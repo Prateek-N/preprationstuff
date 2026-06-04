@@ -1,4 +1,5 @@
 export default {
   index: 'Docs Home',
-  'rivian-vw-ota-interview-prep': 'Rivian/VW OTA Interview Prep Guide'
+  'rivian-vw-ota-interview-prep': 'Rivian/VW OTA Interview Prep Guide',
+  'abbott-onsite-prep-guide': 'Abbott Onsite Prep Guide'
 }
