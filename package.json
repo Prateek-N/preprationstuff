@@ -1,0 +1,33 @@
+{
+  "name": "preprationstuff",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "postbuild": "pagefind --site .next/server/app --output-path public/_pagefind",
+    "start": "next start"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Prateek-N/preprationstuff.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/Prateek-N/preprationstuff/issues"
+  },
+  "homepage": "https://github.com/Prateek-N/preprationstuff#readme",
+  "dependencies": {
+    "next": "15.5.19",
+    "nextra": "4.6.0",
+    "nextra-theme-docs": "4.6.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "pagefind": "^1.5.2"
+  }
+}
