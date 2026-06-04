@@ -35,6 +35,72 @@ Then, spend time on regulatory and stewardship concepts at a level appropriate f
 
 Finally, prepare 6–8 STAR stories and rehearse them out loud. For Abbott, your stories should emphasize **attention to detail**, preventing repeat issues, cross-functional communication, and handling fast-paced multi-tasking.
 
+## Technical Skills (Concepts + Examples)
+
+### Data Management & Document Control
+
+- **Data Validation**: Checking that data meets rules (required fields, allowed values, uniqueness, correct formats) before it’s trusted. Example: validate PartNumber uniqueness and flag missing EffectiveDate before publishing a compliance status report.
+- **Data Entry & Review**: Entering data with consistent standards and verifying it (spot checks + exception checks). Example: update supplier declaration tracker and review that each row links to a valid document/version.
+- **Audit-Ready Record Keeping**: Maintaining evidence so an auditor can trace a claim back to source quickly. Example: for “RoHS compliant,” store the supplier declaration, scope, effective date, and the part list it covers.
+- **Document Control**: Managing document lifecycle (draft/review/approved/superseded) and ensuring only approved versions are used. Example: prevent teams from using an outdated supplier certificate by enforcing “latest approved” links.
+- **Digital Records Management**: Organizing digital files with consistent metadata and retrieval patterns. Example: index documents by SupplierId, PartNumber, regulation, and effective date for fast lookup during audit requests.
+- **Product Composition Data**: Structured material/substance information for a product/part used for compliance reporting. Example: capture substance presence/thresholds to support RoHS/REACH declarations and exception handling.
+- **Data Accuracy & Integrity**: Keeping data correct, consistent, and protected from accidental changes. Example: lock formula cells in an Excel validation workbook and track refresh timestamps to avoid using stale extracts.
+- **Master Data Management (MDM)**: Controlling “golden” reference data (e.g., supplier master, part master) to reduce duplicates and mismatches. Example: standardize SupplierId mappings so SharePoint lists, Excel reports, and PLM exports match.
+- **Data Governance**: Policies + ownership + controls for how data is created, changed, and used. Example: define who owns compliance attributes, how they’re updated, and what evidence is required to change them.
+
+### Excel & Reporting Tools
+
+- **Advanced Excel**: Using formulas/features to reconcile and validate data at speed.
+  - **VLOOKUP**: Legacy lookup; works but fragile if columns move. Example: quick matching part numbers to supplier names in a static sheet.
+  - **XLOOKUP**: Modern lookup with safer readability and built-in “not found.” Example: map SupplierId to SupplierName and return “MISSING_SUPPLIER” if no match.
+  - **INDEX/MATCH**: Flexible lookup pattern (good for older Excel or complex cases). Example: two-way lookup for a matrix of PartNumber vs regulation status.
+  - **PivotTables**: Fast summaries to find patterns and quantify exceptions. Example: count missing declarations by supplier to prioritize follow-up.
+  - **Power Query**: Repeatable import/clean/transform steps. Example: combine monthly supplier declaration files into one standardized table with refresh.
+- **Power BI**: Dashboarding and interactive reporting over modeled data. Example: a dashboard showing coverage %, exception aging, and top suppliers by missing docs.
+- **SharePoint Reporting**: Lists/libraries + metadata views for operational reporting. Example: a SharePoint list of supplier documents with filtered views by “expiring in 30 days.”
+- **KPI Tracking**: Measuring outcomes with defined metrics. Example: exception rate by stage (intake/validation/approval) and time-to-close supplier gaps.
+- **Dashboard Development**: Presenting KPIs in a readable, decision-friendly way. Example: an “audit readiness” dashboard with evidence coverage and overdue renewals.
+
+### Systems & Platforms
+
+- **PLM Systems**: Systems that manage part/product data, revisions, and controlled records. Example: link a compliance attribute to an item revision and attach approved supplier evidence.
+- **ComplianceMap (familiar)**: A compliance tool used to manage/track regulatory status and evidence. Example: locate compliance status and supporting documents for a part number quickly.
+- **JIRA**: Work tracking for issues/tasks. Example: track supplier documentation gaps as tickets with owners, due dates, and impact.
+- **Confluence**: Team documentation/wiki. Example: document validation rules, definitions, and “how-to” steps for new analysts.
+- **SharePoint**: Document storage + metadata + workflow. Example: store approved declarations in a library with required metadata fields.
+- **ServiceNow**: ITSM for incidents/requests. Example: request access to PLM folders or report a failing data pipeline as an incident.
+- **Microsoft 365**: Excel/Teams/SharePoint/Outlook ecosystem. Example: use Teams for cross-functional updates and SharePoint for controlled evidence storage.
+
+### Compliance & Regulatory Frameworks
+
+- **Regulatory Compliance Reporting**: Producing reports that demonstrate adherence to rules/standards. Example: create a quarterly compliance coverage report with evidence links.
+- **Audit Readiness**: Being able to answer “show me the evidence” quickly and consistently. Example: each compliance claim has a traceable doc reference and effective date.
+- **Data Lineage**: Traceability from output back to sources and transformations. Example: show which supplier document and which extract date produced a “compliant” flag.
+- **Metadata Management**: Managing descriptive fields that make records searchable and interpretable. Example: tag each declaration with regulation type, region, effective date, and part coverage.
+- **RoHS/REACH/EPR Awareness**: Understanding the purpose and evidence-driven nature of these frameworks. Example: track declarations and exceptions per regulation and per region.
+- **Conflict Minerals Reporting (familiar)**: Tracking minerals sourcing declarations (e.g., 3TG) and supplier responses. Example: maintain supplier response status and evidence for reporting cycles.
+- **Risk & Compliance**: Identifying, documenting, and reducing compliance-related risks. Example: prioritize missing declarations that impact high-volume products or upcoming audits.
+
+### Cross-Functional Collaboration
+
+- **Supplier Communication**: Clear, specific requests that suppliers can act on. Example: request an updated declaration with exact part list, required fields, and due date.
+- **Stakeholder Management**: Aligning teams on definitions, priorities, and decisions. Example: agree with Quality on what qualifies as “acceptable evidence.”
+- **Gap Analysis**: Finding missing data, mismatches, or process breaks versus requirements. Example: compare PLM export vs supplier evidence list to identify coverage gaps.
+- **Workflow Execution**: Moving work from intake → validation → approval → publish with clear ownership. Example: a weekly cadence to validate new docs and close exceptions.
+- **Cross-Functional Reporting**: Reporting in terms each team needs (Quality, Ops, Supply Chain). Example: separate “audit risk” vs “operational backlog” views.
+- **Issue Resolution**: Root-cause + fix + prevention. Example: recurring mismatched SupplierId fixed by updating the master mapping and adding a validation gate.
+- **Process Documentation**: Writing steps and definitions so work is repeatable. Example: document how to refresh Power Query, run checks, and publish the dashboard.
+
+### Tools & Methodologies
+
+- **Visio / Lucidchart**: Diagramming for workflows/data flows. Example: visualize the intake-to-approval process for supplier declarations.
+- **Trello**: Lightweight task tracking. Example: a board for “requested / received / under review / approved / expired.”
+- **Agile**: Iterative delivery with feedback loops. Example: improve validation workflow in short sprints and track measurable defect reduction.
+- **Scrum**: Agile framework with roles/ceremonies. Example: weekly planning + daily sync for exceptions and supplier follow-ups.
+- **Waterfall**: Sequential delivery for fixed-scope work. Example: a migration plan with defined phases (extract → transform → validate → cutover).
+- **SDL (Software Development Lifecycle)**: End-to-end lifecycle for building and maintaining systems. Example: treat a reporting pipeline like a product: requirements, build, test, deploy, monitor.
+
 ## 30 Interview Questions (Technical + Behavioral) With High-Quality Answers
 
 ### 1) Tell me about yourself and why you’re a fit for this role.
