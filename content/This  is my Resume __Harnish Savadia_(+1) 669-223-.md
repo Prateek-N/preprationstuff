@@ -1,0 +1,1654 @@
+```markdown
+# Frontend (React) Coding Interview Questions – 20 Problems
+
+## 1. Todo List with Add / Toggle / Filter
+
+### Problem
+Build a Todo List component in React with the following features:
+
+- User can add a new todo with text.
+- Each todo can be marked as completed (toggle).
+- There should be three filter buttons: All, Active, Completed.
+- The list should update immediately when adding/toggling/filtering.
+- Use function components and hooks only.
+
+### Thought process
+- Keep todos as an array of objects: `{ id, text, completed }`.
+- Use `useState` for `todos` and for `filter` (`"all" | "active" | "completed"`).
+- When adding, append a new todo with a unique id (e.g., `Date.now()`).
+- When toggling, map over todos and flip `completed` for the matching id.
+- For filtering, derive `visibleTodos` based on `filter` before rendering.
+- Keep components small: one main `TodoApp` and maybe a `TodoItem` if needed.
+
+### Code (React)
+
+```jsx
+import React, { useState } from "react";
+
+function TodoApp() {
+  const [todos, setTodos] = useState([]);
+  const [text, setText] = useState("");
+  const [filter, setFilter] = useState("all"); // all | active | completed
+
+  const handleAdd = () => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    setTodos(prev => [
+      ...prev,
+      { id: Date.now(), text: trimmed, completed: false }
+    ]);
+    setText("");
+  };
+
+  const toggleTodo = (id) => {
+    setTodos(prev =>
+      prev.map(todo =>
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo
+      )
+    );
+  };
+
+  const filteredTodos = todos.filter(todo => {
+    if (filter === "active") return !todo.completed;
+    if (filter === "completed") return todo.completed;
+    return true;
+  });
+
+  return (
+    <div style={{ maxWidth: 400, margin: "0 auto" }}>
+      <h2>Todo List</h2>
+
+      <div>
+        <input
+          value={text}
+          onChange={e => setText(e.target.value)}
+          placeholder="Add a todo"
+        />
+        <button onClick={handleAdd}>Add</button>
+      </div>
+
+      <div style={{ marginTop: 8 }}>
+        <button
+          onClick={() => setFilter("all")}
+          disabled={filter === "all"}
+        >
+          All
+        </button>
+        <button
+          onClick={() => setFilter("active")}
+          disabled={filter === "active"}
+        >
+          Active
+        </button>
+        <button
+          onClick={() => setFilter("completed")}
+          disabled={filter === "completed"}
+        >
+          Completed
+        </button>
+      </div>
+
+      <ul style={{ marginTop: 12, listStyle: "none", padding: 0 }}>
+        {filteredTodos.map(todo => (
+          <li key={todo.id}>
+            <label>
+              <input
+                type="checkbox"
+                checked={todo.completed}
+                onChange={() => toggleTodo(todo.id)}
+              />
+              <span
+                style={{
+                  textDecoration: todo.completed ? "line-through" : "none",
+                  marginLeft: 8
+                }}
+              >
+                {todo.text}
+              </span>
+            </label>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default TodoApp;
+```
+
+
+---
+
+## 2. Searchable User List with Debounce
+
+### Problem
+
+Create a component that:
+
+- Fetches a list of users from `https://jsonplaceholder.typicode.com/users` on mount.
+- Renders a search input that filters users by name.
+- Implements debounced search (wait 500ms after user stops typing before filtering).
+- Shows a loading indicator while fetching.
+
+
+### Thought process
+
+- Use `useEffect` to fetch data on initial render.
+- Maintain `users`, `query`, `debouncedQuery`, `loading`, and `error` states.
+- Use a `useEffect` with `setTimeout` to update `debouncedQuery` after 500ms.
+- Filter `users` by `debouncedQuery` when rendering.
+- Clean up the timeout in the debounce `useEffect`.
+
+
+### Code (React)
+
+```jsx
+import React, { useEffect, useState } from "react";
+
+function UserSearch() {
+  const [users, setUsers] = useState([]);
+  const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Fetch users on mount
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const res = await fetch("https://jsonplaceholder.typicode.com/users");
+        if (!res.ok) throw new Error("Failed to fetch users");
+        const data = await res.json();
+        setUsers(data);
+      } catch (err) {
+        setError(err.message || "Unknown error");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  // Debounce query
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedQuery(query), 500);
+    return () => clearTimeout(id);
+  }, [query]);
+
+  const filtered = users.filter(u =>
+    u.name.toLowerCase().includes(debouncedQuery.toLowerCase())
+  );
+
+  return (
+    <div style={{ maxWidth: 500, margin: "0 auto" }}>
+      <h2>User Search (Debounced)</h2>
+      <input
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+        placeholder="Search by name"
+      />
+      {loading && <p>Loading users...</p>}
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      <ul style={{ marginTop: 8 }}>
+        {filtered.map(user => (
+          <li key={user.id}>
+            <strong>{user.name}</strong> ({user.email})
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default UserSearch;
+```
+
+
+---
+
+## 3. Pagination Component
+
+### Problem
+
+Implement a reusable `Pagination` component:
+
+- Props: `currentPage`, `totalPages`, `onChange(pageNumber)`.
+- Renders buttons: `Prev`, page numbers, `Next`.
+- Disables `Prev` on page 1 and `Next` on last page.
+- Clicking on a number or prev/next calls `onChange`.
+
+Then use it in a parent to paginate a list of items (mock 100 numbers).
+
+### Thought process
+
+- The `Pagination` only deals with UI and callbacks.
+- The parent maintains `currentPage` and the items.
+- Derive current page's items by slicing the array.
+- For simplicity, show all page numbers; can be optimized later with ellipsis.
+
+
+### Code (React)
+
+```jsx
+import React, { useState } from "react";
+
+function Pagination({ currentPage, totalPages, onChange }) {
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+
+  const goTo = (page) => {
+    if (page < 1 || page > totalPages) return;
+    onChange(page);
+  };
+
+  return (
+    <div style={{ display: "flex", gap: 4, marginTop: 8 }}>
+      <button onClick={() => goTo(currentPage - 1)} disabled={currentPage === 1}>
+        Prev
+      </button>
+      {pages.map(page => (
+        <button
+          key={page}
+          onClick={() => goTo(page)}
+          style={{
+            fontWeight: currentPage === page ? "bold" : "normal"
+          }}
+        >
+          {page}
+        </button>
+      ))}
+      <button
+        onClick={() => goTo(currentPage + 1)}
+        disabled={currentPage === totalPages}
+      >
+        Next
+      </button>
+    </div>
+  );
+}
+
+function PaginatedList() {
+  const items = Array.from({ length: 100 }, (_, i) => `Item ${i + 1}`);
+  const pageSize = 10;
+  const totalPages = Math.ceil(items.length / pageSize);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const start = (currentPage - 1) * pageSize;
+  const currentItems = items.slice(start, start + pageSize);
+
+  return (
+    <div>
+      <h2>Paginated List</h2>
+      <ul>
+        {currentItems.map(it => (
+          <li key={it}>{it}</li>
+        ))}
+      </ul>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onChange={setCurrentPage}
+      />
+    </div>
+  );
+}
+
+export default PaginatedList;
+```
+
+
+---
+
+## 4. Controlled Form with Validation
+
+### Problem
+
+Create a signup form with fields: `name`, `email`, `password`, `confirmPassword`.
+
+- All fields are required.
+- Email must look valid (simple regex check).
+- Password must be at least 8 chars.
+- Confirm password must match password.
+- Show inline validation errors and disable submit if any error.
+
+
+### Thought process
+
+- Keep form fields in a single `form` state object or separate states.
+- Keep `errors` as a separate object keyed by field.
+- Validate on submit, and optionally on blur or on change.
+- On successful submit, show an alert or console log the form.
+
+
+### Code (React)
+
+```jsx
+import React, { useState } from "react";
+
+function SignupForm() {
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: ""
+  });
+  const [errors, setErrors] = useState({});
+
+  const validate = () => {
+    const e = {};
+    if (!form.name.trim()) e.name = "Name is required";
+    if (!form.email.trim()) {
+      e.email = "Email is required";
+    } else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email)) {
+      e.email = "Email is invalid";
+    }
+    if (!form.password) {
+      e.password = "Password is required";
+    } else if (form.password.length < 8) {
+      e.password = "Password must be at least 8 characters";
+    }
+    if (form.confirmPassword !== form.password) {
+      e.confirmPassword = "Passwords do not match";
+    }
+    return e;
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const validationErrors = validate();
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length === 0) {
+      console.log("Form submitted", form);
+      alert("Signed up successfully!");
+    }
+  };
+
+  const hasErrors = Object.keys(validate()).length > 0;
+
+  return (
+    <form onSubmit={handleSubmit} style={{ maxWidth: 400 }}>
+      <h2>Signup</h2>
+
+      <div>
+        <label>
+          Name
+          <input
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+          />
+        </label>
+        {errors.name && <div style={{ color: "red" }}>{errors.name}</div>}
+      </div>
+
+      <div>
+        <label>
+          Email
+          <input
+            name="email"
+            value={form.email}
+            onChange={handleChange}
+          />
+        </label>
+        {errors.email && <div style={{ color: "red" }}>{errors.email}</div>}
+      </div>
+
+      <div>
+        <label>
+          Password
+          <input
+            name="password"
+            type="password"
+            value={form.password}
+            onChange={handleChange}
+          />
+        </label>
+        {errors.password && <div style={{ color: "red" }}>{errors.password}</div>}
+      </div>
+
+      <div>
+        <label>
+          Confirm Password
+          <input
+            name="confirmPassword"
+            type="password"
+            value={form.confirmPassword}
+            onChange={handleChange}
+          />
+        </label>
+        {errors.confirmPassword && (
+          <div style={{ color: "red" }}>{errors.confirmPassword}</div>
+        )}
+      </div>
+
+      <button type="submit" disabled={hasErrors}>
+        Sign Up
+      </button>
+    </form>
+  );
+}
+
+export default SignupForm;
+```
+
+
+---
+
+## 5. Custom Hook: useFetch
+
+### Problem
+
+Implement a reusable `useFetch(url)` hook that:
+
+- Fetches JSON data from the given URL.
+- Returns `{ data, loading, error }`.
+- Refetches when `url` changes.
+- Handles cleanup to avoid state updates on unmounted component.
+
+Then use it in a component to display posts.
+
+### Thought process
+
+- Inside `useFetch`, use `useState` and `useEffect`.
+- Track an `aborted` flag or use `AbortController` for cleanup.
+- On `url` change, reset state and refetch.
+- Create a small `Posts` component that uses `useFetch` for a demo.
+
+
+### Code (React)
+
+```jsx
+import { useEffect, useState } from "react";
+
+export function useFetch(url) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!url) return;
+    const controller = new AbortController();
+
+    const fetchData = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const res = await fetch(url, { signal: controller.signal });
+        if (!res.ok) throw new Error("Network error");
+        const json = await res.json();
+        setData(json);
+      } catch (err) {
+        if (err.name === "AbortError") return;
+        setError(err.message || "Unknown error");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+
+    return () => controller.abort();
+  }, [url]);
+
+  return { data, loading, error };
+}
+
+// Example usage component
+export function Posts() {
+  const { data, loading, error } = useFetch(
+    "https://jsonplaceholder.typicode.com/posts"
+  );
+
+```
+
+if (loading) return <p>Loading posts...</p>;
+
+```
+```
+
+if (error) return <p style={{ color: "red" }}>{error}</p>;
+
+```
+if (!data) return null;
+
+return (
+  <div>
+    <h2>Posts</h2>
+    <ul>
+      {data.slice(0, 10).map(post => (
+        <li key={post.id}>
+          <strong>{post.title}</strong>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+}
+```
+
+
+---
+
+## 6. Theme Toggle with Context
+
+### Problem
+
+Implement a light/dark theme toggle using React Context:
+
+- `ThemeProvider` holds the current theme (`"light"` or `"dark"`).
+- A toggle button can switch theme.
+- Child components consume the theme and change styles accordingly.
+- Avoid prop drilling.
+
+
+### Thought process
+
+- Create `ThemeContext` with `createContext`.
+- `ThemeProvider` maintains state and provides `theme` and `toggleTheme`.
+- Use `useContext(ThemeContext)` in child components.
+- Style container based on theme.
+
+
+### Code (React)
+
+```jsx
+import React, { createContext, useContext, useState } from "react";
+
+const ThemeContext = createContext();
+
+export function ThemeProvider({ children }) {
+  const [theme, setTheme] = useState("light");
+
+  const toggleTheme = () =>
+    setTheme(prev => (prev === "light" ? "dark" : "light"));
+
+  const value = { theme, toggleTheme };
+
+  return (
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  );
+}
+
+function ThemedBox() {
+  const { theme } = useContext(ThemeContext);
+  const isDark = theme === "dark";
+  return (
+    <div
+      style={{
+        padding: 16,
+        marginTop: 12,
+        backgroundColor: isDark ? "#333" : "#eee",
+        color: isDark ? "#fff" : "#000"
+      }}
+    >
+      Current theme: {theme}
+    </div>
+  );
+}
+
+export function ThemeApp() {
+  const { theme, toggleTheme } = useContext(ThemeContext);
+  return (
+    <div>
+      <button onClick={toggleTheme}>
+        Switch to {theme === "light" ? "dark" : "light"}
+      </button>
+      <ThemedBox />
+    </div>
+  );
+}
+```
+
+
+---
+
+## 7. Modal Component with Portals
+
+### Problem
+
+Build a `Modal` component:
+
+- Renders its children in a portal attached to `document.body`.
+- Has a backdrop and a centered modal box.
+- Close on clicking backdrop or an explicit close button.
+- Parent controls open/close via `isOpen` prop.
+
+
+### Thought process
+
+- Use `ReactDOM.createPortal` to render outside normal hierarchy.
+- If `!isOpen`, render `null`.
+- On backdrop click, call `onClose`.
+- Stop propagation on modal content to avoid closing when clicking inside.
+
+
+### Code (React)
+
+```jsx
+import React from "react";
+import ReactDOM from "react-dom";
+
+function Modal({ isOpen, onClose, children }) {
+  if (!isOpen) return null;
+
+  return ReactDOM.createPortal(
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "rgba(0,0,0,0.4)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center"
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: "white",
+          padding: 16,
+          borderRadius: 4,
+          minWidth: 300
+        }}
+      >
+        <button
+          style={{ float: "right" }}
+          onClick={onClose}
+        >
+          X
+        </button>
+        {children}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+export default Modal;
+```
+
+
+---
+
+## 8. Drag-and-Drop List Reordering
+
+### Problem
+
+Create a list of items that can be reordered via drag-and-drop (HTML5 DnD, no external libs).
+
+- Items: `["Task A", "Task B", "Task C", "Task D"]`.
+- User can drag and drop to reorder.
+- After drop, the state updates and list shows new order.
+
+
+### Thought process
+
+- Track `items` in state.
+- Use `draggable` attribute and handle `onDragStart`, `onDragOver`, `onDrop`.
+- Keep track of `draggedIndex`.
+- On drop, create a new array with item moved to new index.
+
+
+### Code (React)
+
+```jsx
+import React, { useState } from "react";
+
+function DraggableList() {
+  const [items, setItems] = useState([
+    "Task A",
+    "Task B",
+    "Task C",
+    "Task D"
+  ]);
+  const [dragIndex, setDragIndex] = useState(null);
+
+  const handleDragStart = (index) => {
+    setDragIndex(index);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (index) => {
+    if (dragIndex === null || dragIndex === index) return;
+    const updated = [...items];
+    const [moved] = updated.splice(dragIndex, 1);
+    updated.splice(index, 0, moved);
+    setItems(updated);
+    setDragIndex(null);
+  };
+
+  return (
+    <div>
+      <h2>Draggable List</h2>
+      <ul style={{ listStyle: "none", padding: 0 }}>
+        {items.map((item, index) => (
+          <li
+            key={item}
+            draggable
+            onDragStart={() => handleDragStart(index)}
+            onDragOver={handleDragOver}
+            onDrop={() => handleDrop(index)}
+            style={{
+              padding: 8,
+              marginBottom: 4,
+              border: "1px solid #ccc",
+              cursor: "grab",
+              backgroundColor:
+                dragIndex === index ? "lightyellow" : "white"
+            }}
+          >
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default DraggableList;
+```
+
+
+---
+
+## 9. Infinite Scroll List
+
+### Problem
+
+Build a list that loads more items as the user scrolls to the bottom.
+
+- Start with page 1 from `https://jsonplaceholder.typicode.com/posts?_limit=10&_page=1`.
+- When user scrolls near the bottom, load the next page.
+- Show a loading indicator while fetching.
+- Avoid multiple fetches at the same time.
+
+
+### Thought process
+
+- Track `page`, `items`, `loading`, `hasMore`.
+- Listen to `scroll` events on `window`.
+- When `window.innerHeight + scrollY >= document.body.offsetHeight - threshold` and not loading, increment page.
+- In `useEffect` for `page`, fetch data and append.
+- Stop when API returns empty array (no more pages).
+
+
+### Code (React)
+
+```jsx
+import React, { useEffect, useState } from "react";
+
+function InfinitePosts() {
+  const [page, setPage] = useState(1);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
+  // Fetch whenever page changes
+  useEffect(() => {
+    const fetchPage = async () => {
+      if (!hasMore) return;
+      setLoading(true);
+      try {
+        const res = await fetch(
+          `https://jsonplaceholder.typicode.com/posts?_limit=10&_page=${page}`
+        );
+        const data = await res.json();
+        if (data.length === 0) {
+          setHasMore(false);
+        } else {
+          setPosts(prev => [...prev, ...data]);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPage();
+  }, [page, hasMore]);
+
+  // Scroll handler
+  useEffect(() => {
+    const handleScroll = () => {
+      if (loading || !hasMore) return;
+
+      if (
+        window.innerHeight + window.scrollY >=
+        document.body.offsetHeight - 200
+      ) {
+        setPage(prev => prev + 1);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [loading, hasMore]);
+
+  return (
+    <div>
+      <h2>Infinite Scroll Posts</h2>
+      <ul>
+        {posts.map(p => (
+          <li key={p.id}>
+            <strong>{p.title}</strong>
+          </li>
+        ))}
+      </ul>
+      {loading && <p>Loading...</p>}
+      {!hasMore && <p>No more posts</p>}
+    </div>
+  );
+}
+
+export default InfinitePosts;
+```
+
+
+---
+
+## 10. React Table with Sort and Filter
+
+### Problem
+
+Create a table component for a list of users:
+
+- Columns: Name, Email, Age.
+- Implement:
+    - Text filter on name.
+    - Sort by Age ascending/descending when clicking on header.
+- Data can be hardcoded.
+
+
+### Thought process
+
+- Keep `sortOrder` in state: `"asc" | "desc"`.
+- Keep `nameFilter` in state.
+- Fitler users by `nameFilter`.
+- Sort filtered list by `age` using `sortOrder`.
+- Render in a `<table>`.
+
+
+### Code (React)
+
+```jsx
+import React, { useMemo, useState } from "react";
+
+const USERS = [
+  { id: 1, name: "Alice", email: "alice@example.com", age: 28 },
+  { id: 2, name: "Bob", email: "bob@example.com", age: 35 },
+  { id: 3, name: "Charlie", email: "charlie@example.com", age: 24 }
+];
+
+function UserTable() {
+  const [nameFilter, setNameFilter] = useState("");
+  const [sortOrder, setSortOrder] = useState("asc");
+
+  const toggleSortOrder = () => {
+    setSortOrder(prev => (prev === "asc" ? "desc" : "asc"));
+  };
+
+  const visibleUsers = useMemo(() => {
+    const filtered = USERS.filter(u =>
+      u.name.toLowerCase().includes(nameFilter.toLowerCase())
+    );
+    return filtered.sort((a, b) =>
+      sortOrder === "asc" ? a.age - b.age : b.age - a.age
+    );
+  }, [nameFilter, sortOrder]);
+
+  return (
+    <div>
+      <h2>User Table</h2>
+      <input
+        placeholder="Filter by name"
+        value={nameFilter}
+        onChange={e => setNameFilter(e.target.value)}
+      />
+      <table border="1" cellPadding="8" style={{ marginTop: 8 }}>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th onClick={toggleSortOrder} style={{ cursor: "pointer" }}>
+              Age ({sortOrder === "asc" ? "↑" : "↓"})
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {visibleUsers.map(u => (
+            <tr key={u.id}>
+              <td>{u.name}</td>
+              <td>{u.email}</td>
+              <td>{u.age}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export default UserTable;
+```
+
+
+---
+
+### 11–20 (React) – Suggested Problem Statements Only
+
+To keep this file readable, here are 10 more strong React machine-coding prompts in the same style you can implement similarly:
+
+11. **File Upload with Preview and Progress**
+Build a component that lets user select multiple images, shows previews, and simulates upload progress per file.
+12. **Reusable Autocomplete Component**
+Implement an `Autocomplete` that fetches suggestions from an API as user types, supports keyboard navigation, and selection.
+13. **Shopping Cart with Context and Reducer**
+Create a cart context using `useReducer` with actions: ADD_ITEM, REMOVE_ITEM, UPDATE_QTY, CLEAR_CART.
+14. **Protected Routes with React Router**
+Set up a simple routing system with public and private routes, mock auth state, and redirect unauthenticated users.
+15. **Editable Table (Inline Editing)**
+Table of users where clicking a row turns it into editable fields; save/cancel actions update state.
+16. **Custom Hook: useLocalStorage**
+Wrap `useState` but persist values in `localStorage`; use it in a theme or todo example.
+17. **Global Error Boundary Component**
+Create `ErrorBoundary` class component to catch errors and show fallback UI.
+18. **Responsive Layout with CSS-in-JS**
+Build a responsive header/sidebar layout that collapses sidebar into a hamburger menu on small screens.
+19. **Debounced Window Resize Hook**
+Create `useWindowSize` with debounced resize listener; use it to conditionally render mobile/desktop layouts.
+20. **Form Wizard / Multi-step Form**
+Implement a 3-step form (personal info → address → review) with next/back and final submit.
+
+You can mirror the “problem → thought process → code” pattern from 1–10 for these.
+
+---
+
+# Backend (Python + Flask) Coding Interview Questions – 20 Problems
+
+## 1. Basic CRUD API for Users
+
+### Problem
+
+Build a Flask REST API to manage users with in-memory storage:
+
+- Endpoints:
+    - `GET /users` – list all users.
+    - `GET /users/<int:id>` – get user by id.
+    - `POST /users` – create user with `name` and `email`.
+    - `PUT /users/<int:id>` – update name/email.
+    - `DELETE /users/<int:id>` – delete user.
+- Return JSON responses with proper HTTP status codes and error handling.
+
+
+### Thought process
+
+- Use a Python list or dict as in-memory DB.
+- Maintain a global `next_id` to assign IDs.
+- Validate request JSON; handle not-found with 404.
+- Use `flask` `request` and `jsonify`.
+- Ensure correct status codes: 201 for create, 200 for OK, 204 for delete.
+
+
+### Code (Flask)
+
+```python
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+users = []
+next_id = 1
+
+def find_user(user_id):
+  return next((u for u in users if u["id"] == user_id), None)
+
+@app.route("/users", methods=["GET"])
+def list_users():
+  return jsonify(users), 200
+
+@app.route("/users/<int:user_id>", methods=["GET"])
+def get_user(user_id):
+  user = find_user(user_id)
+  if not user:
+    return jsonify({"error": "User not found"}), 404
+  return jsonify(user), 200
+
+@app.route("/users", methods=["POST"])
+def create_user():
+  global next_id
+  data = request.get_json() or {}
+  name = data.get("name")
+  email = data.get("email")
+  if not name or not email:
+    return jsonify({"error": "name and email are required"}), 400
+  user = {"id": next_id, "name": name, "email": email}
+  next_id += 1
+  users.append(user)
+  return jsonify(user), 201
+
+@app.route("/users/<int:user_id>", methods=["PUT"])
+def update_user(user_id):
+  user = find_user(user_id)
+  if not user:
+    return jsonify({"error": "User not found"}), 404
+  data = request.get_json() or {}
+  user["name"] = data.get("name", user["name"])
+  user["email"] = data.get("email", user["email"])
+  return jsonify(user), 200
+
+@app.route("/users/<int:user_id>", methods=["DELETE"])
+def delete_user(user_id):
+  user = find_user(user_id)
+  if not user:
+    return jsonify({"error": "User not found"}), 404
+  users.remove(user)
+  return "", 204
+
+if __name__ == "__main__":
+  app.run(debug=True)
+```
+
+
+---
+
+## 2. JWT-based Authentication
+
+### Problem
+
+Implement JWT authentication in Flask:
+
+- `POST /login` accepts username/password and returns a JWT if valid.
+- `GET /protected` requires a valid JWT in `Authorization: Bearer <token>`.
+- Use a simple hardcoded user store.
+- Handle invalid/missing token with 401.
+
+
+### Thought process
+
+- Use `pyjwt` to encode/decode tokens.
+- Store secret key in app config.
+- Implement a decorator `@token_required` that checks header, decodes token, and injects `current_user`.
+- For simplicity, use one hardcoded user: `username="admin", password="secret"`.
+
+
+### Code (Flask)
+
+```python
+import datetime
+import jwt
+from functools import wraps
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+app.config["SECRET_KEY"] = "your-secret-key"
+
+USER = {"username": "admin", "password": "secret"}
+
+def token_required(f):
+  @wraps(f)
+  def decorated(*args, **kwargs):
+    auth_header = request.headers.get("Authorization", "")
+    parts = auth_header.split()
+    if len(parts) != 2 or parts.lower() != "bearer":
+      return jsonify({"error": "Token missing"}), 401
+    token = parts[^1]
+    try:
+      data = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
+      current_user = data["username"]
+    except jwt.ExpiredSignatureError:
+      return jsonify({"error": "Token expired"}), 401
+    except jwt.InvalidTokenError:
+      return jsonify({"error": "Invalid token"}), 401
+    return f(current_user, *args, **kwargs)
+  return decorated
+
+@app.route("/login", methods=["POST"])
+def login():
+  data = request.get_json() or {}
+  username = data.get("username")
+  password = data.get("password")
+  if username != USER["username"] or password != USER["password"]:
+    return jsonify({"error": "Invalid credentials"}), 401
+  token = jwt.encode(
+    {
+      "username": username,
+      "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1),
+    },
+    app.config["SECRET_KEY"],
+    algorithm="HS256",
+  )
+  return jsonify({"token": token}), 200
+
+@app.route("/protected")
+@token_required
+def protected(current_user):
+  return jsonify({"message": f"Hello {current_user}, you are authenticated"}), 200
+
+if __name__ == "__main__":
+  app.run(debug=True)
+```
+
+
+---
+
+## 3. SQLAlchemy Model and CRUD
+
+### Problem
+
+Create a `Book` model with fields `id`, `title`, `author`, `year` using SQLAlchemy and build CRUD endpoints for it.
+
+- Use SQLite.
+- Endpoints similar to `/books`, `/books/<id>`.
+- Use migrations or simple `db.create_all()` for setup.
+
+
+### Thought process
+
+- Use `Flask-SQLAlchemy`.
+- Configure SQLite URI.
+- Define `Book` model class.
+- Implement endpoints that use `Book.query` to read and `db.session` to commit.
+
+
+### Code (Flask)
+
+```python
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///books.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db = SQLAlchemy(app)
+
+class Book(db.Model):
+  id = db.Column(db.Integer, primary_key=True)
+  title = db.Column(db.String(120), nullable=False)
+  author = db.Column(db.String(80), nullable=False)
+  year = db.Column(db.Integer, nullable=True)
+
+  def to_dict(self):
+    return {"id": self.id, "title": self.title, "author": self.author, "year": self.year}
+
+@app.before_first_request
+def create_tables():
+  db.create_all()
+
+@app.route("/books", methods=["GET"])
+def list_books():
+  books = Book.query.all()
+  return jsonify([b.to_dict() for b in books]), 200
+
+@app.route("/books/<int:book_id>", methods=["GET"])
+def get_book(book_id):
+  book = Book.query.get_or_404(book_id)
+  return jsonify(book.to_dict()), 200
+
+@app.route("/books", methods=["POST"])
+def create_book():
+  data = request.get_json() or {}
+  title = data.get("title")
+  author = data.get("author")
+  year = data.get("year")
+  if not title or not author:
+    return jsonify({"error": "title and author required"}), 400
+  book = Book(title=title, author=author, year=year)
+  db.session.add(book)
+  db.session.commit()
+  return jsonify(book.to_dict()), 201
+
+@app.route("/books/<int:book_id>", methods=["PUT"])
+def update_book(book_id):
+  book = Book.query.get_or_404(book_id)
+  data = request.get_json() or {}
+  book.title = data.get("title", book.title)
+  book.author = data.get("author", book.author)
+  book.year = data.get("year", book.year)
+  db.session.commit()
+  return jsonify(book.to_dict()), 200
+
+@app.route("/books/<int:book_id>", methods=["DELETE"])
+def delete_book(book_id):
+  book = Book.query.get_or_404(book_id)
+  db.session.delete(book)
+  db.session.commit()
+  return "", 204
+
+if __name__ == "__main__":
+  app.run(debug=True)
+```
+
+
+---
+
+## 4. Request Validation with Marshmallow (or Manual)
+
+### Problem
+
+Create an endpoint `POST /orders` that accepts:
+
+- `customer_name` (string, required)
+- `items` (list of objects with `sku` and `quantity`, both required)
+- Validate input and return 400 with validation errors if invalid.
+
+
+### Thought process
+
+- Either use `marshmallow` for schema or do manual validation.
+- Check presence and types of fields.
+- Validate that `items` is non-empty, quantity > 0.
+- On success, echo back an order id and total items count.
+
+
+### Code (Flask – manual validation)
+
+```python
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route("/orders", methods=["POST"])
+def create_order():
+  data = request.get_json() or {}
+  errors = {}
+
+  name = data.get("customer_name")
+  items = data.get("items")
+
+  if not name or not isinstance(name, str):
+    errors["customer_name"] = "customer_name is required and must be a string"
+
+  if not isinstance(items, list) or not items:
+    errors["items"] = "items must be a non-empty list"
+  else:
+    for idx, item in enumerate(items):
+      if not isinstance(item, dict):
+        errors[f"items[{idx}]"] = "item must be an object"
+        continue
+      sku = item.get("sku")
+      qty = item.get("quantity")
+      if not sku:
+        errors[f"items[{idx}].sku"] = "sku is required"
+      if not isinstance(qty, int) or qty <= 0:
+        errors[f"items[{idx}].quantity"] = "quantity must be positive integer"
+
+  if errors:
+    return jsonify({"errors": errors}), 400
+
+  total_items = sum(it["quantity"] for it in items)
+  # Normally you would insert into DB, here we just echo back
+  return jsonify({
+    "order_id": 1,
+    "customer_name": name,
+    "total_items": total_items
+  }), 201
+
+if __name__ == "__main__":
+  app.run(debug=True)
+```
+
+
+---
+
+## 5. File Upload Endpoint
+
+### Problem
+
+Implement a Flask endpoint `POST /upload`:
+
+- Accepts a file in form-data (field `file`).
+- Validates that file is present and size < 5 MB.
+- Saves file to a local `uploads` directory.
+- Returns original filename and saved path.
+
+
+### Thought process
+
+- Use `request.files`.
+- Check `file.filename`.
+- Use `secure_filename` from `werkzeug.utils`.
+- Ensure `uploads` directory exists.
+
+
+### Code (Flask)
+
+```python
+import os
+from flask import Flask, request, jsonify
+from werkzeug.utils import secure_filename
+
+app = Flask(__name__)
+UPLOAD_FOLDER = "uploads"
+MAX_SIZE = 5 * 1024 * 1024
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+@app.route("/upload", methods=["POST"])
+def upload_file():
+  if "file" not in request.files:
+    return jsonify({"error": "No file part"}), 400
+  file = request.files["file"]
+  if file.filename == "":
+    return jsonify({"error": "No selected file"}), 400
+
+  # Read file temporarily to check size
+  file.seek(0, os.SEEK_END)
+  size = file.tell()
+  file.seek(0)
+  if size > MAX_SIZE:
+    return jsonify({"error": "File too large"}), 400
+
+  filename = secure_filename(file.filename)
+  save_path = os.path.join(UPLOAD_FOLDER, filename)
+  file.save(save_path)
+
+  return jsonify({"filename": filename, "path": save_path}), 201
+
+if __name__ == "__main__":
+  app.run(debug=True)
+```
+
+
+---
+
+## 6. Rate Limiting Middleware
+
+### Problem
+
+Implement simple per-IP rate limiting:
+
+- Limit each IP to 100 requests per hour.
+- If exceeded, return 429 Too Many Requests.
+- Use in-memory store (dict) for counts with timestamp.
+
+
+### Thought process
+
+- Use `before_request` handler.
+- Identify client IP via `request.remote_addr`.
+- Store `count` and `reset_time` per IP.
+- If current time > reset_time, reset count.
+
+
+### Code (Flask)
+
+```python
+import time
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+RATE_LIMIT = 100
+WINDOW_SECONDS = 3600
+ip_store = {}
+
+@app.before_request
+def check_rate_limit():
+  ip = request.remote_addr or "unknown"
+  now = time.time()
+  record = ip_store.get(ip)
+
+  if not record or now > record["reset"]:
+    ip_store[ip] = {"count": 1, "reset": now + WINDOW_SECONDS}
+  else:
+    if record["count"] >= RATE_LIMIT:
+      return jsonify({"error": "Rate limit exceeded"}), 429
+    record["count"] += 1
+
+@app.route("/ping")
+def ping():
+  return jsonify({"message": "pong"}), 200
+
+if __name__ == "__main__":
+  app.run(debug=True)
+```
+
+
+---
+
+## 7. Caching Responses with Simple In-Memory Cache
+
+### Problem
+
+Implement caching for a slow endpoint:
+
+- `GET /slow-data` simulates a slow computation (sleep 3 seconds).
+- Cache the result for 30 seconds.
+- Subsequent calls within 30 seconds should be fast.
+
+
+### Thought process
+
+- Use a module-level cache dict with `value` and `expires_at`.
+- On request, if cache exists and not expired, return it.
+- Otherwise compute (sleep), store, and return.
+
+
+### Code (Flask)
+
+```python
+import time
+from flask import Flask, jsonify
+
+app = Flask(__name__)
+
+cache = {}
+
+@app.route("/slow-data")
+def slow_data():
+  now = time.time()
+  key = "slow_data"
+  entry = cache.get(key)
+
+  if entry and entry["expires_at"] > now:
+    return jsonify({"source": "cache", "data": entry["value"]}), 200
+
+  # Simulate slow computation
+  time.sleep(3)
+  result = {"value": 42}
+  cache[key] = {"value": result, "expires_at": now + 30}
+  return jsonify({"source": "fresh", "data": result}), 200
+
+if __name__ == "__main__":
+  app.run(debug=True)
+```
+
+
+---
+
+## 8. Background Task with Celery (Outline)
+
+### Problem
+
+Expose an endpoint `POST /tasks/long` that triggers a long-running task (e.g., processing data) and returns a task id immediately.
+
+- Another endpoint `GET /tasks/<id>` returns task status.
+- Use Celery + Redis (or outline if infra not available).
+
+
+### Thought process
+
+- Configure Celery app with broker and backend.
+- Define a `@celery.task` function.
+- In `/tasks/long`, call `.delay()` and return task id.
+- In `/tasks/<id>`, fetch task via `AsyncResult`.
+
+*(Omit full Celery wiring due to environment; in interview, explaining config is enough.)*
+
+---
+
+## 9. Error Handling Blueprint
+
+### Problem
+
+Implement centralized error handling:
+
+- Custom JSON responses for 404 and 500 errors.
+- Log exceptions.
+
+
+### Thought process
+
+- Use `@app.errorhandler(404)` and `@app.errorhandler(500)`.
+- Return JSON with message and status code.
+- Add simple logging using `app.logger`.
+
+
+### Code (Flask)
+
+```python
+from flask import Flask, jsonify
+
+app = Flask(__name__)
+
+@app.errorhandler(404)
+def not_found(e):
+  return jsonify({"error": "Not found"}), 404
+
+@app.errorhandler(500)
+def server_error(e):
+  app.logger.exception("Internal server error")
+  return jsonify({"error": "Internal server error"}), 500
+
+@app.route("/cause-error")
+def cause_error():
+  1 / 0  # triggers 500
+  return "should not reach"
+
+if __name__ == "__main__":
+  app.run(debug=True)
+```
+
+
+---
+
+## 10. Pagination on GET Endpoint
+
+### Problem
+
+Add pagination to `GET /items`:
+
+- Query params: `page` (default 1), `page_size` (default 10, max 100).
+- Return `items` slice and `meta` with `page`, `page_size`, `total`.
+
+
+### Thought process
+
+- Parse query params from `request.args`.
+- Validate as integers and bound `page_size`.
+- Use Python slicing on list.
+
+
+### Code (Flask)
+
+```python
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+ITEMS = [f"Item {i}" for i in range(1, 201)]
+
+@app.route("/items")
+def list_items():
+  try:
+    page = int(request.args.get("page", 1))
+    page_size = int(request.args.get("page_size", 10))
+  except ValueError:
+    return jsonify({"error": "Invalid page or page_size"}), 400
+
+  page = max(page, 1)
+  page_size = max(1, min(page_size, 100))
+
+  total = len(ITEMS)
+  start = (page - 1) * page_size
+  end = start + page_size
+  data = ITEMS[start:end]
+
+  return jsonify({
+    "items": data,
+    "meta": {
+      "page": page,
+      "page_size": page_size,
+      "total": total
+    }
+  }), 200
+
+if __name__ == "__main__":
+  app.run(debug=True)
+```
+
+
+---
+
+### 11–20 (Flask) – Problem Statements Only
+
+Again, to keep things maintainable in one file, these are strong backend prompts you can expand with full code in your repo:
+
+11. **Search and Filter API**
+Endpoint to search products with filters (name contains, min/max price, category) and sort options.
+12. **Bulk Insert with Transaction**
+Endpoint `/bulk-users` that inserts multiple users in a single DB transaction; rollback on any error.
+13. **Soft Delete Implementation**
+Add `is_deleted` flag to a model; update read endpoints to exclude soft-deleted rows; implement `/users/<id>/soft-delete`.
+14. **Webhook Receiver Endpoint**
+Endpoint to receive JSON webhooks, validate a shared secret header, and store payloads.
+15. **CSV Export Endpoint**
+`GET /users/export` generates a CSV on the fly from DB and returns as file download.
+16. **Health Check and Readiness Probe**
+Endpoints `/health` and `/ready` to be used by Kubernetes; include DB connectivity check in readiness.
+17. **Role-Based Access Control (RBAC)**
+Extend JWT auth to include roles; restrict certain endpoints (e.g., `/admin`) to admin role only.
+18. **Optimistic Locking with Version Field**
+Model with `version` column; `PUT` checks version to avoid lost updates.
+19. **Rate-limited Login Endpoint with Lockout**
+Login throttling: after 5 failed attempts from a username/IP, lock for 15 minutes.
+20. **Swagger/OpenAPI Documentation**
+Expose OpenAPI spec for your Flask API using `flasgger` or similar, with at least three documented endpoints.
+
+---
+
+If you want, next step can be to fully flesh out, say, React problems 11–15 and Flask problems 11–15 in the same pattern so you have a very dense practice repo.
+
+Which side do you want to deepen first in this `code.md`: frontend (React) or backend (Flask)?
+<span style="display:none">[^10][^11][^12][^13][^14][^15][^2][^3][^4][^5][^6][^7][^8][^9]</span>
+
+<div align="center">⁂</div>
+
+[^1]: https://www.linkedin.com/posts/akshat-khulbe-9490a0141_reactjs-frontendinterview-webdevelopment-activity-7376847476881997824-lOXw
+
+[^2]: https://www.reddit.com/r/flask/comments/e249v0/python_backend_interview_questions/
+
+[^3]: https://www.codinn.dev/reactjs/reactjs-interview-question
+
+[^4]: https://dev.to/shreyvijayvargiya/50-frontend-interview-questions-1bln
+
+[^5]: https://www.ap2v.com/interview-questions/top-21-python-flask-interview-questions
+
+[^6]: https://www.youtube.com/watch?v=NkWOzTEEcco
+
+[^7]: https://medium.com/@Srinivas_N/frontend-interview-prep-guide-50-questions-on-react-javascript-typescript-more-cd75169ecc30
+
+[^8]: https://www.geeksforgeeks.org/python/flask-interview-questions-and-answers/
+
+[^9]: https://www.youtube.com/watch?v=IgWWQT5njag
+
+[^10]: https://www.linkedin.com/posts/gouravhammad_interview-reactjs-frontend-activity-7348554026856140802-DzHy
+
+[^11]: https://mindmajix.com/flask-interview-questions
+
+[^12]: https://dev.to/ruppysuppy/17-react-interview-questions-you-must-know-as-a-developer-in-2025-1o6f
+
+[^13]: https://forum.freecodecamp.org/t/interview-questions-for-experienced-react-frontend-dev/251755
+
+[^14]: https://in.indeed.com/career-advice/interviewing/python-flask-interview-questions
+
+[^15]: https://www.linkedin.com/posts/abhay-tripathi-311382238_top-50-react-interview-questions-activity-7392766384201625600-dLJ1
+
