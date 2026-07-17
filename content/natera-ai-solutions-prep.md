@@ -686,39 +686,3 @@ The architecture is structured to separate metric ingestion from metrics analysi
 
 #### Deep Dive into Non-Functional Requirements
 To keep evaluation costs low while maintaining high-quality tracking, we use a tiered evaluation strategy. We calculate basic metrics like token count, latency, and regex validation checks on every request. We only route a sampled percentage of logs, or requests flagged as low-confidence, to the expensive LLM-as-a-Judge API for semantic accuracy scoring. We configure the Evaluation Daemon with strict rate-limiters to prevent it from exhausting our LLM API quotas, ensuring that our monitoring infrastructure never bottlenecks our production applications.
-
----
-
-## Part 4: Integration with Workspace
-
-We register our new Natera preparation guide in the Nextra configuration files.
-
-### File Modifications
-
-#### 1. Add to Navigation Sidebar
-We register the guide in [content/_meta.js](file:///f:/rivian%20vaishnavi/preprationstuff/content/_meta.js).
-
-```diff
- export default {
-   index: 'Docs Home',
-   'qualcomm-prep-material': 'Qualcomm NPU / Embedded Platform Prep',
-   'rivian-vw-ota-interview-prep': 'Rivian/VW OTA Interview Prep Guide',
-+  'natera-ai-solutions-prep': 'Natera AI Solutions Prep',
-   'torc-prep-guide': 'Torc Prep Guide (Device Drivers)',
-   'abbott-onsite-prep-guide': 'Abbott Onsite Prep Guide',
-   'tcs-sandeep': 'TCS Sandeep Prep Guide',
-```
-
-#### 2. Link on Main Index Page
-We link the new document on [content/index.mdx](file:///f:/rivian%20vaishnavi/preprationstuff/content/index.mdx).
-
-```diff
- # Preparation Stuff
- 
- This site hosts Markdown documents. Add new files under `content/` and they will appear in the sidebar automatically.
- 
- - [Rivian/VW OTA Interview Prep Guide](/docs/rivian-vw-ota-interview-prep)
-+- [Natera Head of AI Solutions Prep Guide](/docs/natera-ai-solutions-prep)
- - [Torc Prep Guide (Device Drivers)](/docs/torc-prep-guide)
- - [Abbott Onsite Prep Guide](/docs/abbott-onsite-prep-guide)
-```
