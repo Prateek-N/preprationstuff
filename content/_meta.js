@@ -2,6 +2,7 @@ export default {
   index: 'Docs Home',
   'qualcomm-prep-material': 'Qualcomm NPU / Embedded Platform Prep',
   'rivian-vw-ota-interview-prep': 'Rivian/VW OTA Interview Prep Guide',
+  'natera-ai-solutions-prep': 'Natera AI Solutions Prep',
   'torc-prep-guide': 'Torc Prep Guide (Device Drivers)',
   'abbott-onsite-prep-guide': 'Abbott Onsite Prep Guide',
   'tcs-sandeep': 'TCS Sandeep Prep Guide',
