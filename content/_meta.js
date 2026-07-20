@@ -5,5 +5,6 @@ export default {
   'torc-prep-guide': 'Torc Prep Guide (Device Drivers)',
   'vaishnavi-torc-mcu-applications-prep': 'Vaishnavi Torc MCU Applications Prep',
   'harnish-frontend-backend-coding-prep': 'Harnish Frontend + Backend Coding Prep',
+  'goldman-sachs-behavioral-prep': 'Goldman Sachs Behavioral Prep',
   'archived': 'Archived Guides'
 }
