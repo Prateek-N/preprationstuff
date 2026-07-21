@@ -6,5 +6,6 @@ export default {
   'vaishnavi-torc-mcu-applications-prep': 'Vaishnavi Torc MCU Applications Prep',
   'harnish-frontend-backend-coding-prep': 'Harnish Frontend + Backend Coding Prep',
   'goldman-sachs-behavioral-prep': 'Goldman Sachs Behavioral Prep',
+  'amazon-behavioral-prep': 'Amazon Behavioral Prep',
   'archived': 'Archived Guides'
 }
