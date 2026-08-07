@@ -805,6 +805,7 @@ The time complexity of this anagram check is $O(N)$ where $N$ is the number of c
 
 ### 51. Distributed Test Automation Execution Grid
 ![Distributed Test Grid](/janaki_test_execution_grid.png)
+![Distributed Test Grid Flowchart](/janaki_test_execution_grid_flow.png)
 
 I will walk you through the system design of a Distributed Test Automation Execution Grid. The functional requirements focus on allowing engineers to submit test suites from their local machines or **Jenkins** pipelines and executing these tests in parallel across a pool of isolated browser environments. The non-functional requirements demand that the grid be highly scalable to handle hundreds of concurrent browser sessions, and self-healing so that if a browser container crashes, it is immediately recycled without failing the entire test suite.
 
@@ -818,6 +819,7 @@ For the high-level design, we use **Docker** and **Kubernetes** to orchestrate t
 
 ### 52. Centralized Test Reporting and Analytics Dashboard
 ![Test Reporting Dashboard](/janaki_test_reporting_dashboard.png)
+![Test Reporting Dashboard Flowchart](/janaki_test_reporting_dashboard_flow.png)
 
 Let's break down the system design of a Centralized Test Reporting and Analytics Dashboard. The functional requirements are to allow test execution agents running in different CI/CD pipelines to upload execution results (logs, run status, and screenshots), and to allow stakeholders to view aggregated quality metrics on a dashboard. The non-functional requirements focus on high ingestion throughput to handle spikes in test uploads during release windows, and low query latency for generating reports.
 
@@ -831,6 +833,7 @@ In our high-level design, we deploy a React dashboard that queries the database 
 
 ### 53. Microservices Test Data Management System
 ![Test Data Service](/janaki_test_data_service.png)
+![Test Data Service Flowchart](/janaki_test_data_service_flow.png)
 
 I will walk you through the design of a Microservices Test Data Management System. The functional requirements are to allow automated test scripts to request valid test data (such as active banking profiles or member enrollment records) and to reserve that data so that concurrent tests do not use the same record. The non-functional requirements demand strict data isolation to prevent test interference, and fast data retrieval times so that tests do not wait for data provisioning.
 
@@ -844,6 +847,7 @@ For the high-level design, we use **Spring Boot** microservices connected to a *
 
 ### 54. API Security Gateway & Rate Limiter
 ![API Security Gateway](/janaki_api_security_gateway.png)
+![API Security Gateway Flowchart](/janaki_api_security_gateway_flow.png)
 
 Let's look at the system design of an API Security Gateway and Rate Limiter. The functional requirements are to inspect all incoming HTTP requests, validate their authentication tokens, and block any requests that exceed the allowed transaction frequency before they reach downstream microservices. The non-functional requirements focus on sub-millisecond processing latency to prevent overhead on transaction paths, and high availability to avoid becoming a single point of failure.
 
@@ -857,6 +861,7 @@ For the high-level design, we use **Spring Cloud Gateway** integrated with **Azu
 
 ### 55. Staging Environment Test Deployment Monitoring System
 ![Deployment Monitoring System](/janaki_deployment_monitoring_system.png)
+![Deployment Monitoring System Flowchart](/janaki_deployment_monitoring_system_flow.png)
 
 I will walk you through the system design of a Staging Environment Test Deployment Monitoring System. The functional requirements are to collect system metrics (like CPU usage, memory limits, and API error rates) from staging microservices during automated test runs, and to trigger alerts if these metrics cross safety thresholds. The non-functional requirements are to collect metrics with minimal overhead on staging pods, and to deliver alerts in real-time.
 
