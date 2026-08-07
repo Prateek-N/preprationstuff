@@ -800,3 +800,70 @@ def is_valid_anagram(string1, string2):
 The time complexity of this anagram check is $O(N)$ where $N$ is the number of characters in the input strings. This is because we loop through each string of size $N$ once, performing constant time dictionary operations. The space complexity is $O(U)$ where $U$ is the number of unique characters in the strings, representing the memory allocated for the frequency mapping.
 
 ---
+
+## Part 4: Top 5 System Design Problems
+
+### 51. Distributed Test Automation Execution Grid
+![Distributed Test Grid](/janaki_test_execution_grid.png)
+
+I will walk you through the system design of a Distributed Test Automation Execution Grid. The functional requirements focus on allowing engineers to submit test suites from their local machines or **Jenkins** pipelines and executing these tests in parallel across a pool of isolated browser environments. The non-functional requirements demand that the grid be highly scalable to handle hundreds of concurrent browser sessions, and self-healing so that if a browser container crashes, it is immediately recycled without failing the entire test suite.
+
+Our core entities in this design include the Test Suite, which defines the group of test cases, the Execution Hub, which acts as the coordinator, and the Worker Node, which represents the containerized browser instance. In terms of API design, the grid communicates using a subset of the W3C WebDriver protocol, exposing a POST endpoint `/session` to create a browser context, and a POST endpoint `/session/{id}/element` to locate UI elements.
+
+The data flow starts when the test runner client (running **Java**, **TestNG**, and **Maven**) requests a new session from the Execution Hub. The hub evaluates the available capacity, selects a free Worker Node from the pool, and establishes a WebSocket connection. The client then sends commands (like clicking buttons or entering text) as HTTP payloads to the hub, which forwards them to the worker. The worker executes the actions in Chrome or Firefox, and returns the outcomes.
+
+For the high-level design, we use **Docker** and **Kubernetes** to orchestrate the worker nodes, scaling browser pods dynamically based on queue size. In our deep dive into the non-functional requirements, we address reliability by using Kubernetes readiness probes: if a worker pod becomes unresponsive, the hub terminates it, redirects the current test session to a new worker, and launches a fresh container, ensuring continuous, error-free execution.
+
+---
+
+### 52. Centralized Test Reporting and Analytics Dashboard
+![Test Reporting Dashboard](/janaki_test_reporting_dashboard.png)
+
+Let's break down the system design of a Centralized Test Reporting and Analytics Dashboard. The functional requirements are to allow test execution agents running in different CI/CD pipelines to upload execution results (logs, run status, and screenshots), and to allow stakeholders to view aggregated quality metrics on a dashboard. The non-functional requirements focus on high ingestion throughput to handle spikes in test uploads during release windows, and low query latency for generating reports.
+
+Our core entities consist of the Test Run, which holds the execution metadata, the Test Step, which records individual assertions, and the Defect, which links failing steps to **Jira** tickets. The API design includes a POST endpoint `/api/v1/runs` to initiate a test run report, and a POST endpoint `/api/v1/runs/{id}/steps` to upload step results and base64-encoded screenshots.
+
+The data flow begins when a test suite completes in a Jenkins or **Azure DevOps** pipeline. The test agent sends a JSON payload containing the run results to our API Gateway. The gateway routes the payload to our Ingestion Service, which pushes the raw data onto a **Kafka** topic to decouple ingestion from database writes. An Ingestion Worker consumes messages from Kafka, parses the data, stores the binary screenshots in cloud storage, and writes the structured metrics to a **PostgreSQL** database.
+
+In our high-level design, we deploy a React dashboard that queries the database via a reporting service, using **Redis** to cache historical trends. In our deep dive, we ensure system scalability under heavy load: if thousands of test cases finish simultaneously, the Kafka message broker buffers the incoming logs, protecting the PostgreSQL database from write bottlenecks, while the background workers process the queue asynchronously.
+
+---
+
+### 53. Microservices Test Data Management System
+![Test Data Service](/janaki_test_data_service.png)
+
+I will walk you through the design of a Microservices Test Data Management System. The functional requirements are to allow automated test scripts to request valid test data (such as active banking profiles or member enrollment records) and to reserve that data so that concurrent tests do not use the same record. The non-functional requirements demand strict data isolation to prevent test interference, and fast data retrieval times so that tests do not wait for data provisioning.
+
+The core entities in this system are the Data Record, which represents the user profile, the Data Pool, which groups records by category, and the Data Lock, which tracks active reservations. The API design features a POST endpoint `/api/data/reserve` to check out a record, and a POST endpoint `/api/data/release` to unlock the record after test completion.
+
+The data flow starts when a **Java** test script requests an active customer account. The script calls the reserve endpoint, passing criteria like account status and region. The Data Reservation Service queries a **Redis** cache to find a matching, unlocked record ID. If found, the service writes a lock key in Redis with a time-to-live threshold, updates the database status, and returns the account details. Once the test finishes, the script calls the release endpoint, which deletes the lock key, making the record available for other runs.
+
+For the high-level design, we use **Spring Boot** microservices connected to a **PostgreSQL** database, with **RabbitMQ** orchestrating background data generation tasks when pool levels run low. In our deep dive, we handle concurrency conflicts: if two parallel tests request the same account type simultaneously, the Redis distributed lock mechanism ensures that only one request acquires the key, while the second request is safely routed to the next available record.
+
+---
+
+### 54. API Security Gateway & Rate Limiter
+![API Security Gateway](/janaki_api_security_gateway.png)
+
+Let's look at the system design of an API Security Gateway and Rate Limiter. The functional requirements are to inspect all incoming HTTP requests, validate their authentication tokens, and block any requests that exceed the allowed transaction frequency before they reach downstream microservices. The non-functional requirements focus on sub-millisecond processing latency to prevent overhead on transaction paths, and high availability to avoid becoming a single point of failure.
+
+Our core entities in this design are the API Client, which holds access credentials, the Auth Token, which contains JWT security scopes, and the Rate Limit Policy, which defines request thresholds. The API design is transparent to clients, but the gateway exposes a POST endpoint `/oauth/token` for token exchange, and appends rate-limiting headers (like X-RateLimit-Remaining) to all routed HTTP responses.
+
+The data flow begins when a client sends an HTTP request to a transaction service. The request hits our API Gateway, which intercepts the call and extracts the Bearer token from the header. The gateway validates the token signature using **OAuth 2.0** keys. If valid, the gateway extracts the client ID and queries a **Redis** cluster to check the client's request counter. If the counter is within the rate limit, the gateway increments the count and forwards the request to the downstream claims microservice.
+
+For the high-level design, we use **Spring Cloud Gateway** integrated with **Azure API Management** to route traffic. In our deep dive, we implement the sliding window counter algorithm in Redis: by using atomic transactions, we update request counts and expire old timestamps in a single step, ensuring that the gateway evaluates rate limits within two milliseconds, protecting our backend services from denial-of-service attacks.
+
+---
+
+### 55. Staging Environment Test Deployment Monitoring System
+![Deployment Monitoring System](/janaki_deployment_monitoring_system.png)
+
+I will walk you through the system design of a Staging Environment Test Deployment Monitoring System. The functional requirements are to collect system metrics (like CPU usage, memory limits, and API error rates) from staging microservices during automated test runs, and to trigger alerts if these metrics cross safety thresholds. The non-functional requirements are to collect metrics with minimal overhead on staging pods, and to deliver alerts in real-time.
+
+Our core entities consist of the Target Pod, which represents the microservice container, the Metric Sample, which holds resource readings, and the Alert Rule, which defines threshold configurations. The API design features a GET endpoint `/metrics` exposed by each microservice, allowing collectors to scrape resource data, and a POST endpoint `/api/alerts` used by the alerting engine to push warnings.
+
+The data flow starts when staging microservices run inside a **Kubernetes** cluster. A **Prometheus** collector queries the `/metrics` endpoint of each pod at regular intervals, saving the time-series data. In parallel, our test runner executes automated suites. If a microservice experiences resource degradation (like a memory leak), Prometheus records the spike. An Alerting Engine evaluates the data against our rules, and if a limit is breached, it calls the **Slack API** to notify the engineering team.
+
+For the high-level design, we use **Prometheus** for data collection, **Grafana** to visualize the dashboard charts, and **Docker** to containerize our services. In our deep dive, we ensure monitoring reliability: the Prometheus collector runs in pull mode, meaning it scrapes data from pods rather than having pods push metrics, which prevents staging services from crashing if the monitoring system experiences downtime.
+
+---
