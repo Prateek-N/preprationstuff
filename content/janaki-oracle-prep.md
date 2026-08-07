@@ -388,3 +388,415 @@ Some team members were hesitant to adopt a new framework, concerned about the le
 The team was convinced by the prototype results, and we migrated our enrollment suite to Playwright. This migration reduced our regression execution times from 12 hours to 5 hours, improving our release velocity and defect detection. By challenging the status quo and delivering a working solution, I improved our overall software quality.
 
 ---
+
+## Part 3: Top 10 Java and Python Coding Questions
+
+### 41. Reverse a String In-Place (Java)
+**Thought Process:**
+To reverse a string in-place in **Java**, I must handle the immutability of the Java `String` class. Since Java strings cannot be modified after creation, I would convert the input string into a mutable character array first. Once I have the character array, I would use a two-pointer approach to reverse the characters. I would initialize one pointer at the start of the array and another pointer at the very end.
+
+In a loop, I would swap the characters at these two pointer positions, and then increment the start pointer and decrement the end pointer. I would continue this swapping process until the two pointers meet in the middle of the array. Finally, I would instantiate a new `String` object from the reversed character array and return it. This approach avoids creating unnecessary intermediate string objects in memory.
+
+**Code:**
+```java
+public class StringReverser {
+    public static String reverseString(String input) {
+        // I check for null or empty strings to prevent NullPointerExceptions
+        if (input == null || input.isEmpty()) {
+            return input;
+        }
+        
+        // I convert the immutable string to a character array for in-place swapping
+        char[] characters = input.toCharArray();
+        int start = 0;
+        int end = characters.length - 1;
+        
+        // I swap characters from the ends moving toward the middle
+        while (start < end) {
+            char temp = characters[start];
+            characters[start] = characters[end];
+            characters[end] = temp;
+            
+            // I move the pointers closer together
+            start++;
+            end--;
+        }
+        
+        // I return the newly constructed string
+        return new String(characters);
+    }
+}
+```
+
+**Complexity:**
+The time complexity of this algorithm is $O(N)$ where $N$ represents the length of the string. This is because the loop runs exactly $N/2$ times, performing a constant number of operations in each iteration. The space complexity is $O(N)$ because Java strings are immutable, requiring us to allocate a character array of size $N$ to perform the swaps and create the final returned string.
+
+---
+
+### 42. Parse JSON Log Records and Count Key Metrics (Python)
+**Thought Process:**
+When validating backend API responses or auditing transaction log streams in **Python**, I often need to parse unstructured JSON payloads and extract specific fields. To accomplish this, I would use Python's built-in **json** library to deserialize the raw string into a dictionary. I would wrap the parsing call in a try-except block to catch parsing errors in case the input log is malformed.
+
+Once the payload is successfully converted to a dictionary, I would extract the target key. For example, if I am monitoring a transaction log, I would search for a list of records, loop through them, and increment a counter for specific event types. By returning a structured summary, I can verify if the service met our expected operational parameters.
+
+**Code:**
+```python
+import json
+
+def parse_logs_and_count(json_log_string, event_type_to_match):
+    # I handle potential parsing issues by wrapping the load logic in a try block
+    try:
+        log_data = json.loads(json_log_string)
+    except json.JSONDecodeError:
+        # I return an error summary if the log string is not valid JSON
+        return {"error": "Invalid JSON format", "count": 0}
+    
+    # I initialize my counter to zero
+    event_count = 0
+    
+    # I access the records list and check for match conditions
+    if "records" in log_data:
+        for record in log_data["records"]:
+            # I check if the current record matches the targeted event type
+            if record.get("event_type") == event_type_to_match:
+                event_count += 1
+                
+    return {"status": "success", "count": event_count}
+```
+
+**Complexity:**
+The time complexity of this parsing utility is $O(N)$ where $N$ is the total number of characters in the input JSON string. Deserializing the string requires scanning all characters, and looping through the records list runs in linear time relative to the number of records. The space complexity is $O(M)$ where $M$ is the size of the generated Python dictionary, as we must allocate memory to store the key-value pairs.
+
+---
+
+### 43. Balanced Bracket Validation Using Stacks (Java)
+**Thought Process:**
+To validate that opening and closing brackets in a configuration or API payload string are balanced, I would use a **Stack** data structure in **Java**. Stacks are ideal for tracking nested structures because they follow a Last-In-First-Out behavior, allowing me to match the most recently opened bracket with the first incoming closing bracket.
+
+I would iterate through each character of the input string. If I encounter an opening bracket (like parenthesis, square bracket, or curly brace), I would push it onto the stack. If I encounter a closing bracket, I would check if the stack is empty. If the stack is empty, it means we have an unmatched closing bracket, so the string is invalid. Otherwise, I pop the top element from the stack and verify that it matches the closing bracket type. If the loop completes and the stack is empty, the brackets are balanced.
+
+**Code:**
+```java
+import java.util.Stack;
+
+public class BracketValidator {
+    public static boolean isBalanced(String expression) {
+        // I initialize a stack to store the opening brackets
+        Stack<Character> stack = new Stack<>();
+        
+        // I loop through each character in the input string
+        for (int i = 0; i < expression.length(); i++) {
+            char current = expression.charAt(i);
+            
+            // I push opening brackets onto the stack
+            if (current == '(' || current == '[' || current == '{') {
+                stack.push(current);
+            } 
+            // I handle closing brackets
+            else if (current == ')' || current == ']' || current == '}') {
+                // If the stack is empty, there is no matching opening bracket
+                if (stack.isEmpty()) {
+                    return false;
+                }
+                
+                char lastOpened = stack.pop();
+                // I verify that the popped bracket matches the closing bracket type
+                if (current == ')' && lastOpened != '(') return false;
+                if (current == ']' && lastOpened != '[') return false;
+                if (current == '}' && lastOpened != '{') return false;
+            }
+        }
+        
+        // The expression is balanced if the stack is completely empty
+        return stack.isEmpty();
+    }
+}
+```
+
+**Complexity:**
+The time complexity of this validation checks is $O(N)$ where $N$ is the number of characters in the input string. This is because we traverse the string exactly once and each push/pop operation on the stack runs in constant time. The space complexity is $O(N)$ because in the worst-case scenario (such as a string containing only opening brackets), the stack will grow to store all $N$ characters.
+
+---
+
+### 44. Find Duplicate Character Counts in a String (Python)
+**Thought Process:**
+To find the duplicate characters and their corresponding frequencies in an input string in **Python**, I would use a dictionary to record the counts. This is an efficient approach that allows me to check occurrence frequencies without nested iteration. I would traverse the input string, character by character.
+
+For each character, I would check if it is already present in our dictionary. If it is, I increment its count value by one. If it is not present, I initialize its entry in the dictionary with a count of one. After counting all characters, I would filter the dictionary to extract only those keys whose counts are greater than one, returning a dictionary containing only the duplicates.
+
+**Code:**
+```python
+def find_duplicate_counts(input_string):
+    # I check for empty input strings
+    if not input_string:
+        return {}
+        
+    char_counts = {}
+    # I loop through each character to calculate frequencies
+    for char in input_string:
+        if char in char_counts:
+            char_counts[char] += 1
+        else:
+            char_counts[char] = 1
+            
+    # I filter the dictionary to include only characters with duplicate counts
+    duplicates = {char: count for char, count in char_counts.items() if count > 1}
+    return duplicates
+```
+
+**Complexity:**
+The time complexity of this function is $O(N)$ where $N$ is the number of characters in the input string. This is because dictionary lookup and insertion operations run in $O(1)$ average time, and we iterate through the string of size $N$ once. The space complexity is $O(U)$ where $U$ is the number of unique characters in the string, representing the maximum memory needed to store the character counts in the dictionary.
+
+---
+
+### 45. Two Sum Optimization Using HashMap (Java)
+**Thought Process:**
+In test data validation tasks, such as searching an array of transaction balances to find two values that sum to a targeted reconciliation amount, a brute-force approach would require nested loops. This would result in quadratic time, which is slow for large datasets. I would optimize this to run in linear time using a **HashMap** in **Java**.
+
+As I iterate through the array, I calculate the difference between the target sum and the current array element (the complement). I then check if this complement is already stored in our map. If it is, it means we have found the two numbers, and I return their indices. If the complement is not in the map, I put the current element and its index into the map and proceed to the next element.
+
+**Code:**
+```java
+import java.util.HashMap;
+
+public class TwoSum {
+    public static int[] findTwoSum(int[] numbers, int target) {
+        // I initialize a map to store values and their array indices
+        HashMap<Integer, Integer> valueIndexMap = new HashMap<>();
+        
+        // I loop through the array once
+        for (int i = 0; i < numbers.length; i++) {
+            int complement = target - numbers[i];
+            
+            // I check if the complement has been seen already
+            if (valueIndexMap.containsKey(complement)) {
+                // I return the index of the complement and the current index
+                return new int[] { valueIndexMap.get(complement), i };
+            }
+            
+            // I store the current number and its index in the map
+            valueIndexMap.put(numbers[i], i);
+        }
+        
+        // I return an empty array if no matching pair is found
+        return new int[] {};
+    }
+}
+```
+
+**Complexity:**
+The time complexity of this optimized solution is $O(N)$ where $N$ is the number of elements in the input array. This is because we traverse the array only once, and hash map insertions and queries run in constant time. The space complexity is $O(N)$ as we store up to $N$ elements and their indices in the hash map in the worst-case scenario.
+
+---
+
+### 46. Clean and Filter Alphanumeric Transaction Codes (Python)
+**Thought Process:**
+In database reconciliation and API response validation, transaction logs often contain messy headers, special characters, and formatting noise. To extract and clean only the valid alphanumeric transaction codes, I would use Python's built-in regular expression (**re**) library. I would design a pattern that matches only strings containing letters and numbers.
+
+I would read the raw string, split it into individual tokens, and apply the regex search. For each match, I would strip any leading or trailing whitespaces. I would also add checks to filter out empty strings or strings that do not meet our length constraints. This ensures that only valid, clean codes are sent to our reconciliation pipelines.
+
+**Code:**
+```python
+import re
+
+def clean_transaction_codes(raw_log_text):
+    # I define a pattern that matches sequences containing only alphanumeric characters
+    alphanumeric_pattern = re.compile(r'^[a-zA-Z0-9]+$')
+    
+    # I split the input text by whitespace or commas to get individual tokens
+    tokens = re.split(r'[\s,;\t\n]+', raw_log_text)
+    cleaned_codes = []
+    
+    for token in tokens:
+        # I clean leading/trailing spaces from each token
+        stripped_token = token.strip()
+        
+        # I verify if the token matches our alphanumeric criteria
+        if alphanumeric_pattern.match(stripped_token):
+            # I store the matching token in our list
+            cleaned_codes.append(stripped_token)
+            
+    return cleaned_codes
+```
+
+**Complexity:**
+The time complexity of this extraction utility is $O(L)$ where $L$ is the total length of the raw log text. Splitting the string and running the regular expression matching on each token requires scanning the characters of the log text. The space complexity is $O(K)$ where $K$ is the number of valid tokens extracted, representing the storage allocated for the output list of cleaned strings.
+
+---
+
+### 47. Merge Two Sorted Arrays (Java)
+**Thought Process:**
+To merge two sorted arrays of transaction IDs or member codes in **Java** without sorting the elements from scratch, I would use a two-pointer approach. Since both input arrays are already sorted, I can initialize one pointer at the start of the first array and another pointer at the start of the second array.
+
+In a loop, I would compare the elements at the two pointer positions. I would copy the smaller element to our result array and increment the pointer for the array that contained the smaller value. Once one array is exhausted, I would copy the remaining elements from the other array directly to the end of the result array. This merge process executes in linear time.
+
+**Code:**
+```java
+public class ArrayMerger {
+    public static int[] mergeSortedArrays(int[] array1, int[] array2) {
+        // I allocate a new array to hold the merged result
+        int[] mergedResult = new int[array1.length + array2.length];
+        
+        int i = 0; // Pointer for array1
+        int j = 0; // Pointer for array2
+        int k = 0; // Pointer for mergedResult
+        
+        // I loop through both arrays comparing values
+        while (i < array1.length && j < array2.length) {
+            if (array1[i] <= array2[j]) {
+                mergedResult[k++] = array1[i++];
+            } else {
+                mergedResult[k++] = array2[j++];
+            }
+        }
+        
+        // I copy any remaining elements from array1
+        while (i < array1.length) {
+            mergedResult[k++] = array1[i++];
+        }
+        
+        // I copy any remaining elements from array2
+        while (j < array2.length) {
+            mergedResult[k++] = array2[j++];
+        }
+        
+        return mergedResult;
+    }
+}
+```
+
+**Complexity:**
+The time complexity of this merge operation is $O(N + M)$ where $N$ and $M$ represent the lengths of the two input arrays. This is because we traverse each element of both arrays exactly once to build the combined array. The space complexity is $O(N + M)$ to store the merged result array in memory.
+
+---
+
+### 48. Read and Filter a CSV Log File Containing Test Runs (Python)
+**Thought Process:**
+For QA reporting and continuous integration analytics, I often need to write utility scripts that parse CSV report files. To do this in **Python**, I would use the built-in **csv** module. I would open the file using a context manager to ensure the file handler is closed properly even if processing fails.
+
+I would instantiate a `DictReader`, which automatically parses the first row as headers and maps subsequent rows to dictionaries. I would loop through these records, checking if the status column matches our target criteria (like "FAIL"). I would extract the relevant rows, append them to a list, and return them for reporting.
+
+**Code:**
+```python
+import csv
+
+def filter_failed_test_runs(csv_file_path):
+    failed_runs = []
+    
+    # I open the file in read mode using a context manager
+    with open(csv_file_path, mode='r', encoding='utf-8') as file:
+        # I use DictReader to map columns to dictionary keys
+        reader = csv.DictReader(file)
+        
+        for row in reader:
+            # I clean any surrounding spaces from the status field
+            status = row.get("status", "").strip().upper()
+            
+            # I check if the test run failed
+            if status == "FAIL" or status == "FAILED":
+                # I capture the test case details
+                failed_runs.append({
+                    "test_id": row.get("test_id"),
+                    "name": row.get("test_name"),
+                    "duration": row.get("duration")
+                })
+                
+    return failed_runs
+```
+
+**Complexity:**
+The time complexity of this CSV parser is $O(R)$ where $R$ is the number of rows in the CSV file. The script processes each row sequentially, running string lookups and comparisons in constant time. The space complexity is $O(F)$ where $F$ is the number of failed test runs stored in memory, representing the size of our output reporting list.
+
+---
+
+### 49. Implement a Sliding Window Rate-Limiting Queue (Java)
+**Thought Process:**
+To simulate or validate rate-limiting policies in API microservices, I would implement a sliding window checker. In **Java**, I would use a double-ended queue (**Deque**) to store the timestamps of incoming requests. This structure allows me to add new timestamps to the tail and remove expired timestamps from the head.
+
+When a new request timestamp is added, I would first check the head of the deque. I would loop and remove any timestamps that fall outside our sliding window threshold (current time minus window duration). After clearing the expired requests, I would compare the remaining deque size against our maximum allowed request threshold. If the size is within limits, I add the request and return true; otherwise, I block the request.
+
+**Code:**
+```java
+import java.util.ArrayDeque;
+import java.util.Deque;
+
+public class RateLimiter {
+    private final Deque<Long> requestTimestamps;
+    private final int maxRequests;
+    private final long windowDurationMs;
+    
+    public RateLimiter(int maxRequests, long windowDurationMs) {
+        this.requestTimestamps = new ArrayDeque<>();
+        this.maxRequests = maxRequests;
+        this.windowDurationMs = windowDurationMs;
+    }
+    
+    public synchronized boolean isRequestAllowed(long currentTimestamp) {
+        long windowStartLimit = currentTimestamp - windowDurationMs;
+        
+        // I remove any timestamps that fall outside the active sliding window
+        while (!requestTimestamps.isEmpty() && requestTimestamps.peekFirst() < windowStartLimit) {
+            requestTimestamps.pollFirst();
+        }
+        
+        // I check if the number of requests exceeds the limit
+        if (requestTimestamps.size() < maxRequests) {
+            // I record the new request timestamp
+            requestTimestamps.addLast(currentTimestamp);
+            return true;
+        }
+        
+        // I block the request if the limit is reached
+        return false;
+    }
+}
+```
+
+**Complexity:**
+The time complexity of this rate-limiting check is $O(D)$ amortized, where $D$ is the number of expired timestamps removed. In most calls, only a few expired timestamps are deleted, running in constant time. The space complexity is $O(K)$ where $K$ is the maximum number of requests allowed in the sliding window, representing the size of the deque.
+
+---
+
+### 50. Valid Anagram Check (Python)
+**Thought Process:**
+To verify if two input text payloads (such as dynamically generated member codes or system tokens) are anagrams, I would compare their character frequencies in **Python**. Since two strings are anagrams only if they contain the exact same characters with the exact same frequencies, I would build a character frequency map.
+
+I would first check if the two strings have the same length. If their lengths differ, they cannot be anagrams, and I return false. I would then count the characters of both strings using a dictionary. I would iterate through the first string to increment counts, and then iterate through the second string to decrement counts. If all final counts in the dictionary are zero, the strings are anagrams.
+
+**Code:**
+```python
+def is_valid_anagram(string1, string2):
+    # I remove spaces and normalize the casing for a fair comparison
+    s1 = string1.replace(" ", "").lower()
+    s2 = string2.replace(" ", "").lower()
+    
+    # I check if lengths match
+    if len(s1) != len(s2):
+        return False
+        
+    char_frequency = {}
+    
+    # I increment counts for characters in the first string
+    for char in s1:
+        char_frequency[char] = char_frequency.get(char, 0) + 1
+        
+    # I decrement counts for characters in the second string
+    for char in s2:
+        if char in char_frequency:
+            char_frequency[char] -= 1
+        else:
+            # I return False if the character is not in string1
+            return False
+            
+    # I verify that all character counts are reduced to zero
+    for count in char_frequency.values():
+        if count != 0:
+            return False
+            
+    return True
+```
+
+**Complexity:**
+The time complexity of this anagram check is $O(N)$ where $N$ is the number of characters in the input strings. This is because we loop through each string of size $N$ once, performing constant time dictionary operations. The space complexity is $O(U)$ where $U$ is the number of unique characters in the strings, representing the memory allocated for the frequency mapping.
+
+---
