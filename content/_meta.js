@@ -9,6 +9,7 @@ export default {
   'sai-sharath-finance-ai': 'Sai Sharath Finance AI Prep',
   'sai-sharath-infosys-stg': 'Sai Sharath Infosys STG Prep',
   'logeswaran-infosys-prep': 'Logeswaran Infosys Prep',
+  'janaki-oracle-prep': 'Janaki Oracle Prep',
   'torc-prep-guide': 'Torc Prep Guide (Device Drivers)',
   'vaishnavi-torc-mcu-applications-prep': 'Vaishnavi Torc MCU Applications Prep',
   'harnish-frontend-backend-coding-prep': 'Harnish Frontend + Backend Coding Prep',
