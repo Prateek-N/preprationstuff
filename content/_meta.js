@@ -3,6 +3,7 @@ export default {
   'qualcomm-prep-material': 'Qualcomm NPU / Embedded Platform Prep',
   'natera-ai-solutions-prep': 'Natera AI Solutions Prep',
   'sirisha-genai-prep': 'Sirisha GenAI Prep',
+  'sirisha-genai-new-prep': 'Sirisha GenAI New Prep',
   'dineesha-support-prep': 'Dineesha Support Prep',
   'manohar-bi-prep': 'Manohar BI Prep',
   'prathyush-zed-prep': 'Prathyush Zed Prep',
