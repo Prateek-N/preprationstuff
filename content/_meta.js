@@ -12,6 +12,7 @@ export default {
   'logeswaran-infosys-prep': 'Logeswaran Infosys Prep',
   'janaki-oracle-prep': 'Janaki Oracle Prep',
   'ali-shan-integra-prep': 'Ali Shan Integra Prep',
+  'sai-mallesh-aws-prep': 'Sai Mallesh AWS Prep',
   'torc-prep-guide': 'Torc Prep Guide (Device Drivers)',
   'vaishnavi-torc-mcu-applications-prep': 'Vaishnavi Torc MCU Applications Prep',
   'harnish-frontend-backend-coding-prep': 'Harnish Frontend + Backend Coding Prep',
