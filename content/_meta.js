@@ -14,6 +14,7 @@ export default {
   'ali-shan-integra-prep': 'Ali Shan Integra Prep',
   'sai-mallesh-aws-prep': 'Sai Mallesh AWS Prep',
   'venkata-chaitanya-aws-glue-prep': 'Venkata Chaitanya AWS Glue Prep',
+  'haritha-anand-bcg-prep': 'Haritha Anand BCG Prep',
   'torc-prep-guide': 'Torc Prep Guide (Device Drivers)',
   'vaishnavi-torc-mcu-applications-prep': 'Vaishnavi Torc MCU Applications Prep',
   'harnish-frontend-backend-coding-prep': 'Harnish Frontend + Backend Coding Prep',
