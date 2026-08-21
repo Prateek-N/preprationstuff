@@ -13,6 +13,7 @@ export default {
   'janaki-oracle-prep': 'Janaki Oracle Prep',
   'ali-shan-integra-prep': 'Ali Shan Integra Prep',
   'sai-mallesh-aws-prep': 'Sai Mallesh AWS Prep',
+  'sai-charan-caterpillar-prep': 'Sai Charan Caterpillar Prep',
   'venkata-chaitanya-aws-glue-prep': 'Venkata Chaitanya AWS Glue Prep',
   'venkata-chaitanya-citi-prep': 'Venkata Chaitanya Citi Prep',
   'haritha-anand-bcg-prep': 'Haritha Anand BCG Prep',
