@@ -5,6 +5,7 @@ export default {
   'sirisha-genai-prep': 'Sirisha GenAI Prep',
   'sirisha-genai-new-prep': 'Sirisha GenAI New Prep',
   'dineesha-support-prep': 'Dineesha Support Prep',
+  'dhwani-vora-uline-prep': 'Dhwani Vora Uline Prep',
   'manohar-bi-prep': 'Manohar BI Prep',
   'prathyush-zed-prep': 'Prathyush Zed Prep',
   'sai-sharath-finance-ai': 'Sai Sharath Finance AI Prep',
