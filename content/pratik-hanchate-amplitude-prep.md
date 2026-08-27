@@ -1218,151 +1218,121 @@ The time complexity of this construction is $O(P \log P + P \times L)$ where $P$
 ## Part 3: Top 10 System Design Breakdowns
 
 ### 51. System Design 1: Analytics SDK Telemetry Pipeline
-I am going to walk you through how we design an Analytics SDK Telemetry Pipeline for our mobile applications. This pipeline is responsible for capturing user events on the device and transmitting them securely to our analytics backend.
 
-The functional requirements are straightforward. The SDK must expose a public interface for logging events, allow adding custom properties to these events, handle session tracking automatically, and save events locally when the device goes offline.
+![Telemetry Pipeline Flow](/pratik_telemetry_pipeline_flow.jpg)
 
-For non-functional requirements, we must prioritize performance, ensuring that the tracking operations do not block the host application's main thread or drain the device's battery. We also need to guarantee data reliability, ensuring zero event loss during network drops, and keep network data consumption to a minimum.
+Let us talk about how we can build an Analytics SDK Telemetry Pipeline for our mobile applications, designed to capture user events and upload them securely. For functional requirements, the SDK needs to log events with custom properties, manage session tracking, handle offline data storage, and trigger batch uploads. For non-functional requirements, we must ensure near-zero main thread latency to protect app performance, maintain a low memory footprint, and guarantee data persistence so no events are lost during network drops or crashes.
 
-The core entities in this design are the Event payload, the Configuration object, the Session tracker, the SQLite Database helper, and the Network Uploader client. The public API design is simple and thread-safe. We expose a configure method that accepts an API key and configuration settings, a logEvent method that takes the event name and an optional properties dictionary, and a flush method to force upload pending events.
+The core entities are the Event payload, the Configuration settings, the Session Tracker, the Database Helper, and the Upload Client. For the public API design, we expose a configure method accepting initialization parameters, and a trackEvent method that takes the event name and properties. The data flow starts when the app triggers a log request. The SDK intercepts the call, appends session and timestamp metadata, and writes the event to a local SQLite database in a background thread. When the batch limit is met, the upload client reads the records, compresses them, and sends them to the server over HTTPS, deleting them upon success.
 
-The data flow begins when the host application logs an event. The SDK receives the event name and properties, appends session metadata and a timestamp, and queues the payload. The payload is written to our local SQLite database in a background thread. When the batch size limit is met or the upload timer triggers, the uploader fetches the batched events from the database, packages them in a compressed format, and sends them to the server over HTTPS. Once the server returns a successful response, we delete the uploaded records from our local database.
-
-To ensure we meet our non-functional performance requirements, we execute all database writes and network operations asynchronously on a dedicated serial background queue. We implement an exponential back-off retry strategy for network uploads, which prevents database lockups and saves battery life during prolonged offline periods. We also serialize our payloads using JSON-compatible formats to minimize data consumption.
+For the high-level design, we route all data updates through a background queue to ensure thread safety. For the non-functional deep dive, we enforce serial queue scheduling to prevent main thread blocking. We implement write-ahead logging (WAL) in SQLite to allow concurrent reads and writes, and use exponential back-off retries to manage connection drops.
 
 ---
 
 ### 52. System Design 2: Mobile Session Replay Recording Engine
-Let us look at how we design a Mobile Session Replay Recording Engine, which captures user interactions and UI updates to reconstruct user journeys for debugging and product optimization.
 
-The functional requirements are to record UI state updates, capture touch gestures, mask sensitive inputs (like credit card numbers and passwords) to protect user privacy, and batch these interaction records for upload.
+![Session Replay Flow](/pratik_session_replay_flow.jpg)
 
-For non-functional requirements, the recording engine must run with minimal CPU overhead to prevent frame drops or UI lags in the host application. The network payload size must be minimized, and we must guarantee that no sensitive user data is captured or transmitted.
+Let us break down the design of a Mobile Session Replay Recording Engine, which reconstructs user interface interactions for diagnostic reviews. For functional requirements, the engine must capture layout hierarchies, track touch coordinate gestures, mask sensitive inputs to protect user privacy, and stream these logs. For non-functional requirements, we must restrict CPU utilization to prevent UI stuttering, minimize the network payload size, and ensure absolute data safety.
 
-The core entities are the UI Snapshot capturing class, the Touch Tracker, the Privacy Masker, the serialization Buffer, and the Stream Uploader. The API design includes a startRecording method, a stopRecording method, and a configureMasking method that allows developers to register specific UI views that must be masked during recording.
+The core entities are the View Tree Snapshotter, the Touch Listener, the Privacy Masker, the serialization Buffer, and the Stream Uploader. For the API design, we expose a startRecording method, a stopRecording method, and a configureMasking method allowing developers to register views that need privacy blocks. The data flow begins at startup, where the touch listener captures taps and the snapshotter inspects the active view tree. The privacy masker redacts sensitive fields before writing the layout details to an in-memory buffer. The uploader then serializes and streams this data to the server.
 
-The data flow begins when the engine is initialized. We register listeners to capture layout updates and touch events. Every few frames, the snapshot class captures the visual state of the active screen. The privacy masker inspects the view tree, replacing any text inputs or sensitive views with solid placeholders. We serialize these masked layouts and touch coordinates into structured coordinates, appending them to a circular in-memory buffer. When the buffer reaches its capacity, we compress the data and stream it to our analytics servers in the background.
-
-To achieve our performance and privacy targets, we run all view tree traversals and image compression tasks on background threads, ensuring that the host app's main rendering loop remains unaffected. We use vector-based representation of the UI rather than taking screen images, which dramatically reduces the network payload size. We also enforce hardcoded safety rules that automatically mask all text input fields by default, protecting user privacy.
+For the high-level design, the system runs as a background service, using native view hierarchy observers to capture changes. For the non-functional deep dive, we optimize CPU overhead by tracking text changes and layout dimensions as vector metadata rather than capturing raw screen images. We run the privacy masking routines immediately on capture, ensuring that unmasked sensitive data never leaves the client device.
 
 ---
 
-### 3. System Design 3: Experimentation and Feature Flagging SDK
-I am going to walk you through how we design an Experimentation and Feature Flagging SDK, which allows developers to toggle application features and run A/B testing variations dynamically.
+### 53. System Design 3: Experimentation and Feature Flagging SDK
 
-The functional requirements are to fetch flag configurations from the server, evaluate flag rules locally, support user variant targeting, and track feature exposure metrics.
+![Experiment SDK Flow](/pratik_experiment_sdk_flow.jpg)
 
-For non-functional requirements, the SDK must resolve flags with near-zero latency to prevent UI render delays. It must support offline variant evaluations using cached configurations, and ensure the SDK's local cache remains synchronized with the server's flag definitions.
+Let us examine how we design an Experimentation and Feature Flagging SDK to evaluate variant rules and toggle application features dynamically. For functional requirements, the SDK must fetch flag configurations, evaluate user targeting rules locally on the device, handle offline evaluations, and log exposure metrics. For non-functional requirements, variant resolution must execute with near-zero latency, require minimal network overhead, and fall back gracefully if the configuration server is unreachable.
 
-The core entities are the Flag Configuration registry, the Targeting Evaluator, the local Cache Manager, the Exposure Tracker, and the Configuration Sync Client. The API design includes an initialize method, a getVariant method that returns the variation string for a flag key, and a trackExposure method to log when a user is exposed to a variant.
+The core entities are the Flag Configuration registry, the Targeting Evaluator, the Cache Manager, the Exposure Tracker, and the Configuration Sync Client. For the API design, we expose an initialize method, a getVariant method that returns the active string variation for a flag key, and a trackExposure method. The data flow starts during app launch, where the sync client fetches the flag configurations and saves them to the cache. When a variant is checked, the evaluator pulls the configuration and checks the rules against local user attributes in memory, returning the variant while logging an exposure event.
 
-The data flow starts during application launch. The Sync Client fetches the latest flag configurations from the server, storing them in our local cache. When the host application requests a flag variant, the Targeting Evaluator retrieves the flag rules from the cache and evaluates them locally against the current user's attributes (like location or app version), returning the variant name. The SDK logs an exposure event in the background, which is uploaded to the analytics server to track which variant the user saw.
-
-To ensure near-zero latency, we execute all variant evaluations locally in memory without making blocking network calls. We use a fallback default configuration if the server cannot be reached, ensuring the host app does not freeze. We also implement a WebSockets connection to receive real-time flag updates from the server, keeping our local configurations synchronized.
+For the high-level design, we separate configuration fetching from evaluation, keeping the database local and evaluation in memory. For the non-functional deep dive, we ensure zero latency by performing targeting evaluations entirely locally without making synchronous network calls. We also run a background WebSocket connection to receive flag updates from the server, keeping the cache synchronized.
 
 ---
 
 ### 54. System Design 4: Event Batching and Offline Storage Engine
-Let us look at how we design an Event Batching and Offline Storage Engine, which manages local telemetry events, ensuring zero data loss during offline periods while protecting device resource utilization.
 
-The functional requirements are to write telemetry events to disk, batch events based on size or time limits, read batched events for upload, and delete successfully uploaded records.
+![Event Batching Flow](/pratik_event_batching_flow.jpg)
 
-For non-functional requirements, we must prioritize data persistence, preventing event loss even if the host application crashes. We also need to minimize disk write cycles to protect battery health and prevent database lockups.
+Let us review how we build an Event Batching and Offline Storage Engine, which manages local data queues to prevent data loss. For functional requirements, the engine must write events to local storage, batch events based on size or time limits, retrieve records for upload, and delete successfully processed files. For non-functional requirements, we must prioritize data persistence, minimize disk I/O write cycles to protect battery health, and prevent local database file corruption.
 
-The core entities are the in-memory Event Queue, the SQLite Disk Helper, the Batch Manager, the Upload Client, and the Database Compactor. The API design includes a writeEvent method, a getUploadBatch method, and a confirmUpload method to delete processed records.
+The core entities are the in-memory Event Queue, the SQLite Disk Coordinator, the Batch Manager, the Upload Client, and the Database Compactor. For the API design, we expose a writeEvent method, a getUploadBatch method, and a confirmUpload method. The data flow starts when an event is logged and appended to the in-memory queue. When the queue reaches its threshold, the batch manager triggers a disk write. The upload client retrieves the oldest batch, packages the events, and sends them to the server, clearing the database upon success.
 
-The data flow starts when an event is logged. The event is appended to an in-memory queue. When the queue reaches our memory limit (e.g., ten events), the Batch Manager triggers a background task to write the batch to our local SQLite database. When the device is online and the batch threshold is met, the Upload Client retrieves the oldest batch from the database, packages the events, and uploads them. Once the server returns success, the database helper deletes those records, and the compactor runs periodically to free up disk space.
-
-To optimize disk performance and save battery, we use a write-ahead log (WAL) configuration in our SQLite database, which allows concurrent reads and writes without thread blocking. We limit the maximum size of the database file on disk: if the storage limits are exceeded, we drop the oldest events to protect the host device's file system from filling up.
+For the high-level design, the system uses a local database file to store event records, running all operations asynchronously. For the non-functional deep dive, we configure the database to use write-ahead logging (WAL) to allow concurrent write operations without blocking read access. We also cap the database file size: if the device storage limit is reached, we drop the oldest events to protect the host device's file system.
 
 ---
 
 ### 55. System Design 5: Mobile App Crash Reporter SDK
-I am going to walk you through how we design a Mobile App Crash Reporter SDK, which detects application crashes, captures stack traces, and uploads crash logs to help developers debug issues.
 
-The functional requirements are to intercept uncaught exceptions and signal failures, capture active thread stack traces, write crash details to disk before the app exits, and upload the crash reports during the next launch.
+![Crash Reporter Flow](/pratik_crash_reporter_flow.jpg)
 
-For non-functional requirements, the crash reporter must run with high reliability, ensuring it captures details even during fatal out-of-memory (OOM) crashes. It must not impact the host app's startup latency or cause secondary crashes.
+Let us discuss the architecture of a Mobile App Crash Reporter SDK, which intercepts application crashes and records debugging logs. For functional requirements, the SDK must intercept fatal system signals, capture active thread call stacks, write crash reports to disk before the app exits, and upload the files on the next launch. For non-functional requirements, the reporter must be highly reliable, running even during memory corruption, and must not impact app startup time.
 
-The core entities are the Signal Handler, the Exception Interceptor, the Crash Log Writer, the Stack Trace Serializer, and the Upload Client. The API design includes an initializeReporter method and a setCustomMetadata method to associate user details with crash logs.
+The core entities are the Signal Handler, the Exception Interceptor, the Crash Log Writer, the Stack Trace Serializer, and the Upload Client. For the API design, we expose an initializeReporter method and a setCustomMetadata method to tag crash files. The data flow begins at initialization, where the signal handler registers listeners for system crashes. When a crash occurs, the handler intercepts the signal, suspends active threads, and serializes the call stacks. The log writer saves this payload to disk. During the next launch, the upload client reads the files, uploads them, and deletes the local logs.
 
-The data flow begins during application initialization, where the Signal Handler registers listeners for fatal system signals (like SIGSEGV or SIGABRT) and uncaught exceptions. When a crash occurs, the Exception Interceptor halts execution, captures the call stacks of all active threads, and serializes them along with device metadata and custom tags. The Crash Log Writer writes this payload to a dedicated file path in local storage immediately before the application terminates. During the next app launch, the Upload Client checks the storage folder, reads any saved crash files, uploads them to the server, and deletes them once sent.
-
-To ensure reliability during fatal crashes, we write the crash files directly using raw C APIs, avoiding complex Swift allocations that could fail if the heap is corrupted. We run the upload tasks asynchronously in the background during app startup, ensuring the reporter does not delay the initial screen render.
+For the high-level design, the reporter runs at the system level, catching signals before the OS terminates the app. For the non-functional deep dive, we ensure reliability during fatal heap corruption by writing our crash logs using raw C file APIs, avoiding memory allocations. We run all upload tasks asynchronously on a background queue during startup to prevent delaying the UI.
 
 ---
 
 ### 56. System Design 6: Device Fingerprinting and Session Attribution Service
-Let us look at how we design a Device Fingerprinting and Session Attribution Service, which identifies unique device instances and attributes user sessions to marketing campaigns.
 
-The functional requirements are to capture hardware and software attributes, generate a unique device identifier, track installation events, and associate user sessions with campaign source tags.
+![Device Fingerprint Flow](/pratik_device_fingerprint_flow.jpg)
 
-For non-functional requirements, the service must respect user privacy regulations (like GDPR and App Tracking Transparency), avoid capturing prohibited identifiers (like UDID), and run with near-zero latency.
+Let us look at how we design a Device Fingerprinting and Session Attribution Service, which identifies unique device instances and attributes install campaigns. For functional requirements, the service must collect allowed device attributes, generate a unique device hash, track installation events, and associate sessions with campaign URLs. For non-functional requirements, the service must comply with user privacy regulations, avoid tracking prohibited IDs, and run with near-zero latency.
 
-The core entities are the Attribute Collector, the Fingerprint Generator, the Local Storage Helper, the Campaign Attributer, and the Server Sync Client. The API design includes an initializeAttribution method and a getFingerprintId method.
+The core entities are the Attribute Collector, the Fingerprint Generator, the Local Storage Helper, the Campaign Attributer, and the Server Sync Client. For the API design, we expose an initializeAttribution method and a getFingerprintId method. The data flow starts on first launch, where the attribute collector gathers device properties like system language, screen resolution, and OS version. The generator hashes these attributes to create an ID, saving it to the secure keychain. The sync client sends this fingerprint and installation source to the server to attribute the campaign.
 
-The data flow starts when the application is launched for the first time. The Attribute Collector gathers allowed device properties (such as screen resolution, system language, OS version, and network carrier). The Fingerprint Generator hashes these attributes to create a unique identifier, which we store in the local keychain. The Campaign Attributer retrieves the installation URL or referral tags, and the Sync Client sends the fingerprint and campaign metadata to the server to attribute the user's installation.
-
-To ensure compliance with privacy regulations, we do not capture hardware identifiers. Instead, we rely on Apple's Identifier for Advertisers (IDFA) only if the user grants permission under the App Tracking Transparency framework. We use secure hashing algorithms to protect all collected attributes, ensuring user data privacy.
+For the high-level design, the collector runs on the client device, while the attribution database manages user mapping on the server. For the non-functional deep dive, we ensure privacy compliance by avoiding hardware serial numbers. Instead, we use Apple's IDFA only if the user grants permission. We encrypt all attributes locally, protecting user identities.
 
 ---
 
 ### 57. System Design 7: Real-Time Bluetooth IoT Sync Platform
-I am going to walk you through how we design a Real-Time Bluetooth IoT Sync Platform, which coordinates communication and data synchronization between mobile applications and smart accessories.
 
-The functional requirements are to discover and pair with BLE hardware, establish secure connection channels, send command payloads, and sync offline sensor logs from the accessory to the mobile database.
+![BLE IoT Sync Flow](/pratik_ble_iot_sync_flow.jpg)
 
-For non-functional requirements, the sync platform must manage BLE connection states reliably, handling signal drops without losing data. It must optimize data transmission rates and minimize mobile battery consumption.
+Let us walk through the design of a Real-Time Bluetooth IoT Sync Platform, which coordinates data synchronization between mobile apps and smart accessories. For functional requirements, the platform must scan for BLE peripherals, establish secure connections, route commands, and sync offline sensor logs. For non-functional requirements, the system must manage BLE connection states, handle signal drops without data loss, and optimize device battery consumption.
 
-The core entities are the BLE Discovery client, the Connection Manager, the Packet Serializer, the local Sync Database, and the Firmware Command Router. The API design includes a startScanning method, a connectDevice method, and a sendCommand method.
+The core entities are the BLE Discovery client, the Connection Manager, the Packet Serializer, the Sync Database, and the Command Router. For the API design, we expose a startScanning method, a connectDevice method, and a sendCommand method. The data flow starts when the scanning client locates the accessory's UUID. The connection manager pairs with the peripheral and discovers its services. During synchronization, the peripheral streams sensor data over BLE. The serializer reassembles the packets, verifies check-sums, and writes the records to our database, sending confirmations back.
 
-The data flow begins when the host application scans for nearby accessories. The Discovery client locates the hardware's UUID, and the Connection Manager initiates the pairing process. Once connected, we discover the peripheral's services and characteristics. When syncing data, the peripheral sends packet streams over BLE. The Packet Serializer reassembles these packets, validates their check-sums, and writes the sensor logs to our local database. We send acknowledgment packets back to the peripheral to confirm safe receipt, allowing it to clear its memory.
-
-To ensure connection reliability, we implement automatic reconnection logic with exponential back-off schedules if the Bluetooth link drops. We use Protocol Buffers to compress our message payloads, reducing transmission times and battery consumption during extended synchronization cycles.
+For the high-level design, the BLE stack coordinates with a local database to store incoming data streams. For the non-functional deep dive, we build automatic reconnection logic with exponential back-off schedules. We compress our command payloads using Protocol Buffers, minimizing data transmission times and saving battery power.
 
 ---
 
 ### 58. System Design 8: Multi-Tenant Push Notification Gateway
-Let us look at how we design a Multi-Tenant Push Notification Gateway, which coordinates token registrations and routes notifications to distributed mobile applications across multiple platforms.
 
-The functional requirements are to register device tokens from APNs and FCM, map tokens to user profiles, manage notification templates, and route notifications to Apple and Google servers.
+![Push Notification Flow](/pratik_push_notification_flow.jpg)
 
-For non-functional requirements, the gateway must handle high concurrent registration requests, guarantee low-latency delivery, and protect user data security.
+Let us examine how we design a Multi-Tenant Push Notification Gateway, which routes notifications to mobile applications across multiple platforms. For functional requirements, the gateway must register device tokens from APNs and FCM, map tokens to user profiles, manage notification templates, and route messages to Apple and Google push servers. For non-functional requirements, the gateway must handle high concurrent registration requests, guarantee low-latency delivery, and protect data security.
 
-The core entities are the Token Registrar, the User Registry, the Notification Router, the APNs Client, the FCM Client, and the Delivery Monitor. The API design includes a registerToken route, a sendNotification route, and a trackDelivery route.
+The core entities are the Token Registrar, the User Registry, the Notification Router, the APNs Client, the FCM Client, and the Delivery Monitor. For the API design, we expose a registerToken endpoint, a sendNotification endpoint, and a trackDelivery status endpoint. The data flow begins when the mobile app registers for push notifications. The app sends its token and platform type to the gateway. When a system sends a notification, the router retrieves the target user's active tokens, determines the platform type, and forwards the payload to APNs or FCM servers, logging delivery metrics.
 
-The data flow begins when a mobile app launches and receives a push token from the operating system. The app calls the registerToken route, sending the token, the device platform, and the user identifier. The Token Registrar saves this mapping to our database. When a marketing system triggers a notification, the Notification Router retrieves the target user's active tokens, determines the platform (iOS or Android), and routes the payload to our APNs or FCM client. The clients communicate with Apple and Google push servers, and the Delivery Monitor tracks delivery success statuses.
-
-To handle high registration volumes, we build the gateway using stateless microservices behind a load balancer, utilizing caching layers to store active token records. We secure all communication paths using TLS encryption and manage push certificates and keys securely within credential vaults, protecting our notification channels.
+For the high-level design, the gateway is a backend service using message queues to manage incoming and outgoing notification tasks. For the non-functional deep dive, we scale the gateway using stateless microservices and caching layers. We encrypt all token records and push payloads using TLS, securing our communication channels.
 
 ---
 
 ### 59. System Design 9: Offline Video Download Manager
-I am going to walk you through how we design an Offline Video Download Manager, which coordinates downloading and caching media files locally to support offline playback in video learning applications.
 
-The functional requirements are to queue video download URLs, manage download tasks (pause, resume, cancel), track progress percentages, and store decrypted video segments securely on disk.
+![Video Download Flow](/pratik_video_download_flow.jpg)
 
-For non-functional requirements, the download manager must prevent blocking the host app's network requests, manage local disk space limits, and protect premium video content from unauthorized sharing.
+Let us talk about how we can build an Offline Video Download Manager, which coordinates downloading and caching media files locally. For functional requirements, the manager must queue video downloads, manage download tasks (pause, resume, cancel), track progress, and store encrypted video segments. For non-functional requirements, we must prevent blocking the host app's network bandwidth, manage local disk space limits, and protect premium content from piracy.
 
-The core entities are the Download Queue, the URLSession Task Coordinator, the Storage Manager, the Video Decrypter client, and the Cache Policy checker. The API design includes a queueDownload method, a pauseDownload method, and a playOfflineVideo method.
+The core entities are the Download Queue, the URLSession Task Coordinator, the Storage Manager, the Video Decrypter client, and the Cache Policy checker. For the API design, we expose a queueDownload method, a pauseDownload method, and a playOfflineVideo method. The data flow starts when a user chooses to save a video. The coordinator initializes a background download task, writing segments to a temporary file. Once completed, the storage manager moves the file to a secure directory and encrypts the file headers. During playback, the decrypter reads the file, verifies the key, and plays the stream.
 
-The data flow begins when a user chooses to save a video for offline viewing. The URLSession Task Coordinator initializes a background download task, saving incoming video segments to a temporary file path. The Download Queue tracks the active progress, updating the UI. Once the download completes, the Storage Manager moves the file to a secure directory, and the Video Decrypter encrypts the file headers. When the user plays the video offline, our player retrieves the encrypted file, decrypts the headers in memory using key verification, and plays the stream.
-
-To optimize network performance, we limit the number of concurrent downloads (e.g., to three tasks) and allow downloads to run in the background using Apple's background transfer services. We monitor local disk storage, automatically cleaning up expired or least recently viewed videos if the device's storage limits are reached.
+For the high-level design, the manager runs as a background service, using native background transfer tools to manage downloads. For the non-functional deep dive, we limit concurrency to three active downloads to protect network performance. We monitor local storage, using an LRU policy to clean up expired media files.
 
 ---
 
 ### 60. System Design 10: AI-Assisted Mobile Log Analyzer
-Let us look at how we design an AI-Assisted Mobile Log Analyzer, which processes local application logs, classifies anomalies, and uses LLM integrations to suggest debugging fixes for developers.
 
-The functional requirements are to capture structured application logs, run local anomaly classification, package diagnostic contexts, and interface with LLM APIs to generate fix recommendations.
+![AI Log Analyzer Flow](/pratik_ai_log_analyzer_flow.jpg)
 
-For non-functional requirements, the analyzer must run with low CPU overhead to prevent slowing down the application, secure sensitive user details, and manage API token usage efficiently.
+Let us look at how we design an AI-Assisted Mobile Log Analyzer, which processes application logs, flags anomalies, and uses LLM integrations to suggest debugging fixes. For functional requirements, the analyzer must collect structured logs, classify anomalies locally, package diagnostic context, and call LLM APIs to generate fix recommendations. For non-functional requirements, the analyzer must run with low CPU overhead, protect user privacy, and manage API token consumption.
 
-The core entities are the Local Log Collector, the Anomaly Classifier, the Context Packer, the LLM API Client, and the Debug Dashboard. The API design includes a logDiagnostic method and a getDebugRecommendation method.
+The core entities are the Log Collector, the Anomaly Classifier, the Context Packer, the LLM API Client, and the Debug Dashboard. For the API design, we expose a logDiagnostic method and a getDebugRecommendation method. The data flow starts as the app writes logs to the local database. The classifier scans these logs, flagging anomalies like database latencies. When a crash occurs, the packer retrieves the logs, sanitizes the text to remove sensitive user details, and structures the diagnostic payload. The LLM client calls our backend API, which queries models to generate code fixes, displaying them on the dashboard.
 
-The data flow starts as the host application writes structured logs to our local database. The Anomaly Classifier scans these logs in the background, identifying unusual patterns (like network errors or database latency). When a crash or exception occurs, the Context Packer retrieves the recent logs and device metadata, sanitizes the text to remove sensitive user details, and structures the diagnostic payload. The LLM Client calls our AI backend API, which queries models (like Claude or OpenAI) to generate a summary of the issue and suggested code fixes, rendering the recommendation on the developer's debug dashboard.
-
-To protect host app performance, we run the log analysis tasks during idle periods or when the app is charging. We implement strict text-redaction rules to strip out IP addresses, account tokens, and personal details before sending data to the AI model. We also cache common error recommendations locally to minimize API token costs.
+For the high-level design, the analyzer runs as a background diagnostic service, coordinating with our AI API endpoint. For the non-functional deep dive, we run analysis tasks only during idle periods or when charging. We use strict redaction rules to strip out personal details before sending data to the AI model, protecting privacy.
 
 ---
