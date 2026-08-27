@@ -7,6 +7,7 @@ export default {
   'dineesha-support-prep': 'Dineesha Support Prep',
   'dhwani-vora-uline-prep': 'Dhwani Vora Uline Prep',
   'manohar-bi-prep': 'Manohar BI Prep',
+  'pratik-hanchate-amplitude-prep': 'Pratik Hanchate Amplitude Prep',
   'prathyush-zed-prep': 'Prathyush Zed Prep',
   'sai-sharath-finance-ai': 'Sai Sharath Finance AI Prep',
   'sai-sharath-infosys-stg': 'Sai Sharath Infosys STG Prep',
