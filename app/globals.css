@@ -71,23 +71,30 @@ nav[class*='sidebar'], aside {
   border-right: 1px solid var(--border-subtle) !important;
 }
 
-/* Sidebar active link */
+/* Sidebar active link — cast a wide net to beat Nextra specificity */
 .nextra-sidebar li a[aria-current="page"],
-nav a[aria-current="page"] {
-  background: rgba(79,142,247,0.12) !important;
-  color: var(--accent-blue) !important;
-  border-left: 2px solid var(--accent-blue) !important;
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0 !important;
+nav a[aria-current="page"],
+aside a[aria-current="page"],
+[class*='sidebar'] a[aria-current="page"],
+[class*='sidebar'] a.active,
+nav li a.active {
+  background: rgba(79,142,247,0.14) !important;
+  color: #4f8ef7 !important;
+  border-left: 2px solid #4f8ef7 !important;
+  border-radius: 0 6px 6px 0 !important;
   font-weight: 600 !important;
+  -webkit-text-fill-color: #4f8ef7 !important;
 }
 
 /* Sidebar links */
-nav a, aside a {
-  color: var(--text-secondary) !important;
+nav a, aside a, [class*='sidebar'] a {
+  color: #b0b8d8 !important;
+  -webkit-text-fill-color: #b0b8d8 !important;
   transition: color var(--transition-fast) !important;
 }
-nav a:hover, aside a:hover {
-  color: var(--text-primary) !important;
+nav a:hover, aside a:hover, [class*='sidebar'] a:hover {
+  color: #eef0ff !important;
+  -webkit-text-fill-color: #eef0ff !important;
 }
 
 /* Nextra navbar */
@@ -114,10 +121,10 @@ h1 {
   font-weight: 800 !important;
   letter-spacing: -0.04em !important;
   line-height: 1.15 !important;
-  background: linear-gradient(135deg, #f0f2ff 0%, var(--accent-blue) 50%, var(--accent-violet) 100%);
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  background-clip: text !important;
+  /* Solid colour — no gradient on body h1 to avoid two-tone splits on multi-line titles */
+  color: #eef0ff !important;
+  -webkit-text-fill-color: #eef0ff !important;
+  background: none !important;
   margin-bottom: 1.25rem !important;
 }
 
@@ -125,7 +132,9 @@ h2 {
   font-size: 1.55rem !important;
   font-weight: 700 !important;
   letter-spacing: -0.025em !important;
-  color: var(--text-primary) !important;
+  color: #e8ecff !important;
+  -webkit-text-fill-color: #e8ecff !important;
+  background: none !important;
   margin-top: 2.5rem !important;
   margin-bottom: 0.75rem !important;
   padding-bottom: 0.5rem !important;
@@ -135,28 +144,33 @@ h2 {
 h3 {
   font-size: 1.2rem !important;
   font-weight: 600 !important;
-  color: var(--text-primary) !important;
+  color: #d8dcf8 !important;
+  -webkit-text-fill-color: #d8dcf8 !important;
+  background: none !important;
   letter-spacing: -0.015em !important;
   margin-top: 1.75rem !important;
 }
 
 h4 {
-  font-size: 1rem !important;
   font-weight: 600 !important;
-  color: var(--accent-blue) !important;
+  color: #4f8ef7 !important;
+  -webkit-text-fill-color: #4f8ef7 !important;
+  background: none !important;
   text-transform: uppercase !important;
   letter-spacing: 0.06em !important;
   font-size: 0.8rem !important;
 }
 
 p {
-  color: var(--text-secondary);
+  color: #b0b8d8;
+  -webkit-text-fill-color: #b0b8d8;
   font-size: 1.0rem;
   line-height: 1.85;
 }
 
 strong, b {
-  color: var(--text-primary) !important;
+  color: #eef0ff !important;
+  -webkit-text-fill-color: #eef0ff !important;
   font-weight: 600 !important;
 }
 
