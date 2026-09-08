@@ -2,6 +2,7 @@ export default {
   index: 'Docs Home',
   'suvishal-operations-analyst-prep': 'Suvishal Operations Analyst Prep',
   'aryan-bigcommerce-prep': 'Aryan Agrawal BigCommerce Prep',
+  'dhwani-eq-bank-prep': 'Dhwani Vora EQ Bank Prep',
   'qualcomm-prep-material': { display: 'hidden' },
   'natera-ai-solutions-prep': { display: 'hidden' },
   'sirisha-genai-prep': { display: 'hidden' },
