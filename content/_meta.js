@@ -1,5 +1,6 @@
 export default {
   index: 'Docs Home',
+  'pranavi-rooms-to-go-prep': 'Pranavi Myneni Rooms To Go Prep',
   'ashutosh-oscar-health-prep': 'Ashutosh Rudraksh Oscar Health Prep',
   'suvishal-operations-analyst-prep': 'Suvishal Operations Analyst Prep',
   'aryan-bigcommerce-prep': 'Aryan Agrawal BigCommerce Prep',
