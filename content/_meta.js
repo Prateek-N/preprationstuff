@@ -1,5 +1,6 @@
 export default {
   index: 'Docs Home',
+  'ashutosh-oscar-health-prep': 'Ashutosh Rudraksh Oscar Health Prep',
   'suvishal-operations-analyst-prep': 'Suvishal Operations Analyst Prep',
   'aryan-bigcommerce-prep': 'Aryan Agrawal BigCommerce Prep',
   'dhwani-eq-bank-prep': 'Dhwani Vora EQ Bank Prep',

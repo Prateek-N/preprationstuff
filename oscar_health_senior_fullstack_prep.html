@@ -1,0 +1,2117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oscar Health — Senior Fullstack Engineer Interview Prep Suite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #090d16;
+      --bg-surface: #0f172a;
+      --bg-card: #151f36;
+      --bg-card-hover: #1a2744;
+      --border: #1e293b;
+      --border-accent: #0ea5e9;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --oscar-teal: #0ea5e9;
+      --oscar-green: #10b981;
+      --oscar-amber: #f59e0b;
+      --oscar-purple: #8b5cf6;
+      --oscar-rose: #f43f5e;
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* LOCK SCREEN MODAL */
+    #lockScreen {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at center, #111a2e 0%, #060911 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      padding: 1.5rem;
+    }
+
+    .lock-box {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 2.5rem;
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 40px rgba(14, 165, 233, 0.15);
+    }
+
+    .lock-icon-wrap {
+      width: 68px;
+      height: 68px;
+      margin: 0 auto 1.5rem;
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.2), rgba(16, 185, 129, 0.2));
+      border: 1px solid rgba(14, 165, 233, 0.4);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--oscar-teal);
+    }
+
+    .lock-box h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .lock-box p {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .input-group {
+      position: relative;
+      margin-bottom: 1.25rem;
+    }
+
+    .input-group input {
+      width: 100%;
+      background: rgba(9, 13, 22, 0.8);
+      border: 1px solid var(--border);
+      padding: 0.85rem 1.2rem;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.2s;
+      text-align: center;
+      letter-spacing: 0.1em;
+    }
+
+    .input-group input:focus {
+      border-color: var(--oscar-teal);
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.25);
+    }
+
+    .unlock-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+      color: white;
+      border: none;
+      padding: 0.85rem;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .unlock-btn:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px -5px rgba(14, 165, 233, 0.4);
+    }
+
+    .lock-error {
+      color: var(--oscar-rose);
+      font-size: 0.825rem;
+      margin-top: 0.75rem;
+      display: none;
+      animation: shake 0.35s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+
+    /* MAIN APP LAYOUT */
+    #appContent {
+      display: none;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .app-header {
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      padding: 1rem 2rem;
+    }
+
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-badge {
+      background: linear-gradient(135deg, #0ea5e9, #10b981);
+      color: #030712;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.05em;
+    }
+
+    .brand-title h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .brand-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .tab-nav {
+      display: flex;
+      gap: 6px;
+      background: rgba(9, 13, 22, 0.7);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-btn.active {
+      background: var(--oscar-teal);
+      color: #04131f;
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .stat-pill {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--oscar-green);
+    }
+
+    .lock-action-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+    .lock-action-btn:hover {
+      color: var(--text-main);
+      border-color: var(--oscar-rose);
+    }
+
+    /* MAIN CONTAINER */
+    .container {
+      max-width: 1400px;
+      margin: 2rem auto;
+      padding: 0 1.5rem 4rem;
+    }
+
+    /* SEARCH & FILTER BAR */
+    .search-section {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .search-input-wrap {
+      flex: 1;
+      min-width: 280px;
+      position: relative;
+    }
+
+    .search-input-wrap input {
+      width: 100%;
+      background: var(--bg-base);
+      border: 1px solid var(--border);
+      padding: 0.75rem 1rem 0.75rem 2.5rem;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    .search-input-wrap input:focus {
+      border-color: var(--oscar-teal);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+    }
+
+    .category-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .cat-pill {
+      background: var(--bg-base);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      padding: 6px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .cat-pill:hover, .cat-pill.active {
+      background: rgba(14, 165, 233, 0.15);
+      border-color: var(--oscar-teal);
+      color: var(--oscar-teal);
+    }
+
+    /* TAB CONTENT PANELS */
+    .tab-panel {
+      display: none;
+    }
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* CARDS & ACCORDIONS */
+    .item-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .item-card:hover {
+      border-color: rgba(14, 165, 233, 0.4);
+    }
+
+    .card-header {
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      gap: 1rem;
+    }
+
+    .card-title-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .badge-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(14, 165, 233, 0.15);
+      color: var(--oscar-teal);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      flex-shrink: 0;
+    }
+
+    .card-title-text h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-main);
+      line-height: 1.4;
+    }
+
+    .tag-category {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      margin-top: 4px;
+      display: inline-block;
+    }
+
+    .chevron-icon {
+      color: var(--text-dim);
+      transition: transform 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .item-card.open .chevron-icon {
+      transform: rotate(180deg);
+      color: var(--oscar-teal);
+    }
+
+    .card-body {
+      display: none;
+      padding: 1.5rem;
+      border-top: 1px solid var(--border);
+      background: var(--bg-card);
+      font-size: 0.925rem;
+      color: #cbd5e1;
+      line-height: 1.75;
+    }
+
+    .item-card.open .card-body {
+      display: block;
+    }
+
+    /* STAR BLOCKS */
+    .star-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .star-segment {
+      background: rgba(9, 13, 22, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+    }
+
+    .star-badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+      letter-spacing: 0.05em;
+    }
+    .badge-s { background: rgba(14, 165, 233, 0.2); color: #38bdf8; }
+    .badge-t { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .badge-a { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .badge-r { background: rgba(244, 63, 94, 0.2); color: #fb7185; }
+
+    .card-body b, .star-segment b {
+      color: #38bdf8;
+      font-weight: 600;
+    }
+
+    /* CODE BLOCKS */
+    .code-wrapper {
+      position: relative;
+      margin: 1.25rem 0;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .code-header {
+      background: #0d1322;
+      padding: 0.5rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .copy-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover {
+      background: var(--oscar-teal);
+      color: #030712;
+    }
+
+    pre {
+      background: #080c16 !important;
+      padding: 1.25rem;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: #e2e8f0;
+    }
+
+    /* ASCII DIAGRAM PRE */
+    .diagram-pre {
+      background: #0b1120 !important;
+      border: 1px dashed rgba(14, 165, 233, 0.4);
+      color: #38bdf8;
+      padding: 1.25rem;
+      border-radius: 10px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      line-height: 1.4;
+      white-space: pre;
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+
+    /* COMPLEXITY PILLS */
+    .complexity-bar {
+      display: flex;
+      gap: 12px;
+      margin: 1rem 0;
+      flex-wrap: wrap;
+    }
+
+    .complexity-pill {
+      background: rgba(9, 13, 22, 0.7);
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-family: var(--font-mono);
+    }
+    .complexity-pill span {
+      color: var(--oscar-teal);
+      font-weight: 600;
+    }
+
+    /* HEALTHCARE ALERT BOX */
+    .alert-box {
+      background: rgba(14, 165, 233, 0.08);
+      border-left: 4px solid var(--oscar-teal);
+      padding: 1rem 1.25rem;
+      border-radius: 0 10px 10px 0;
+      margin: 1rem 0;
+      font-size: 0.875rem;
+    }
+    .alert-box strong {
+      color: var(--oscar-teal);
+    }
+
+    /* PROGRESS BAR */
+    .progress-bar-wrap {
+      background: var(--bg-card);
+      border-radius: 99px;
+      height: 6px;
+      width: 140px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .progress-fill {
+      background: linear-gradient(90deg, #0ea5e9, #10b981);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    /* OVERVIEW SECTION */
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .metric-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+    }
+
+    .metric-card h4 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      margin-bottom: 0.5rem;
+    }
+
+    .metric-val {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 0.5rem;
+    }
+
+    .metric-desc {
+      font-size: 0.825rem;
+      color: var(--text-muted);
+    }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 3rem 1rem 1rem;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 768px) {
+      .header-inner { flex-direction: column; align-items: flex-start; }
+      .tab-nav { width: 100%; overflow-x: auto; }
+      .search-section { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PASSWORD GATE SCREEN -->
+  <div id="lockScreen">
+    <div class="lock-box">
+      <div class="lock-icon-wrap">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+      </div>
+      <h2>Oscar Health Loop Prep</h2>
+      <p>Candidate: Ashutosh Rudraksh<br>Senior Software Engineer, Fullstack</p>
+      
+      <div class="input-group">
+        <input type="password" id="passInput" placeholder="Enter Access Password" autofocus onkeydown="if(event.key==='Enter') unlockApp()">
+      </div>
+      <button class="unlock-btn" onclick="unlockApp()">Unlock Preparation Suite</button>
+      <div class="lock-error" id="lockError">Incorrect password. Please enter the authorized passcode.</div>
+    </div>
+  </div>
+
+  <!-- MAIN APP CONTAINER -->
+  <div id="appContent">
+    <header class="app-header">
+      <div class="header-inner">
+        <div class="brand-title">
+          <div class="brand-badge">OSCAR HEALTH</div>
+          <div>
+            <h1>Ashutosh Rudraksh · Fullstack Loop Master Guide</h1>
+            <div class="brand-sub">Hudson Square, NYC · Senior Software Engineer ($164k - $215k)</div>
+          </div>
+        </div>
+
+        <nav class="tab-nav">
+          <button class="tab-btn active" onclick="switchTab('tab-overview')">Strategy & Rubric</button>
+          <button class="tab-btn" onclick="switchTab('tab-part1')">Part 1: 20 Behavioral & Tech</button>
+          <button class="tab-btn" onclick="switchTab('tab-part2')">Part 2: 15 Coding & DSA</button>
+          <button class="tab-btn" onclick="switchTab('tab-part3')">Part 3: System Design & LLD</button>
+        </nav>
+
+        <div class="header-actions">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="progress-bar-wrap"><div class="progress-fill" id="topProgress"></div></div>
+            <span class="stat-pill" id="readCounter">0 / 45 Ready</span>
+          </div>
+          <button class="lock-action-btn" onclick="relockApp()">Lock</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <!-- GLOBAL FILTER / SEARCH -->
+      <section class="search-section">
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="globalSearch" placeholder="Search across questions, topics, code algorithms, system architectures..." oninput="handleSearch()">
+        </div>
+        <div class="category-pills">
+          <button class="cat-pill active" onclick="filterByTag('all')">All</button>
+          <button class="cat-pill" onclick="filterByTag('behavioral')">Behavioral</button>
+          <button class="cat-pill" onclick="filterByTag('technical')">Technical Q&A</button>
+          <button class="cat-pill" onclick="filterByTag('dsa')">Coding / DSA</button>
+          <button class="cat-pill" onclick="filterByTag('hld')">HLD Systems</button>
+          <button class="cat-pill" onclick="filterByTag('lld')">LLD / OOD</button>
+        </div>
+      </section>
+
+      <!-- TAB 0: OVERVIEW & STRATEGY -->
+      <div id="tab-overview" class="tab-panel active">
+        <div class="overview-grid">
+          <div class="metric-card">
+            <h4>Target Role</h4>
+            <div class="metric-val" style="color: var(--oscar-teal);">Senior Fullstack</div>
+            <div class="metric-desc">Oscar Health (Hudson Square, NYC Hybrid 3 days). Autonomous contributor driving end-to-end technical releases.</div>
+          </div>
+          <div class="metric-card">
+            <h4>Mission Alignment</h4>
+            <div class="metric-val" style="color: var(--oscar-green);">"Doctor in Family"</div>
+            <div class="metric-desc">Pioneering a tech-first insurance platform: transparent pricing, member mobile care, seamless provider claims.</div>
+          </div>
+          <div class="metric-card">
+            <h4>Target Tech Stack</h4>
+            <div class="metric-val" style="color: var(--oscar-amber);">Python · TS · Kafka</div>
+            <div class="metric-desc">FastAPI, React/TypeScript, PostgreSQL, Kafka event pipelines, Redis, AWS/K8s, HIPAA & PHI security.</div>
+          </div>
+        </div>
+
+        <div class="alert-box">
+          <strong>Key Interview Rubric at Oscar:</strong>
+          Interviewers score heavily on: (1) <em>Pragmatic technical ownership</em> (making steady progress without constant senior oversight), (2) <em>Healthcare data empathy & HIPAA awareness</em> (strong consistency, zero data loss, auditability), and (3) <em>Clean abstractions and step-wise migrations</em> (strangler fig pattern, contract-first APIs).
+        </div>
+
+        <div class="overview-grid" style="margin-top: 1.5rem;">
+          <div class="metric-card">
+            <h4>Interview Round 1: Behavioral & Domain</h4>
+            <div class="metric-desc" style="font-size: 0.9rem; line-height: 1.7;">
+              • Collaboration with Product Managers, Clinical Leads, and Designers.<br>
+              • Handling production incidents (99.9% uptime track record).<br>
+              • Mentorship, PR standards, and balancing technical debt with velocity.<br>
+              • <em>Target: Direct alignment with 20 STAR answers in Part 1.</em>
+            </div>
+          </div>
+          <div class="metric-card">
+            <h4>Interview Round 2: Coding / DSA</h4>
+            <div class="metric-desc" style="font-size: 0.9rem; line-height: 1.7;">
+              • Healthcare interval scheduling, merging deductibles, and appointment conflicts.<br>
+              • In-memory LRU caches, sliding window rate limiters, and topological care pathways.<br>
+              • Trie autocomplete for ICD-10 medical codes and doctor directories.<br>
+              • <em>Target: Master the 15 clean Python implementations in Part 2.</em>
+            </div>
+          </div>
+          <div class="metric-card">
+            <h4>Interview Round 3: HLD & LLD</h4>
+            <div class="metric-desc" style="font-size: 0.9rem; line-height: 1.7;">
+              • HLD: Real-time claims adjudication, provider search, telehealth, pharmacy benefit.<br>
+              • LLD: Deductible calculators (Strategy/Chain of Responsibility), state machines.<br>
+              • Strong consistency, transactional outbox pattern, and idempotency.<br>
+              • <em>Target: Follow the 6-step framework and 10 detailed designs in Part 3.</em>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 1: 20 BEHAVIORAL & TECHNICAL QUESTIONS -->
+      <div id="tab-part1" class="tab-panel">
+        <div id="questionsContainer"></div>
+      </div>
+
+      <!-- TAB 2: TOP 15 CODING & DSA PROBLEMS -->
+      <div id="tab-part2" class="tab-panel">
+        <div id="dsaContainer"></div>
+      </div>
+
+      <!-- TAB 3: SYSTEM DESIGN MASTERCLASS (HLD & LLD) -->
+      <div id="tab-part3" class="tab-panel">
+        <div id="systemDesignContainer"></div>
+      </div>
+
+    </main>
+
+    <footer>
+      <p>Oscar Health Senior Fullstack Software Engineer Interview Preparation Suite · Curated for Ashutosh Rudraksh · Private & Confidential</p>
+    </footer>
+  </div>
+
+  <!-- SCRIPT LOGIC & COMPLETE DATA -->
+  <script>
+    // AUTHENTICATION
+    const MASTER_PASS = "Ashutosh";
+
+    function checkAuth() {
+      if (sessionStorage.getItem("oscar_prep_unlocked") === "true") {
+        document.getElementById("lockScreen").style.display = "none";
+        const app = document.getElementById("appContent");
+        app.style.display = "block";
+        setTimeout(() => app.style.opacity = "1", 50);
+      }
+    }
+
+    function unlockApp() {
+      const input = document.getElementById("passInput");
+      const err = document.getElementById("lockError");
+      if (input.value === MASTER_PASS) {
+        sessionStorage.setItem("oscar_prep_unlocked", "true");
+        document.getElementById("lockScreen").style.display = "none";
+        const app = document.getElementById("appContent");
+        app.style.display = "block";
+        setTimeout(() => app.style.opacity = "1", 50);
+      } else {
+        err.style.display = "block";
+        input.value = "";
+        input.focus();
+      }
+    }
+
+    function relockApp() {
+      sessionStorage.removeItem("oscar_prep_unlocked");
+      location.reload();
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.getElementById(tabId).classList.add("active");
+      event.target.classList.add("active");
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // DATA FOR PART 1: 20 BEHAVIORAL & TECHNICAL QUESTIONS
+    const part1Questions = [
+      {
+        num: 1,
+        title: "Tell me about yourself, your background, and why you are excited about Oscar Health.",
+        category: "behavioral",
+        tag: "Background & Fit",
+        s: "Over the past four years, I have engineered high-throughput distributed systems, fullstack microservices, and AI-enabled infrastructure across hyper-growth environments including <b>Uber</b>, <b>Meta Reality Labs</b>, <b>Tekainos</b>, and <b>Dell Technologies</b>, complemented by an M.S. in Computer Science from <b>The Ohio State University</b>.",
+        t: "My focus has always centered on bridging robust backend microservices with intuitive consumer-facing interfaces, ensuring strict system reliability, data fidelity, and seamless user experiences.",
+        a: "At <b>Uber</b>, I led the development of a fullstack internal query resolution platform utilizing <b>FastAPI</b>, <b>React</b>, and <b>TypeScript</b>, integrating semantic search over <b>PostgreSQL</b> and <b>pgvector</b> across 180K+ records. At <b>Dell Technologies</b>, I modernized legacy enterprise workflows using <b>Java 17</b>, <b>Spring Boot</b>, and <b>Kafka</b>, achieving a 55% query latency drop and 99.9% uptime. At <b>Tekainos</b>, I architected automated asynchronous ETL pipelines using <b>FastAPI</b>, <b>AWS Lambda</b>, and <b>Redis</b>, slashing processing times from 24 hours to minutes. Throughout this journey, I prioritized cross-functional collaboration with product managers, clinical/domain stakeholders, and DevOps engineers.",
+        r: "Oscar Health's mission to act like 'a doctor in the family' resonates deeply with me. Healthcare in the United States is fraught with opaque pricing, complex insurance claims, and fragmented care pathways. I want to leverage my fullstack expertise in <b>TypeScript</b>, <b>Python</b>, <b>FastAPI</b>, and event-driven <b>Kafka</b> architectures to make healthcare transparent, empathetic, and friction-free for millions of Oscar members and providers."
+      },
+      {
+        num: 2,
+        title: "Oscar emphasizes building reliable systems for members and providers. Describe a time you owned a complex technical project end-to-end.",
+        category: "behavioral",
+        tag: "Technical Ownership & Execution",
+        s: "At <b>Uber</b>, internal operations and employee support specialists faced fragmented workflows when diagnosing member and employee queries across disparate repositories, causing high turnaround times and low resolution accuracy.",
+        t: "I was tasked with leading the end-to-end design, implementation, and deployment of a unified query resolution platform from scratch, capable of handling thousands of multi-modal requests daily with sub-second response times.",
+        a: "I spearheaded the technical architecture by decoupling the presentation layer from the data ingestion pipelines. I implemented the frontend in <b>React</b> and <b>TypeScript</b>, crafting a modular interface with type-safe state management. On the backend, I built a high-performance <b>FastAPI</b> service containerized with <b>Docker</b> and orchestrated on <b>Kubernetes (EKS)</b>. To solve unstructured search limitations, I engineered a semantic search pipeline using <b>PostgreSQL</b> with the <b>pgvector</b> extension, indexing 180,000+ complex documents. I set up automated <b>CI/CD</b> pipelines via <b>GitHub Actions</b>, integrating unit tests, end-to-end integration tests, and <b>AWS CloudWatch</b> synthetic monitoring to track p99 latencies.",
+        r: "The platform successfully handled <b>3,500+ requests</b> during initial rollout and settled into <b>6,000+ daily requests</b> with <b>99.5% uptime</b>. Search accuracy improved by <b>38%</b>, and resolution relevance surged by <b>45%</b>. I delivered this project on time by partnering closely with data science and product teams."
+      },
+      {
+        num: 3,
+        title: "Oscar requires engineers to perform step-wise technical migrations of legacy services. Describe a time you executed a migration without downtime.",
+        category: "technical",
+        tag: "System Migration & Zero Downtime",
+        s: "At <b>Dell Technologies</b>, our core customer service and order tracking modules were running on a legacy monolithic architecture with tightly coupled database transactions. This setup was suffering from locking contentions and high database query latency across 10+ modules.",
+        t: "I owned the technical migration plan to decompose the monolithic data-access layer into decoupled <b>Spring Boot</b> microservices backed by <b>PostgreSQL</b>, requiring zero downtime for live business operations.",
+        a: "I applied the <b>Strangler Fig pattern</b>. First, I introduced an abstraction layer with an API gateway to route traffic incrementally. I implemented the <b>Outbox Pattern</b> using <b>Kafka</b> to mirror live database writes asynchronously from the old schema into the new PostgreSQL tables. I validated data integrity by writing automated shadow-comparison scripts in <b>Python</b> that ran in the background, comparing production responses from both systems without returning the shadow output to the client. Once parity reached 100% over two consecutive weeks, I gradually shifted read traffic using weighted routing (10%, 25%, 50%, 100%). Finally, I migrated write traffic using distributed transactions and idempotency keys.",
+        r: "The migration executed with <b>zero downtime</b> and zero data loss. The optimized schema and Hibernate configurations reduced overall database query latency by <b>55%</b>, while inter-service communication bottlenecks fell by <b>35%</b>, enabling our team to release features 40% faster."
+      },
+      {
+        num: 4,
+        title: "Tell me about a time you handled a critical production outage or severe performance regression.",
+        category: "technical",
+        tag: "Production Debugging & Incidents",
+        s: "At <b>Tekainos</b>, during peak month-end financial reconciliations, our backend services experienced severe latency spikes where API response times degraded from 200ms to over 30 seconds, leading to cascading HTTP 504 Gateway Timeouts across automated accounting workflows.",
+        t: "As the on-call engineer, I had to immediately triage the root cause, mitigate customer impact, restore normal system throughput, and establish safeguards against future recurrences.",
+        a: "I inspected <b>AWS CloudWatch</b> metrics and distributed traces, observing an exponential surge in thread starvation across our <b>FastAPI</b> worker nodes. Deep analysis of our <b>PostgreSQL</b> slow query logs revealed an un-indexed multi-table join executed concurrently by scheduled <b>Lambda</b> ETL workers against our primary transactional database. To stop the bleed, I immediately applied a rate-limiting circuit breaker using <b>Redis</b> to throttle bulk analytical queries. Next, I spun up an <b>AWS RDS Read Replica</b> and redirected all read-heavy reporting and OCR normalization jobs away from the primary transactional instance. Finally, I added compound B-tree indexes on <code>(tenant_id, transaction_timestamp, status)</code> and tuned connection pool sizing using <b>PgBouncer</b>.",
+        r: "P99 response times returned to <b>under 150ms</b> within 45 minutes of incident declaration. I subsequently authored a blameless post-mortem, mandated read-replica routing for all analytics, and introduced synthetic database load tests into our <b>GitHub Actions</b> CI pipeline."
+      },
+      {
+        num: 5,
+        title: "How do you collaborate with non-technical stakeholders (Product Managers, Clinical Specialists, Operations) to solve ambiguous problems?",
+        category: "behavioral",
+        tag: "Cross-Functional Collaboration",
+        s: "At <b>Meta (Reality Labs)</b>, leadership requested an automated evaluation framework to test how spatial agents perceived and interacted with simulated environments. The prompt from research scientists was highly ambiguous: 'Make the spatial agent reason accurately without breaking user immersion.'",
+        t: "I had to translate broad, exploratory research goals into tangible, testable software engineering specifications and reproducible API contracts.",
+        a: "I scheduled structured discovery workshops with researchers, product managers, and QA specialists. Rather than discussing abstract ML models, I focused on user journeys: What constitutes an unacceptable failure in an AR/VR environment? Together, we defined concrete acceptance criteria: collision avoidance latency, token budget constraints, and tool invocation accuracy. To bridge the gap, I designed modular <b>MCP (Model Context Protocol)</b> servers using <b>FastAPI</b> and <b>Node.js</b> that exposed clear JSON schemas for perception, evaluation, and logging. I provided product managers with an intuitive dashboard where they could inspect live simulation traces and flag edge cases without writing code.",
+        r: "This collaboration eliminated <b>70% of manual testing efforts</b> and boosted system test reliability by <b>28%</b>. The modular API layer accelerated team feature integration speed by <b>50%</b>, enabling Reality Labs leadership to greenlight the project for extended production development."
+      },
+      {
+        num: 6,
+        title: "How do you design APIs that handle high throughput, maintain sub-second latency, and ensure strict backward compatibility?",
+        category: "technical",
+        tag: "API Design & Resiliency",
+        s: "At <b>Tekainos</b>, our cross-service messaging was initially fragmented across ad-hoc HTTP endpoints, leading to brittle integrations, contract mismatches, and frequent inter-service communication failures when onboarded partners sent divergent payloads.",
+        t: "I needed to architect a robust, backward-compatible API layer capable of handling bursty traffic with strict schema validation and minimal serialization overhead.",
+        a: "I adopted a contract-first API design. For high-volume inter-service synchronous communication, I instituted <b>gRPC</b> with <b>Protocol Buffers</b>, strictly enforcing backward compatibility rules (never renumbering field tags, using optional fields, and reserving deprecated tags). For external and client integrations, I engineered RESTful endpoints using <b>FastAPI</b> and <b>Pydantic v2</b>, taking advantage of compiled type validation and automatic OpenAPI documentation. I implemented deterministic versioning in the URI path (<code>/api/v1/</code>), integrated <b>gzip/brotli compression</b>, and introduced <b>Redis</b> cache-aside mechanisms for read-intensive entity lookups with sub-5ms latency. Furthermore, I enforced idempotency keys in HTTP request headers (<code>Idempotency-Key: &lt;UUID&gt;</code>) for all state-mutating POST/PUT endpoints.",
+        r: "Inter-service failures dropped by <b>40%</b>, average API response latencies stayed below <b>80ms</b>, and partner onboarding time plummeted from <b>6 weeks down to 2 days</b> due to self-documenting, resilient API contracts."
+      },
+      {
+        num: 7,
+        title: "Tell me about a time you had a technical disagreement with a team member. How did you resolve it?",
+        category: "behavioral",
+        tag: "Influence & Conflict Resolution",
+        s: "At <b>Dell Technologies</b>, during the redesign of our asynchronous event notification pipeline, a senior engineer strongly advocated using synchronous REST calls with aggressive retry policies between our microservices to keep the architecture 'simple' and avoid introducing new message broker overhead.",
+        t: "I recognized that synchronous HTTP chaining across five microservices during peak order spikes would create tight coupling, cascading failures, thread pool exhaustion, and unpredictable latency spikes. I needed to advocate for an event-driven architecture using <b>Kafka</b> diplomatically and backed by empirical evidence.",
+        a: "Rather than engaging in an ideological debate, I built a quick proof-of-concept simulation using <b>Python</b> and <b>Locust</b> to load-test both paradigms under 10,000 concurrent requests with simulated network jitter. The test results demonstrated that the REST-based chaining suffered a 28% failure rate due to connection timeouts, whereas the <b>Kafka</b> message broker ingested 100% of events asynchronously with zero loss. I presented the findings in a team design review, emphasizing how Kafka's dead-letter queues (DLQ) and consumer group offsets would give us built-in replayability and isolation without complicating the client interface.",
+        r: "The senior engineer appreciated the empirical data and backed the approach. We implemented the <b>Kafka</b> event pipeline, which reduced inter-service communication bottlenecks by <b>35%</b> and processed over <b>10,000 daily requests</b> seamlessly."
+      },
+      {
+        num: 8,
+        title: "Healthcare requires strict adherence to HIPAA, PHI privacy, and data security. How have you implemented security and compliance in your architectures?",
+        category: "technical",
+        tag: "Security, Privacy & HIPAA",
+        s: "At <b>Tekainos</b>, we extracted, normalized, and stored highly sensitive financial and identity records from over 5,000+ unstructured documents via OCR, requiring strict adherence to data privacy standards equivalent to <b>SOC 2</b> and <b>HIPAA</b> compliance.",
+        t: "I was responsible for securing the end-to-end data pipeline to ensure that personally identifiable information (PII) was never exposed in logs, leaked across tenants, or stored unencrypted.",
+        a: "I enforced defense-in-depth security principles across the software lifecycle. First, I configured <b>AES-256</b> encryption at rest on <b>PostgreSQL (AWS RDS)</b> and <b>S3 buckets</b>, and mandated <b>TLS 1.3</b> for all data in transit. Second, I introduced an automated data-sanitization middleware in <b>FastAPI</b> that intercepted incoming payloads and redacting sensitive fields (Social Security numbers, bank account numbers, names) before writing to application log streams in <b>CloudWatch</b>. Third, I implemented role-based access control (<b>RBAC</b>) and least-privilege policies through <b>AWS IAM</b> and JWT claims verification. Finally, I partitioned our database using tenant-isolated schemas to eliminate cross-tenant data leakage risks, and integrated automated dependency vulnerability scanning using <b>Snyk</b> in our <b>GitHub Actions</b> CI pipeline.",
+        r: "The pipeline normalized over 5,000+ documents with zero security leaks or compliance breaches, while improving data quality by <b>38%</b>. This rigorous foundation prepared the company to pass its third-party security audit seamlessly."
+      },
+      {
+        num: 9,
+        title: "Tell me about a time you experimented with a new or bleeding-edge technology to solve a real business problem.",
+        category: "behavioral",
+        tag: "Innovation & Experimentation",
+        s: "At <b>Meta Reality Labs</b>, evaluating vision-language-action (<b>VLA</b>) agents across 3D simulation environments was bottlenecked by brittle, ad-hoc Python testing scripts. Engineers were manually inspecting agent trajectories, which delayed deployment cycles and consumed valuable research bandwidth.",
+        t: "I wanted to explore whether the newly emerging <b>Model Context Protocol (MCP)</b> and structured LLM tool-calling could be adapted into a standardized, plug-and-play evaluation pipeline for our embodied AI workflows.",
+        a: "Over a two-week sprint, I designed an experimental MCP server architecture using <b>FastAPI</b>, <b>Node.js</b>, and <b>Docker</b>. I encapsulated environmental observation tools, spatial collision detectors, and trajectory verifiers as standardized MCP tools with explicit JSON schemas. This allowed LLMs and VLA models to dynamically query spatial metrics, execute verification actions, and report regression anomalies autonomously. I benchmarked this against our existing test harness, ensuring that the token overhead and latency of LLM calls did not exceed our simulation frame budgets.",
+        r: "The experiment was a resounding success. It slashed manual testing efforts by <b>70%</b>, increased automated anomaly detection by <b>28%</b>, and supported 6+ simulation configurations. I demoed the working architecture to Reality Labs leadership, who greenlit it as a standard testing harness across our spatial computing division."
+      },
+      {
+        num: 10,
+        title: "Oscar operates a high-volume platform with real-time eligibility checks and claims. How do you design and scale event-driven microservices using Kafka?",
+        category: "technical",
+        tag: "Event-Driven & Distributed Systems",
+        s: "At <b>Dell Technologies</b>, our enterprise order processing system required real-time orchestration across billing, inventory, and notification services. During promotional events, synchronous API calls triggered database thread deadlocks and dropped notifications.",
+        t: "I was tasked with designing and implementing an asynchronous event-driven backbone using <b>Apache Kafka</b> and <b>Spring Boot</b> to decouple services and guarantee message delivery during traffic spikes.",
+        a: "I designed partitioned Kafka topics with strategic partition keys (such as <code>account_id</code> or <code>order_id</code>) to ensure strict in-order processing per entity while scaling consumer concurrency horizontally. To prevent dual-write inconsistencies between the local database and Kafka, I implemented the <b>Transactional Outbox Pattern</b>: domain mutations and outbound events were written atomically to PostgreSQL in a single database transaction, after which a background worker relayed the events to Kafka. On the consumer side, I enforced <b>idempotent message processing</b> by storing processed event IDs in a <b>Redis</b> cache with a TTL. I also implemented a <b>Dead Letter Queue (DLQ)</b> with exponential backoff retries to isolate poison-pill messages without halting partition consumption.",
+        r: "The event-driven architecture processed <b>10,000+ daily events</b> seamlessly, eliminated communication bottlenecks by <b>35%</b>, and maintained <b>99.9% service availability</b> during peak traffic without a single dropped transaction."
+      },
+      {
+        num: 11,
+        title: "Tell me about a time you mentored junior engineers or drove engineering best practices across your team.",
+        category: "behavioral",
+        tag: "Mentorship & Engineering Standards",
+        s: "At <b>Dell Technologies</b>, our team grew rapidly with the onboarding of four junior software engineers. Code reviews were inconsistent, unit test coverage was hovering below 50%, and merge conflicts in Git were frequently blocking staging deployments.",
+        t: "As an experienced engineer, I took the initiative to establish structured engineering standards, improve automated testing hygiene, and mentor junior colleagues to elevate overall code quality.",
+        a: "I instituted weekly technical lunch-and-learns focusing on <b>SOLID principles</b>, clean architecture in <b>Spring Boot</b>, and practical test-driven development (<b>TDD</b>). I created a comprehensive PR review checklist and configured pre-commit hooks and <b>GitHub Actions</b> workflows that enforced code formatting (<b>Checkstyle/Black</b>), static analysis (<b>SonarQube</b>), and a mandatory <b>80% code coverage threshold</b> via <b>JUnit</b> and <b>Mockito</b>. Furthermore, I set up bi-weekly 1-on-1 pair-programming sessions with junior engineers, teaching them how to profile slow database queries with <b>EXPLAIN ANALYZE</b> and how to write clean, modular abstractions rather than monolithic controllers.",
+        r: "Within four months, production defect escape rates dropped by <b>30%</b>, test coverage surpassed <b>85%</b>, and junior engineers were able to independently own and ship production features with minimal senior oversight."
+      },
+      {
+        num: 12,
+        title: "How do you approach database performance tuning, indexing strategies, and scaling when query latencies degrade?",
+        category: "technical",
+        tag: "Database Tuning & Indexing",
+        s: "At <b>Dell Technologies</b>, our analytical and reporting dashboards experienced severe latency degradation (queries taking 8–12 seconds) across 10+ core database modules as our PostgreSQL transaction tables surpassed millions of rows.",
+        t: "I was assigned to diagnose the root causes of the degradation and optimize database performance without restructuring the entire application.",
+        a: "I systematically audited the <b>PostgreSQL slow query logs</b> and ran <code>EXPLAIN (ANALYZE, BUFFERS)</code> on the slowest queries. I discovered two primary issues: pervasive sequential table scans caused by missing composite indexes, and severe N+1 query patterns generated by misconfigured <b>Hibernate JPA</b> entity mappings. I resolved the N+1 queries by rewriting ORM fetches to use explicit <code>JOIN FETCH</code> queries and batch fetching (<code>hibernate.default_batch_fetch_size = 30</code>). Next, I introduced targeted B-tree composite indexes aligned with query filter cardinalities and created partial indexes for active records (<code>WHERE status = 'ACTIVE'</code>). For high-volume audit logs, I implemented range-based table partitioning by month. Finally, I optimized connection pooling settings via <b>HikariCP</b>.",
+        r: "Average database query latency dropped by <b>55%</b>, CPU utilization on our database instances decreased by <b>40%</b>, and downstream dashboard load times plummeted from 10s to sub-800ms."
+      },
+      {
+        num: 13,
+        title: "In a fast-paced environment, how do you balance paying down technical debt against delivering new product features?",
+        category: "behavioral",
+        tag: "Technical Debt & Velocity",
+        s: "At <b>Tekainos</b>, our startup needed to ship automated scheduling features rapidly to close enterprise client deals, but our core scheduling service was built on brittle, hard-coded rules that made adding new client constraints increasingly prone to regression bugs.",
+        t: "I had to balance the business imperative to ship client-facing features quickly with the technical necessity of refactoring the core scheduling engine to prevent a maintenance deadlock.",
+        a: "Rather than halting feature development for an unrealistic 'full rewrite,' I proposed an incremental refactoring strategy to the product manager. I quantified the cost of technical debt in terms of delivery velocity: each new constraint was taking twice as long to ship because of legacy bugs. I negotiated a <b>20% technical debt allocation</b> into each two-week sprint. During feature work, I applied the <b>Boy Scout Rule</b>: whenever we touched a module to add a feature, we refactored that specific path, decoupled business logic into a clean <b>Strategy Pattern</b>, and wrapped it in comprehensive unit tests.",
+        r: "Over three sprints, we completely modernized the scheduling engine without missing a single client deadline. As a result, manual data entry was slashed by <b>85%</b>, system latency dropped from 24 hours to minutes, and future feature turnaround times accelerated dramatically."
+      },
+      {
+        num: 14,
+        title: "Describe your experience building fullstack applications. How do you ensure clean contracts between React/TypeScript and Python/FastAPI?",
+        category: "technical",
+        tag: "Fullstack & Type Safety",
+        s: "At <b>Uber</b>, our internal employee query resolution system required a responsive, intuitive frontend in <b>React</b> and <b>TypeScript</b> coupled with a high-performance, asynchronous backend in <b>Python (FastAPI)</b> handling vector search and LLM orchestration.",
+        t: "I needed to ensure end-to-end type safety, prevent runtime contract mismatches between frontend and backend, and provide an ultra-responsive UI for employee operations.",
+        a: "I established an automated contract-driven development workflow. In <b>FastAPI</b>, I defined strict request and response schemas using <b>Pydantic v2</b>. I integrated an automated OpenAPI generation script in our CI pipeline that exported the API specifications as a <code>schema.json</code> file on every build. On the frontend, I used <code>openapi-typescript</code> to generate strict <b>TypeScript</b> interfaces directly from that schema, ensuring that any backend property renaming or type change would immediately trigger compile-time errors on the frontend. In React, I utilized <b>React Query (TanStack Query)</b> for optimistic UI updates, background caching, and automatic deduplication of network requests. For real-time updates, I established WebSocket connections managed cleanly through custom React hooks.",
+        r: "The platform rolled out to <b>3,500+ users</b> with zero runtime API contract mismatches. The UI delivered instant sub-100ms perceived latency due to client-side caching, achieving high adoption and user satisfaction."
+      },
+      {
+        num: 15,
+        title: "Tell me about a time a project failed, fell behind schedule, or did not meet expectations. What did you learn?",
+        category: "behavioral",
+        tag: "Resilience & Retrospective",
+        s: "Early in my time at <b>Tekainos</b>, I designed an OCR data extraction pipeline intended to parse complex medical and accounting invoices. I initially selected an off-the-shelf open-source OCR library without sufficiently testing it against highly degraded, skewed, and handwritten scanned PDFs.",
+        t: "When we deployed the pipeline to staging against real customer documents, the extraction accuracy fell below 60%, far below our 90% business acceptance threshold, threatening our release timeline.",
+        a: "I immediately took ownership of the miscalculation and communicated the roadblock transparently to our engineering lead and product manager. Rather than stubbornly trying to patch an inadequate library, I conducted a rapid 48-hour spike evaluating alternative solutions. I redesigned the ingestion pipeline into a multi-stage hybrid architecture: using <b>OpenCV</b> for image pre-processing (deskewing, contrast normalization, noise removal), followed by a cloud-based vision model for raw OCR text extraction, and finally a <b>FastAPI</b> validation service that used regular expressions and schema heuristics to normalize unstructured entities into <b>PostgreSQL</b>.",
+        r: "The revised pipeline successfully normalized data from <b>5,000+ unstructured documents</b>, boosting accuracy to <b>94%</b> and overall data quality by <b>38%</b>. The key takeaway was to validate edge cases against realistic production data early during discovery rather than assuming library benchmarks apply universally."
+      },
+      {
+        num: 16,
+        title: "Oscar is exploring AI/LLM applications to assist care guides and members. Describe your real-world experience deploying production AI/RAG systems.",
+        category: "technical",
+        tag: "AI/LLM Systems & Production RAG",
+        s: "At <b>Uber</b>, employees spent significant time searching through fragmented internal documentation, wikis, and policies to resolve employee inquiries, leading to delayed resolutions.",
+        t: "I was tasked with engineering an accurate, low-latency semantic search and Retrieval-Augmented Generation (<b>RAG</b>) pipeline capable of querying 180,000+ institutional records while mitigating hallucinations and maintaining strict access control.",
+        a: "I architected the semantic search pipeline using <b>FastAPI</b>, <b>PostgreSQL</b>, and the <b>pgvector</b> extension. I chunked long documents into semantic paragraphs using sliding-window tokenizers and generated embeddings using sentence-transformer models. To achieve low latency, I implemented an <b>HNSW (Hierarchical Navigable Small World)</b> index in pgvector, which enabled sub-50ms approximate nearest neighbor search across 180K+ embeddings. I integrated a hybrid search ranking strategy combining dense vector similarity with traditional <b>BM25 full-text search</b> to preserve exact keyword recall (such as policy IDs). Finally, I introduced a cross-encoder reranking step and strict prompt engineering templates that instructed the LLM to ground answers strictly in retrieved source context, citing document URLs.",
+        r: "The system improved response relevance by <b>45%</b> and search accuracy by <b>38%</b>. It served <b>6,000+ daily requests</b> with <b>99.5% uptime</b>, drastically reducing support ticket resolution times."
+      },
+      {
+        num: 17,
+        title: "Why do you want to join Oscar Health specifically at this stage of your career?",
+        category: "behavioral",
+        tag: "Company Motivation & Healthcare Mission",
+        s: "Having engineered high-scale distributed systems at <b>Dell</b> and <b>Uber</b>, and cutting-edge agentic workflows at <b>Meta</b>, I evaluated where my engineering contributions would deliver the highest societal and user impact over the next five years.",
+        t: "I sought a role at a tech-first organization tackling complex, high-stakes human problems where fullstack engineering excellence directly improves people's lives.",
+        a: "Oscar Health stands out as the pioneer in rebuilding health insurance from the ground up as a modern software platform. Unlike legacy payers whose systems are locked in 40-year-old mainframes, Oscar treats technology as its primary differentiator—from consumer-grade member apps to automated provider claim adjudications. The Hudson Square, NYC engineering culture combines fast-paced iteration with rigorous system reliability. My hands-on skills in <b>Python/FastAPI</b>, <b>TypeScript/React</b>, <b>Kafka</b> event pipelines, and <b>PostgreSQL</b> align directly with Oscar's tech stack and engineering challenges.",
+        r: "As a Senior Fullstack Engineer at Oscar, I can take end-to-end ownership of critical member-facing features and backend infrastructure, ensuring that navigating health insurance feels as seamless, transparent, and empathetic as consulting a trusted doctor in the family."
+      },
+      {
+        num: 18,
+        title: "How do you design systems to be fault-tolerant against third-party API outages (e.g., pharmacy benefit managers, clearinghouses)?",
+        category: "technical",
+        tag: "Distributed Systems Reliability",
+        s: "In healthcare and financial integrations (such as the market data server I built and the partner APIs at <b>Tekainos</b>), external third-party endpoints frequently experience network latency spikes, rate limits, or transient outages.",
+        t: "When downstream vendor APIs fail, our internal consumer-facing applications must remain resilient, avoiding cascading failures, thread pool exhaustion, or data corruption.",
+        a: "I implement a multi-layered resiliency pattern: (1) <b>Timeouts & Circuit Breakers:</b> I wrap all outbound third-party calls in a circuit breaker pattern (using libraries like <b>Resilience4j</b> or <b>Tenacity</b>). If error rates exceed 50% over a rolling 10-second window, the circuit trips open, immediately returning fallback cached data rather than hanging threads. (2) <b>Exponential Backoff with Jitter:</b> For transient 5xx or network drops, retries are executed with randomized exponential backoff (<code>t = base * 2^attempt + jitter</code>) to avoid thundering-herd problems. (3) <b>Asynchronous Queuing & Outbox:</b> Non-critical vendor synchronizations are pushed to a <b>Kafka</b> topic or <b>AWS SQS</b> queue, decoupling user requests from third-party response times. (4) <b>Idempotency Keys:</b> Every outbound transactional request carries a cryptographically unique idempotency key, ensuring that if a retried request was actually processed downstream, duplicate charges or duplicate claim submissions are physically prevented.",
+        r: "This architecture guarantees graceful degradation: users can still interact with the UI, read cached statuses, and receive notifications once background reconciliation completes, preserving <b>99.9% application availability</b>."
+      },
+      {
+        num: 19,
+        title: "Describe a time you built tools or infrastructure that drastically improved developer velocity or system observability.",
+        category: "behavioral",
+        tag: "Developer Productivity & Velocity",
+        s: "At <b>Meta Reality Labs</b>, testing multimodal vision and environment integrations across distributed developer machines required engineers to manually spin up multiple container configurations, resulting in environment drift, broken local setups, and long onboarding cycles.",
+        t: "I wanted to streamline the developer experience by standardizing integration tooling, eliminating configuration friction, and automating regression detection across all six supported simulation environments.",
+        a: "I architected a modular <b>FastAPI</b> API layer and standardized containerized workflows using <b>Docker</b> and <b>Kubernetes</b>. I built reusable developer CLI tools and integrated <b>Model Context Protocol (MCP)</b> servers that abstracted environment orchestration behind simple declarative commands. To improve observability, I integrated <b>OpenTelemetry</b> tracing and structured JSON logging across all microservices, piping metrics into centralized dashboards. Furthermore, I created automated mock servers simulating external vision and environment endpoints, allowing engineers to run full integration test suites locally in under two minutes without connecting to expensive physical hardware rigs.",
+        r: "The new modular architecture accelerated developer integration speed by <b>50%</b>, reduced deployment complexity across 6+ configurations, and slashed new engineer environment onboarding from several days to under two hours."
+      },
+      {
+        num: 20,
+        title: "Oscar processes millions of sensitive member events. How do you design scalable ETL and asynchronous background workers?",
+        category: "technical",
+        tag: "Scalable ETL & Async Processing",
+        s: "At <b>Tekainos</b>, client transaction data arrived in irregular, bursty batches throughout the day, requiring heavy validation, OCR extraction, and reconciliation before updating master accounting ledgers. The existing synchronous processing pipeline created massive backlogs, taking up to 24 hours to reflect finalized records.",
+        t: "I was tasked with re-architecting the entire ETL ingestion system into a scalable, near-real-time asynchronous pipeline capable of handling bursty volumes with zero data loss.",
+        a: "I redesigned the architecture using an event-driven, decoupled worker model. Inbound document uploads were immediately stored in <b>AWS S3</b>, which published an <code>ObjectCreated</code> event to an <b>AWS SQS</b> FIFO queue. I deployed serverless <b>AWS Lambda</b> functions and containerized <b>FastAPI</b> workers to consume tasks concurrently from the queue. To maintain low latency, intermediate state and deduplication hashes were managed in <b>Redis</b>. Heavy OCR normalization jobs were executed in parallel worker pools with memory and CPU boundaries. Processed entities were batched using bulk <code>COPY</code> operations into <b>PostgreSQL</b> rather than single-row inserts, dramatically reducing database I/O contention.",
+        r: "End-to-end processing latency plummeted from <b>24 hours down to minutes</b>, achieving true near-real-time processing. The system slashed manual data entry by <b>85%</b>, handled 10x traffic spikes smoothly, and provided comprehensive error tracking via dead-letter queues."
+      }
+    ];
+
+    // DATA FOR PART 2: TOP 15 CODING & DSA PROBLEMS
+    const part2DSA = [
+      {
+        num: 1,
+        title: "Merge Intervals",
+        tag: "Intervals / Arrays",
+        oscarContext: "Member insurance policies often have overlapping coverage periods, or doctor availability schedules have overlapping shifts. We need to merge all overlapping time intervals into contiguous blocks.",
+        thought: "1. Sort intervals by start time in O(N log N). This guarantees overlapping intervals are adjacent.\n2. Iterate through intervals: if result is empty or current start > previous end, append.\n3. Else, overlap detected: update previous end to max(previous end, current end).",
+        timeComp: "O(N log N)",
+        spaceComp: "O(N)",
+        code: `from typing import List
+
+def merge_intervals(intervals: List[List[int]]) -> List[List[int]]:
+    """
+    Merges all overlapping intervals into contiguous intervals.
+    Example: [[1,3],[2,6],[8,10],[15,18]] -> [[1,6],[8,10],[15,18]]
+    """
+    if not intervals:
+        return []
+    
+    # Sort by interval start time
+    intervals.sort(key=lambda x: x[0])
+    merged: List[List[int]] = []
+    
+    for start, end in intervals:
+        # If merged list is empty or current interval does not overlap
+        if not merged or start > merged[-1][1]:
+            merged.append([start, end])
+        else:
+            # Overlap detected: merge by expanding the end timestamp
+            merged[-1][1] = max(merged[-1][1], end)
+            
+    return merged`
+      },
+      {
+        num: 2,
+        title: "Insert Interval",
+        tag: "Intervals / Arrays",
+        oscarContext: "A member adds a new health insurance deductible window or a doctor blocks off a new consultation slot in an already sorted schedule.",
+        thought: "1. Intervals are already sorted.\n2. Phase 1: Add all intervals ending before newInterval starts.\n3. Phase 2: Merge all overlapping intervals into newInterval by taking min(start) and max(end).\n4. Phase 3: Append merged newInterval and all remaining trailing intervals.",
+        timeComp: "O(N)",
+        spaceComp: "O(N)",
+        code: `from typing import List
+
+def insert_interval(intervals: List[List[int]], new_interval: List[int]) -> List[List[int]]:
+    result: List[List[int]] = []
+    i = 0
+    n = len(intervals)
+    
+    # Phase 1: Add intervals ending before new_interval begins
+    while i < n and intervals[i][1] < new_interval[0]:
+        result.append(intervals[i])
+        i += 1
+        
+    # Phase 2: Merge overlapping intervals into new_interval
+    while i < n and intervals[i][0] <= new_interval[1]:
+        new_interval[0] = min(new_interval[0], intervals[i][0])
+        new_interval[1] = max(new_interval[1], intervals[i][1])
+        i += 1
+    result.append(new_interval)
+    
+    # Phase 3: Add remaining intervals
+    while i < n:
+        result.append(intervals[i])
+        i += 1
+        
+    return result`
+      },
+      {
+        num: 3,
+        title: "Meeting Rooms II (Min Clinicians Needed)",
+        tag: "Heap / Two Pointers",
+        oscarContext: "Given telemedicine appointment intervals, find the minimum number of doctors/virtual rooms required to avoid scheduling delays.",
+        thought: "1. Extract start times and end times separately, sort both.\n2. Use two pointers: if start[s] < end[e], an appointment has started before one ended -> room count + 1.\n3. Else, an appointment has finished -> room count - 1, advance end pointer.\n4. Track peak concurrent rooms used.",
+        timeComp: "O(N log N)",
+        spaceComp: "O(N)",
+        code: `from typing import List
+
+def min_meeting_rooms(intervals: List[List[int]]) -> int:
+    if not intervals:
+        return 0
+        
+    start_times = sorted([i[0] for i in intervals])
+    end_times = sorted([i[1] for i in intervals])
+    
+    start_ptr, end_ptr = 0, 0
+    current_rooms, max_rooms = 0, 0
+    
+    while start_ptr < len(intervals):
+        if start_times[start_ptr] < end_times[end_ptr]:
+            current_rooms += 1
+            start_ptr += 1
+        else:
+            current_rooms -= 1
+            end_ptr += 1
+        max_rooms = max(max_rooms, current_rooms)
+        
+    return max_rooms`
+      },
+      {
+        num: 4,
+        title: "LRU Cache (Least Recently Used Cache)",
+        tag: "Design / Hash Map + DLL",
+        oscarContext: "Caching verified member eligibility tokens or provider network lookup records in memory with O(1) read and write.",
+        thought: "1. Combine Hash Map (key -> Node) with Doubly Linked List (maintains recency order).\n2. Sentinel dummy head (MRU) and dummy tail (LRU) prevent edge case null checks.\n3. get(): if key exists, move node to front, return val; else -1.\n4. put(): update or create node, move to front. If over capacity, evict node before tail.",
+        timeComp: "O(1) get & put",
+        spaceComp: "O(Capacity)",
+        code: `class Node:
+    def __init__(self, key: int = 0, val: int = 0):
+        self.key, self.val = key, val
+        self.prev = None
+        self.next = None
+
+class LRUCache:
+    def __init__(self, capacity: int):
+        self.cap = capacity
+        self.cache = {} # key -> Node
+        self.head, self.tail = Node(), Node()
+        self.head.next = self.tail
+        self.tail.prev = self.head
+
+    def _add_front(self, node: Node):
+        node.next = self.head.next
+        node.prev = self.head
+        self.head.next.prev = node
+        self.head.next = node
+
+    def _remove(self, node: Node):
+        p, n = node.prev, node.next
+        p.next = n
+        n.prev = p
+
+    def get(self, key: int) -> int:
+        if key in self.cache:
+            node = self.cache[key]
+            self._remove(node)
+            self._add_front(node)
+            return node.val
+        return -1
+
+    def put(self, key: int, value: int) -> None:
+        if key in self.cache:
+            node = self.cache[key]
+            node.val = value
+            self._remove(node)
+            self._add_front(node)
+        else:
+            if len(self.cache) >= self.cap:
+                lru = self.tail.prev
+                self._remove(lru)
+                del self.cache[lru.key]
+            node = Node(key, value)
+            self.cache[key] = node
+            self._add_front(node)`
+      },
+      {
+        num: 5,
+        title: "Design Hit Counter / Sliding Window Rate Limiter",
+        tag: "Design / Queue / Circular Array",
+        oscarContext: "Rate limiting external pharmacy benefit manager (PBM) or provider portal API calls to at most N requests in the past 300 seconds.",
+        thought: "1. Instead of unbounded queues, use a fixed circular array of size 300 (1 bucket per second).\n2. Each bucket stores (timestamp, hit_count).\n3. hit(t): index = t % 300. If stored timestamp == t, increment count; else reset count to 1.\n4. get_hits(t): sum all hit_counts where t - stored_t < 300.",
+        timeComp: "O(1) hit, O(300)=O(1) get",
+        spaceComp: "O(1) constant",
+        code: `class HitCounter:
+    def __init__(self):
+        self.window = 300
+        self.times = [0] * self.window
+        self.hits = [0] * self.window
+
+    def hit(self, timestamp: int) -> None:
+        idx = timestamp % self.window
+        if self.times[idx] != timestamp:
+            self.times[idx] = timestamp
+            self.hits[idx] = 1
+        else:
+            self.hits[idx] += 1
+
+    def get_hits(self, timestamp: int) -> int:
+        total = 0
+        for i in range(self.window):
+            if timestamp - self.times[i] < self.window:
+                total += self.hits[i]
+        return total`
+      },
+      {
+        num: 6,
+        title: "Subarray Sum Equals K (Claims Accumulation)",
+        tag: "Hash Map / Prefix Sum",
+        oscarContext: "Financial reconciliation — finding how many contiguous billing or claim sequences sum up exactly to a member's target deductible K.",
+        thought: "1. Let PrefixSum[i] be cumulative sum up to i.\n2. Subarray sum from j to i is PrefixSum[i] - PrefixSum[j-1] = K.\n3. Therefore, PrefixSum[j-1] = PrefixSum[i] - K.\n4. Maintain a hash map of seen prefix sums and their frequency count. O(N) single pass.",
+        timeComp: "O(N)",
+        spaceComp: "O(N)",
+        code: `from typing import List
+from collections import defaultdict
+
+def subarray_sum(nums: List[int], k: int) -> int:
+    prefix_counts = defaultdict(int)
+    prefix_counts[0] = 1  # Base case: empty subarray sum = 0
+    
+    current_sum = 0
+    total = 0
+    
+    for num in nums:
+        current_sum += num
+        # If (current_sum - k) was observed, a valid subarray ending here exists
+        if (current_sum - k) in prefix_counts:
+            total += prefix_counts[current_sum - k]
+        prefix_counts[current_sum] += 1
+        
+    return total`
+      },
+      {
+        num: 7,
+        title: "Group Anagrams / Medical Code Grouping",
+        tag: "Hash Map / Strings",
+        oscarContext: "Grouping interchangeable medical billing codes or synonym diagnosis descriptions that contain identical character frequencies.",
+        thought: "1. Represent each string by its 26-character count tuple.\n2. Use this immutable tuple as a dictionary key, mapping to a list of original words.\n3. Avoids O(L log L) sorting per word.",
+        timeComp: "O(N * L)",
+        spaceComp: "O(N * L)",
+        code: `from typing import List
+from collections import defaultdict
+
+def group_anagrams(strs: List[str]) -> List[List[str]]:
+    groups = defaultdict(list)
+    for s in strs:
+        count = [0] * 26
+        for char in s:
+            count[ord(char) - ord('a')] += 1
+        groups[tuple(count)].append(s)
+    return list(groups.values())`
+      },
+      {
+        num: 8,
+        title: "Word Break (Clinical Notes Segmentation)",
+        tag: "Dynamic Programming",
+        oscarContext: "Clinical NLP: segmenting unpunctuated medical terms or compound pharmaceutical names ('tylenolextrastrength') into valid dictionary words.",
+        thought: "1. Let dp[i] = True if prefix s[0:i] can be segmented into words.\n2. Base case: dp[0] = True.\n3. For each i from 1 to N, check each j from 0 to i: if dp[j] is True and s[j:i] in word_set, set dp[i] = True and break.",
+        timeComp: "O(N^2 * L)",
+        spaceComp: "O(N + M)",
+        code: `from typing import List
+
+def word_break(s: str, word_dict: List[str]) -> bool:
+    word_set = set(word_dict)
+    n = len(s)
+    dp = [False] * (n + 1)
+    dp[0] = True
+    
+    for i in range(1, n + 1):
+        for j in range(i):
+            if dp[j] and s[j:i] in word_set:
+                dp[i] = True
+                break
+                
+    return dp[n]`
+      },
+      {
+        num: 9,
+        title: "Lowest Common Ancestor of a Binary Tree",
+        tag: "Trees / DFS",
+        oscarContext: "Finding the most immediate shared category in Oscar's hierarchical clinical taxonomy or medical specialty ontology.",
+        thought: "1. Base case: if root is None or root == p or root == q, return root.\n2. Recurse left and right.\n3. If both left and right return non-null, root is the LCA.\n4. Else return the non-null child.",
+        timeComp: "O(N)",
+        spaceComp: "O(H) tree height",
+        code: `class TreeNode:
+    def __init__(self, val: int = 0):
+        self.val = val
+        self.left = None
+        self.right = None
+
+def lowest_common_ancestor(root: TreeNode, p: TreeNode, q: TreeNode) -> TreeNode:
+    if not root or root == p or root == q:
+        return root
+        
+    left = lowest_common_ancestor(root.left, p, q)
+    right = lowest_common_ancestor(root.right, p, q)
+    
+    if left and right:
+        return root
+    return left if left else right`
+      },
+      {
+        num: 10,
+        title: "Course Schedule II / Topological Sort",
+        tag: "Graph / BFS / Kahn's Algo",
+        oscarContext: "Clinical care pathways and insurance pre-authorization rules: Treatment step B cannot be approved until prerequisites A and C have been satisfied.",
+        thought: "1. Build adjacency list and in-degree array for each node.\n2. Push all nodes with in-degree 0 onto queue.\n3. Pop node, append to result, decrement in-degree of neighbors. If neighbor in-degree == 0, push to queue.\n4. If result length == num_nodes, return result; else cycle detected, return empty.",
+        timeComp: "O(V + E)",
+        spaceComp: "O(V + E)",
+        code: `from typing import List
+from collections import deque, defaultdict
+
+def find_order(num_courses: int, prerequisites: List[List[int]]) -> List[int]:
+    adj = defaultdict(list)
+    in_degree = [0] * num_courses
+    
+    for course, prereq in prerequisites:
+        adj[prereq].append(course)
+        in_degree[course] += 1
+        
+    queue = deque([i for i in range(num_courses) if in_degree[i] == 0])
+    order = []
+    
+    while queue:
+        curr = queue.popleft()
+        order.append(curr)
+        for nbr in adj[curr]:
+            in_degree[nbr] -= 1
+            if in_degree[nbr] == 0:
+                queue.append(nbr)
+                
+    return order if len(order) == num_courses else []`
+      },
+      {
+        num: 11,
+        title: "Number of Islands (Cluster Detection in Care Networks)",
+        tag: "Matrix / BFS / Graph",
+        oscarContext: "Mapping connected healthcare provider clusters across an operational regional grid to ensure network adequacy.",
+        thought: "1. Traverse 2D grid. If cell == '1', increment island count.\n2. Launch BFS/DFS from cell to sink connected '1's into '0's in-place.\n3. Return count.",
+        timeComp: "O(M * N)",
+        spaceComp: "O(min(M, N))",
+        code: `from typing import List
+from collections import deque
+
+def num_islands(grid: List[List[str]]) -> int:
+    if not grid or not grid[0]:
+        return 0
+    rows, cols = len(grid), len(grid[0])
+    islands = 0
+    
+    def bfs(r, c):
+        q = deque([(r, c)])
+        grid[r][c] = '0'
+        while q:
+            cr, cc = q.popleft()
+            for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                nr, nc = cr + dr, cc + dc
+                if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] == '1':
+                    grid[nr][nc] = '0'
+                    q.append((nr, nc))
+                    
+    for r in range(rows):
+        for c in range(cols):
+            if grid[r][c] == '1':
+                islands += 1
+                bfs(r, c)
+    return islands`
+      },
+      {
+        num: 12,
+        title: "Kth Largest Element in an Array / Stream",
+        tag: "Heap / Priority Queue",
+        oscarContext: "Emergency telemedicine triage: dynamically identifying the K-th highest priority patient risk score in real time.",
+        thought: "1. Maintain a min-heap of size K.\n2. Push each score onto min-heap. If size > K, pop minimum.\n3. Heap top is the K-th largest score.",
+        timeComp: "O(N log K)",
+        spaceComp: "O(K)",
+        code: `from typing import List
+import heapq
+
+def find_kth_largest(nums: List[int], k: int) -> int:
+    min_heap = []
+    for num in nums:
+        heapq.heappush(min_heap, num)
+        if len(min_heap) > k:
+            heapq.heappop(min_heap)
+    return min_heap[0]`
+      },
+      {
+        num: 13,
+        title: "Implement Trie (Prefix Tree for Drug & Provider Autocomplete)",
+        tag: "Design / Trees / Strings",
+        oscarContext: "Oscar member search bar: instant typeahead autocomplete for doctor specialties, medication names, and provider facilities.",
+        thought: "1. TrieNode has children dict and is_end boolean.\n2. insert(word): traverse character by character, creating nodes as needed.\n3. search(word): traverse; return False if char missing, else return is_end.\n4. starts_with(prefix): traverse; return True if all prefix chars exist.",
+        timeComp: "O(L) per operation",
+        spaceComp: "O(Chars * Alphabet)",
+        code: `class TrieNode:
+    def __init__(self):
+        self.children = {}
+        self.is_end = False
+
+class Trie:
+    def __init__(self):
+        self.root = TrieNode()
+
+    def insert(self, word: str) -> None:
+        curr = self.root
+        for ch in word:
+            if ch not in curr.children:
+                curr.children[ch] = TrieNode()
+            curr = curr.children[ch]
+        curr.is_end = True
+
+    def search(self, word: str) -> bool:
+        curr = self.root
+        for ch in word:
+            if ch not in curr.children:
+                return False
+            curr = curr.children[ch]
+        return curr.is_end
+
+    def starts_with(self, prefix: str) -> bool:
+        curr = self.root
+        for ch in prefix:
+            if ch not in curr.children:
+                return False
+            curr = curr.children[ch]
+        return True`
+      },
+      {
+        num: 14,
+        title: "Trapping Rain Water (Resource Cushion Modeling)",
+        tag: "Two Pointers",
+        oscarContext: "Hospital bed reservation and resource surge capacity allocation between seasonal peaks.",
+        thought: "1. Two pointers left = 0, right = N-1. Track left_max and right_max.\n2. If height[left] < height[right]: if height[left] >= left_max, update left_max; else trapped += left_max - height[left], advance left.\n3. Else: if height[right] >= right_max, update right_max; else trapped += right_max - height[right], advance right.",
+        timeComp: "O(N)",
+        spaceComp: "O(1)",
+        code: `from typing import List
+
+def trap_rain_water(height: List[int]) -> int:
+    if not height:
+        return 0
+    left, right = 0, len(height) - 1
+    left_max, right_max = 0, 0
+    total = 0
+    
+    while left < right:
+        if height[left] < height[right]:
+            if height[left] >= left_max:
+                left_max = height[left]
+            else:
+                total += left_max - height[left]
+            left += 1
+        else:
+            if height[right] >= right_max:
+                right_max = height[right]
+            else:
+                total += right_max - height[right]
+            right -= 1
+    return total`
+      },
+      {
+        num: 15,
+        title: "Longest Substring Without Repeating Characters",
+        tag: "Sliding Window / Hash Map",
+        oscarContext: "Parsing diagnostic claim telemetry tokens and stream verification without duplicate identifiers.",
+        thought: "1. Sliding window [left, right] with hash map storing most recent index of each character.\n2. If char seen at index >= left, jump left to seen[char] + 1.\n3. Update seen[char] = right, calculate max window length.",
+        timeComp: "O(N)",
+        spaceComp: "O(min(N, M))",
+        code: `def length_of_longest_substring(s: str) -> int:
+    char_map = {}
+    left = 0
+    max_len = 0
+    
+    for right, char in enumerate(s):
+        if char in char_map and char_map[char] >= left:
+            left = char_map[char] + 1
+        char_map[char] = right
+        max_len = max(max_len, right - left + 1)
+        
+    return max_len`
+      }
+    ];
+
+    // DATA FOR PART 3: SYSTEM DESIGN (5 HLD + 5 LLD)
+    const part3Systems = [
+      {
+        num: 1,
+        type: "HLD",
+        title: "Real-Time Claims Adjudication & Processing Engine",
+        tag: "Core Healthcare FinTech",
+        reqs: "• Functional: Ingest EDI 837 / JSON claims, check eligibility, calculate deductible/coinsurance, generate EDI 835 remittance.\n• Non-Functional: Zero data loss, sub-2s latency, 10,000 claims/sec peak, strict idempotency, HIPAA audit logging.",
+        diagram: `[Hospital / Provider] ──► (EDI 837 / HTTPS + Idempotency-Key)
+           │
+           ▼
+   [API Gateway / WAF] (Rate Limiter, mTLS, JWT)
+           │
+           ▼
+ [Claims Ingestion Service] (FastAPI / Go)
+           │
+           │ Atomic write to DB & Outbox Table
+           ▼
+   [Transactional Outbox] ──► Debezium / CDC ──► [Kafka: 'claims-submitted']
+                                                           │
+                                                           ▼
+   ┌───────────────────────────────────────────────────────────────┐
+   │ Claims Orchestrator Engine (State Machine Worker Fleet)       │
+   └───────┬───────────────────────────────┬───────────────────────┘
+           │                               │
+           ▼ (Check Member Status)         ▼ (Check Clinical Rules)
+   [Eligibility Service]          [Policy Rules Engine]
+     (Redis Cache -> RDS)           (Drools / Python Rules)
+           │                               │
+           └───────────────┬───────────────┘
+                           │
+                           ▼ (Calculate Member Deductible)
+                 [Accumulator Service]
+              (PostgreSQL Locks / Redis Redlock)
+                           │
+                           ▼
+              [Kafka: 'claims-adjudicated']
+                           │
+           ┌───────────────┴───────────────┐
+           ▼                               ▼
+   [Notification Service]        [Remittance Service]
+    (Push to Member App)          (Generates EDI 835 Payment)`,
+        deepDive: "<b>Idempotency & Concurrency:</b> Claims utilize a client-provided Idempotency-Key stored in Redis with 24-hour TTL. To prevent race conditions when two claims simultaneously deduct from a member's $3,000 deductible, the Accumulator Service partitions Kafka messages by <code>member_id</code>, ensuring strict serial execution per member."
+      },
+      {
+        num: 2,
+        type: "HLD",
+        title: "In-Network Doctor & Provider Search Directory",
+        tag: "Geospatial & Search",
+        reqs: "• Functional: Typeahead autocomplete for doctor/specialty, radius search (e.g. 10 miles of NYC), filter by in-network tier, real-time availability slots.\n• Non-Functional: Search latency < 100ms, 99.99% read availability, 5M members, 500k providers nationwide.",
+        diagram: `[Member Mobile App / Web] ──► GET /api/v1/providers/search?lat=40.72&lon=-74.00&specialty=cardio
+           │
+           ▼
+    [Cloudflare CDN] (Static metadata & taxonomies)
+           │
+           ▼
+     [API Gateway]
+           │
+    ┌──────┴─────────────────────────────────┐
+    ▼                                        ▼
+[Typeahead Autocomplete]            [Provider Search Service]
+  (Redis Trie / Memory)               (FastAPI / Python)
+                                             │
+                       ┌─────────────────────┴──────────────────────┐
+                       │ Read Geo Search                            │ Read Realtime Slots
+                       ▼                                            ▼
+           [Elasticsearch / OpenSearch]                 [Appointment Service]
+            - Geo-distance querying                       (Redis / PostgreSQL)
+            - BM25 Relevancy & Synonyms
+            - Filters: in-network tier, language
+                       ▲
+                       │ CDC via Debezium
+                       │
+              [Kafka Topic: 'provider-updates']
+                       ▲
+                       │
+        [Provider Credentialing Master DB]`,
+        deepDive: "<b>Geospatial Indexing:</b> Elasticsearch maps provider coordinates using <code>geo_point</code>. Queries use <code>geo_distance</code> filter combined with multi-match BM25 relevance scores. High-volume queries are cached in Redis with a 15-minute TTL."
+      },
+      {
+        num: 3,
+        type: "HLD",
+        title: "'Doctor in the Family' Virtual Telehealth Platform",
+        tag: "Real-time Streaming & Telemedicine",
+        reqs: "• Functional: Member virtual urgent care request, dynamic intake questionnaire, matchmaking to state-licensed doctor, WebRTC audio/video consultation, post-visit clinical notes.\n• Non-Functional: Video latency < 200ms, matching latency < 3 min, HIPAA encrypted storage.",
+        diagram: `[Member App]                                  [Doctor Web Portal]
+     │                                                │
+     ├────────────► [API Gateway / WAF] ◄─────────────┤
+     │                                                │
+     ▼                                                ▼
+[Triage & Questionnaire]                     [Provider Session Service]
+  (FastAPI + LLM Symptom Triage)               (State License Registry)
+     │                                                │
+     ▼                                                ▼
+ ┌─────────────────────────────────────────────────────────────┐
+ │ Matchmaking & Dispatch Engine (Redis Sorted Sets + Pub/Sub)  │
+ └──────────────────────────────┬──────────────────────────────┘
+                                │ Match Created
+                                ▼
+                   [WebRTC Signaling Server]
+                    (Node.js / WebSockets)
+                                │
+          ┌─────────────────────┴─────────────────────┐
+          │ Peer-to-Peer Encrypted Media Channel      │
+          ▼                                           ▼
+   [Member Video Feed] <═════════════════════> [Doctor Video Feed]
+          │                                           │
+          └─────────────────────┬─────────────────────┘
+                                │ Call Terminated
+                                ▼
+                     [Care Summary Service]
+               (PostgreSQL + S3 Encrypted PHI)`,
+        deepDive: "<b>State Medical Licensing Queue:</b> Doctors can only consult patients located in states where they hold active licenses. Redis maintains per-state priority queues (<code>queue:waiting_patients:NY</code>) sorted by arrival timestamp. Doctors atomically claim patients using <code>ZPOPMIN</code>."
+      },
+      {
+        num: 4,
+        type: "HLD",
+        title: "Real-Time Pharmacy Benefit & Prescription Gateway",
+        tag: "High-Throughput PBM Verification",
+        reqs: "• Functional: Real-time prescription benefit check, formulary tier lookup, drug-drug interaction alerts, copay determination.\n• Non-Functional: Hard p99 latency SLA < 800ms, 99.999% availability, 5,000 req/sec peak, multi-region active-active.",
+        diagram: `[Pharmacy POS (CVS / Walgreens)]
+           │ (NCPDP Protocol / REST)
+           ▼
+     [B2B Partner Gateway] (mTLS + HSM)
+           │
+           ▼
+ ┌─────────────────────────────────────────────────────────────┐
+ │ Pharmacy Adjudication Service (FastAPI / Go)                 │
+ └───────┬───────────────────────────────┬─────────────────────┘
+         │                               │
+         │ (1) In-Memory Formulary Check │ (2) Member Deductible
+         ▼                               ▼
+ [Drug Formulary Cache]           [Member Plan Cache]
+   (Redis Cluster / In-Memory)      (Redis Read Replica)
+         │                               │
+         └───────────────┬───────────────┘
+                         │
+                         ▼ (3) Safety Screening (<150ms)
+            [Drug Interaction Service] (Graph DB / Neo4j)
+                         │
+                         ▼ (4) Immediate Copay Result (<400ms)
+              [NCPDP Response Packet]
+                         │
+                         ▼ (5) Asynchronous Ledger Journaling
+           [Kafka Topic: 'rx-claims-committed'] ──► [Financial Ledger DB]`,
+        deepDive: "<b>Sub-800ms SLA & Circuit Breaker:</b> Formulary tiers are cached in worker process memory (sub-2ms lookup). If the external Drug Interaction Service latency exceeds 200ms, a circuit breaker trips to approve the medication with a soft warning, ensuring patient safety is never compromised by external timeouts."
+      },
+      {
+        num: 5,
+        type: "HLD",
+        title: "Member Health Records Timeline & OCR Document Pipeline",
+        tag: "Asynchronous ETL & Document Parsing",
+        reqs: "• Functional: Ingest medical bills, lab results, and EMR PDFs via S3, run OCR, extract ICD-10/CPT codes, index into interactive member timeline.\n• Non-Functional: Process documents in < 60s, bursty uploads, PHI encryption at rest with tenant KMS keys.",
+        diagram: `[Member Mobile / Web] ──► Request Pre-signed S3 Upload URL
+           │
+           ▼
+    [AWS S3 Quarantine Bucket] (Encrypted SSE-KMS)
+           │
+           │ S3 Event 'ObjectCreated'
+           ▼
+     [AWS SQS Queue] (FIFO + Dead Letter Queue)
+           │
+           ▼
+ ┌─────────────────────────────────────────────────────────────┐
+ │ OCR & Extraction Worker Fleet (FastAPI / Celery)             │
+ │  - Step 1: ClamAV Virus & File Signature Scan               │
+ │  - Step 2: OpenCV Deskew & Contrast Normalization           │
+ │  - Step 3: Textract / Tesseract OCR Text Extraction         │
+ │  - Step 4: Medical Named Entity Recognition (NER / LLM)     │
+ └──────────────────────────────┬──────────────────────────────┘
+                                │
+                                ▼
+           [Kafka Topic: 'medical-records-processed']
+                                │
+            ┌───────────────────┴───────────────────┐
+            ▼                                       ▼
+ [PostgreSQL Timeline DB]               [Elasticsearch Index]
+   - Structured ICD-10 / CPT              - Full-text clinical notes
+   - Timestamps & Provider metadata       - Autocomplete timeline search`,
+        deepDive: "<b>S3 Pre-Signed Uploads:</b> Application servers never receive multipart file streams directly, eliminating memory exhaustion. Files land in an encrypted quarantine S3 bucket before virus scanning, OCR parsing, and database indexing."
+      },
+      {
+        num: 6,
+        type: "LLD",
+        title: "Insurance Deductible & Out-of-Pocket Max Calculator",
+        tag: "Strategy & Chain of Responsibility",
+        reqs: "Model how a claim bill is split between member and insurer, applying OOP maximums, copays, deductibles, and coinsurance.",
+        diagram: `  [ClaimContext] (bill, service_type, deductible_limit, current_deductible, oop_max, current_oop)
+         │
+         ▼
+  <<interface>> AdjudicationRule
+    ├── OutOfPocketCapCheckRule (if current_oop >= max, insurer pays 100%)
+    ├── CopayRule (applies flat copay up to remaining bill/oop)
+    └── DeductibleAndCoinsuranceRule (applies remaining deductible then % coinsurance)`,
+        deepDive: "<b>Python Implementation:</b> Uses <code>decimal.Decimal</code> to prevent floating-point rounding errors in financial transactions. Rules are chained dynamically based on the member's insurance tier.",
+        code: `from decimal import Decimal
+from abc import ABC, abstractmethod
+
+class ClaimContext:
+    def __init__(self, bill: Decimal, deductible_limit: Decimal, current_deductible: Decimal,
+                 oop_max: Decimal, current_oop: Decimal, copay: Decimal, coinsurance_rate: Decimal):
+        self.bill = bill
+        self.remaining_bill = bill
+        self.deductible_limit = deductible_limit
+        self.current_deductible = current_deductible
+        self.oop_max = oop_max
+        self.current_oop = current_oop
+        self.copay = copay
+        self.coinsurance_rate = coinsurance_rate
+        self.member_pays = Decimal("0.00")
+        self.insurer_pays = Decimal("0.00")
+
+class AdjudicationRule(ABC):
+    def __init__(self):
+        self.next_rule = None
+
+    def set_next(self, rule):
+        self.next_rule = rule
+        return rule
+
+    @abstractmethod
+    def apply(self, ctx: ClaimContext):
+        pass
+
+class OutOfPocketCapRule(AdjudicationRule):
+    def apply(self, ctx: ClaimContext):
+        if ctx.current_oop >= ctx.oop_max:
+            ctx.insurer_pays = ctx.bill
+            ctx.member_pays = Decimal("0.00")
+            ctx.remaining_bill = Decimal("0.00")
+            return
+        if self.next_rule:
+            self.next_rule.apply(ctx)
+
+class DeductibleCoinsuranceRule(AdjudicationRule):
+    def apply(self, ctx: ClaimContext):
+        rem_ded = max(Decimal("0.00"), ctx.deductible_limit - ctx.current_deductible)
+        charge_ded = min(ctx.remaining_bill, rem_ded)
+        ctx.member_pays += charge_ded
+        ctx.remaining_bill -= charge_ded
+        
+        if ctx.remaining_bill > 0:
+            coins_member = ctx.remaining_bill * ctx.coinsurance_rate
+            rem_oop = ctx.oop_max - ctx.current_oop - ctx.member_pays
+            actual_coins = min(coins_member, rem_oop)
+            ctx.member_pays += actual_coins
+            ctx.insurer_pays += (ctx.remaining_bill - actual_coins)
+            ctx.remaining_bill = Decimal("0.00")`
+      },
+      {
+        num: 7,
+        type: "LLD",
+        title: "Thread-Safe Sliding Window Rate Limiter",
+        tag: "Concurrency & Data Structures",
+        reqs: "Limit requests per client to N calls per window_seconds with thread safety and automatic eviction.",
+        diagram: `Client Request ──► SlidingWindowRateLimiter.is_allowed(client_id)
+                         │ (Acquire Lock)
+                         ▼
+             client_windows[client_id] -> deque of timestamps
+                         │
+             Evict timestamps older than (current_time - window)
+                         │
+             if len(window) < max_requests:
+                 append current_time, return True
+             else:
+                 return False`,
+        deepDive: "<b>Concurrency:</b> Protected by Python's <code>threading.Lock</code>. Timestamps are kept in a double-ended queue (deque) allowing O(1) pops from the left.",
+        code: `import time
+import threading
+from collections import deque
+
+class SlidingWindowRateLimiter:
+    def __init__(self, max_requests: int, window_seconds: float):
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        self.client_windows = {}
+        self.lock = threading.Lock()
+
+    def is_allowed(self, client_id: str) -> bool:
+        now = time.time()
+        with self.lock:
+            if client_id not in self.client_windows:
+                self.client_windows[client_id] = deque()
+            window = self.client_windows[client_id]
+            
+            while window and window[0] <= now - self.window_seconds:
+                window.popleft()
+                
+            if len(window) < self.max_requests:
+                window.append(now)
+                return True
+            return False`
+      },
+      {
+        num: 8,
+        type: "LLD",
+        title: "Provider Appointment Scheduling & Conflict Engine",
+        tag: "Interval Checks & Concurrency",
+        reqs: "Manage virtual care bookings, detecting overlaps and locking schedules concurrently.",
+        diagram: `ScheduleManager.book(provider_id, member_id, new_slot)
+           │ (Acquire Lock)
+           ▼
+    Check all provider's existing slots for slot.overlaps(new_slot)
+      - if overlap -> return False (Conflict)
+      - else -> append appointment, return True`,
+        deepDive: "<b>Interval Overlap Logic:</b> Two slots A and B overlap if and only if <code>A.start < B.end and B.start < A.end</code>. Thread-safe execution guarantees zero double bookings.",
+        code: `from datetime import datetime
+import threading
+
+class TimeSlot:
+    def __init__(self, start: datetime, end: datetime):
+        if start >= end:
+            raise ValueError("Start must precede end.")
+        self.start = start
+        self.end = end
+
+    def overlaps(self, other: 'TimeSlot') -> bool:
+        return self.start < other.end and other.start < self.end
+
+class ScheduleManager:
+    def __init__(self):
+        self._schedules = {}
+        self._lock = threading.Lock()
+
+    def book(self, provider_id: str, member_id: str, slot: TimeSlot) -> bool:
+        with self._lock:
+            if provider_id not in self._schedules:
+                self._schedules[provider_id] = []
+            for appt in self._schedules[provider_id]:
+                if appt['slot'].overlaps(slot):
+                    return False
+            self._schedules[provider_id].append({'member': member_id, 'slot': slot})
+            return True`
+      },
+      {
+        num: 9,
+        type: "LLD",
+        title: "Extensible Claims Processing State Machine",
+        tag: "State Pattern",
+        reqs: "Manage valid transitions of a medical claim: SUBMITTED -> ELIGIBILITY_VERIFIED -> ADJUDICATED -> PAID.",
+        diagram: `[SubmittedState] ──► verify_eligibility() ──► [EligibilityVerifiedState]
+                                                        │
+                                                        ▼ adjudicate()
+                                                [AdjudicatedState]
+                                                        │
+                                                        ▼ pay()
+                                                  [PaidState]`,
+        deepDive: "<b>State Pattern:</b> Each state implements a common interface. Invalid transitions raise custom exceptions, ensuring claims never bypass required validation stages.",
+        code: `from abc import ABC, abstractmethod
+
+class ClaimState(ABC):
+    @abstractmethod
+    def verify(self, claim): pass
+    @abstractmethod
+    def adjudicate(self, claim): pass
+    @abstractmethod
+    def pay(self, claim): pass
+
+class SubmittedState(ClaimState):
+    def verify(self, claim):
+        print("Verified eligibility.")
+        claim.state = VerifiedState()
+    def adjudicate(self, claim): raise Exception("Cannot adjudicate unverified claim.")
+    def pay(self, claim): raise Exception("Cannot pay unverified claim.")
+
+class VerifiedState(ClaimState):
+    def verify(self, claim): print("Already verified.")
+    def adjudicate(self, claim):
+        print("Adjudicating claim.")
+        claim.state = AdjudicatedState()
+    def pay(self, claim): raise Exception("Cannot pay unadjudicated claim.")
+
+class AdjudicatedState(ClaimState):
+    def verify(self, claim): print("Already verified.")
+    def adjudicate(self, claim): print("Already adjudicated.")
+    def pay(self, claim):
+        print("Disbursing remittance.")
+        claim.state = PaidState()
+
+class PaidState(ClaimState):
+    def verify(self, claim): raise Exception("Terminal state.")
+    def adjudicate(self, claim): raise Exception("Terminal state.")
+    def pay(self, claim): print("Already paid.")
+
+class Claim:
+    def __init__(self, cid: str):
+        self.cid = cid
+        self.state = SubmittedState()`
+      },
+      {
+        num: 10,
+        type: "LLD",
+        title: "Thread-Safe In-Memory Cache with TTL & Eviction",
+        tag: "Read-Write Lock & Eviction",
+        reqs: "In-process cache with maximum capacity, read/write locking, TTL timestamp expiration, and oldest-key eviction.",
+        diagram: `ThreadSafeTTLCache
+   ├── _store: dict of key -> CacheItem(value, expires_at)
+   ├── _lock: threading.RLock()
+   ├── get(key): check expiry, evict if expired, return value
+   └── set(key, value, ttl): evict expired if full, store new CacheItem`,
+        deepDive: "<b>TTL Expiration:</b> Uses lazy expiration on get() and active purge of expired items on set() when capacity is reached.",
+        code: `import time
+import threading
+
+class CacheItem:
+    def __init__(self, value, ttl: float = None):
+        self.value = value
+        self.expires_at = (time.time() + ttl) if ttl else None
+
+    def is_expired(self) -> bool:
+        return self.expires_at is not None and time.time() > self.expires_at
+
+class ThreadSafeTTLCache:
+    def __init__(self, max_size: int = 1000):
+        self.max_size = max_size
+        self._store = {}
+        self._lock = threading.RLock()
+
+    def get(self, key: str):
+        with self._lock:
+            if key not in self._store:
+                return None
+            item = self._store[key]
+            if item.is_expired():
+                del self._store[key]
+                return None
+            return item.value
+
+    def set(self, key: str, value, ttl: float = None):
+        with self._lock:
+            if len(self._store) >= self.max_size and key not in self._store:
+                # Evict expired keys first
+                expired = [k for k, v in self._store.items() if v.is_expired()]
+                for k in expired: del self._store[k]
+                if len(self._store) >= self.max_size:
+                    del self._store[next(iter(self._store))]
+            self._store[key] = CacheItem(value, ttl)`
+      }
+    ];
+
+    // RENDER FUNCTIONS
+    function renderPart1() {
+      const container = document.getElementById("questionsContainer");
+      container.innerHTML = part1Questions.map(q => `
+        <div class="item-card" data-category="${q.category}" data-search="${(q.title + ' ' + q.s + ' ' + q.a).toLowerCase()}">
+          <div class="card-header" onclick="toggleCard(this)">
+            <div class="card-title-group">
+              <div class="badge-num">Q${q.num}</div>
+              <div class="card-title-text">
+                <h3>${q.title}</h3>
+                <span class="tag-category">${q.tag}</span>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap: 10px;">
+              <input type="checkbox" class="read-checkbox" onclick="event.stopPropagation(); updateProgress()" title="Mark as ready">
+              <span class="chevron-icon">▼</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="star-grid">
+              <div class="star-segment">
+                <span class="star-badge badge-s">SITUATION</span>
+                <div>${q.s}</div>
+              </div>
+              <div class="star-segment">
+                <span class="star-badge badge-t">TASK</span>
+                <div>${q.t}</div>
+              </div>
+              <div class="star-segment">
+                <span class="star-badge badge-a">ACTION</span>
+                <div>${q.a}</div>
+              </div>
+              <div class="star-segment">
+                <span class="star-badge badge-r">RESULT</span>
+                <div>${q.r}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderPart2() {
+      const container = document.getElementById("dsaContainer");
+      container.innerHTML = part2DSA.map(p => `
+        <div class="item-card" data-category="dsa" data-search="${(p.title + ' ' + p.oscarContext + ' ' + p.thought).toLowerCase()}">
+          <div class="card-header" onclick="toggleCard(this)">
+            <div class="card-title-group">
+              <div class="badge-num">#${p.num}</div>
+              <div class="card-title-text">
+                <h3>${p.title}</h3>
+                <span class="tag-category">${p.tag}</span>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap: 10px;">
+              <input type="checkbox" class="read-checkbox" onclick="event.stopPropagation(); updateProgress()" title="Mark as ready">
+              <span class="chevron-icon">▼</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="alert-box">
+              <strong>Oscar Health Context:</strong> ${p.oscarContext}
+            </div>
+            <div style="margin: 1rem 0;">
+              <strong style="color: var(--oscar-teal);">Thought Process:</strong>
+              <div style="white-space: pre-line; margin-top: 4px;">${p.thought}</div>
+            </div>
+            <div class="complexity-bar">
+              <div class="complexity-pill">Time: <span>${p.timeComp}</span></div>
+              <div class="complexity-pill">Space: <span>${p.spaceComp}</span></div>
+            </div>
+            <div class="code-wrapper">
+              <div class="code-header">
+                <span>python3</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy Code</button>
+              </div>
+              <pre><code>${escapeHtml(p.code)}</code></pre>
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderPart3() {
+      const container = document.getElementById("systemDesignContainer");
+      container.innerHTML = part3Systems.map(s => `
+        <div class="item-card" data-category="${s.type.toLowerCase()}" data-search="${(s.title + ' ' + s.reqs + ' ' + s.deepDive).toLowerCase()}">
+          <div class="card-header" onclick="toggleCard(this)">
+            <div class="card-title-group">
+              <div class="badge-num" style="${s.type === 'HLD' ? 'background:rgba(14,165,233,0.2);color:#38bdf8;' : 'background:rgba(139,92,246,0.2);color:#a78bfa;'}">${s.type} ${s.num}</div>
+              <div class="card-title-text">
+                <h3>${s.title}</h3>
+                <span class="tag-category">${s.tag}</span>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap: 10px;">
+              <input type="checkbox" class="read-checkbox" onclick="event.stopPropagation(); updateProgress()" title="Mark as ready">
+              <span class="chevron-icon">▼</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div style="margin-bottom: 1rem;">
+              <strong style="color: var(--oscar-teal);">Requirements & Scope:</strong>
+              <div style="white-space: pre-line; margin-top: 4px;">${s.reqs}</div>
+            </div>
+            <div style="margin: 1rem 0;">
+              <strong style="color: var(--oscar-amber);">Architecture Diagram & Data Flow:</strong>
+              <div class="diagram-pre">${escapeHtml(s.diagram)}</div>
+            </div>
+            <div style="margin: 1rem 0;">
+              ${s.deepDive}
+            </div>
+            ${s.code ? `
+              <div class="code-wrapper">
+                <div class="code-header">
+                  <span>python3 (LLD Implementation)</span>
+                  <button class="copy-btn" onclick="copyCode(this)">Copy Code</button>
+                </div>
+                <pre><code>${escapeHtml(s.code)}</code></pre>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function toggleCard(headerEl) {
+      headerEl.parentElement.classList.toggle("open");
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function copyCode(btn) {
+      const code = btn.closest(".code-wrapper").querySelector("pre code").innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const originalText = btn.innerText;
+        btn.innerText = "Copied!";
+        setTimeout(() => btn.innerText = originalText, 1500);
+      });
+    }
+
+    function updateProgress() {
+      const allCheckboxes = document.querySelectorAll(".read-checkbox");
+      const checked = document.querySelectorAll(".read-checkbox:checked");
+      const pct = allCheckboxes.length > 0 ? (checked.length / allCheckboxes.length) * 100 : 0;
+      document.getElementById("topProgress").style.width = pct + "%";
+      document.getElementById("readCounter").innerText = `${checked.length} / ${allCheckboxes.length} Ready`;
+    }
+
+    function handleSearch() {
+      const query = document.getElementById("globalSearch").value.toLowerCase().trim();
+      document.querySelectorAll(".item-card").forEach(card => {
+        const text = card.getAttribute("data-search") || "";
+        if (!query || text.includes(query)) {
+          card.style.display = "block";
+        } else {
+          card.style.display = "none";
+        }
+      });
+    }
+
+    function filterByTag(tag) {
+      document.querySelectorAll(".cat-pill").forEach(p => p.classList.remove("active"));
+      event.target.classList.add("active");
+      
+      document.querySelectorAll(".item-card").forEach(card => {
+        const cat = card.getAttribute("data-category");
+        if (tag === 'all' || cat === tag) {
+          card.style.display = "block";
+        } else {
+          card.style.display = "none";
+        }
+      });
+    }
+
+    // INITIALIZE
+    window.addEventListener("DOMContentLoaded", () => {
+      checkAuth();
+      renderPart1();
+      renderPart2();
+      renderPart3();
+      updateProgress();
+    });
+  </script>
+</body>
+</html>
