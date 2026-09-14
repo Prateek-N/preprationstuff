@@ -4,6 +4,7 @@ export default {
   'aryan-bigcommerce-prep': 'Aryan Agrawal BigCommerce Prep',
   'dhwani-eq-bank-prep': 'Dhwani Vora EQ Bank Prep',
   'sampath-cid-prep': 'Sampath Thota CID Data Analyst Prep',
+  'vijaya-fintech-ops-prep': 'Vijaya Krishna Ande FinTech Ops Prep',
   'qualcomm-prep-material': { display: 'hidden' },
   'natera-ai-solutions-prep': { display: 'hidden' },
   'sirisha-genai-prep': { display: 'hidden' },

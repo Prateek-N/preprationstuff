@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next build",
     "postbuild": "pagefind --site .next/server/app --output-path public/_pagefind",
     "start": "next start"
   },
@@ -28,6 +28,7 @@
     "react-dom": "19.2.7"
   },
   "devDependencies": {
+    "cross-env": "^10.1.0",
     "pagefind": "^1.5.2"
   }
 }
