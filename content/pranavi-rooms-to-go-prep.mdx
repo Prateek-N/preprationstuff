@@ -63,11 +63,11 @@ A dedicated **AI Orchestration Worker Pool** consumes the task. It retrieves the
 **Answer:**  
 Generative image diffusion models inherently introduce latency (typically 5 to 15 seconds), which presents a major drop-off risk if treated as a generic blocking spinner. My strategy attacks latency across three vectors: **perception management, progressive delivery, and infrastructure optimization**.
 
-First, in the user interface, we replace ambiguous spinners with an **explicitly time-boxed, micro-animated loading experience**. In my prototype, the copy reads *"Placing the Azurelee Cream Sofa in your room... usually takes a few seconds."* We pair this with progressive status indicators (e.g., *"Analyzing room lighting..."* $\rightarrow$ *"Matching perspective..."* $\rightarrow$ *"Compositing sofa..."*). In cognitive UX research, staged feedback dramatically compresses perceived wait times, keeping users engaged up to 15 seconds without bounce.
+First, in the user interface, we replace ambiguous spinners with an **explicitly time-boxed, micro-animated loading experience**. In my prototype, the copy reads *"Placing the Azurelee Cream Sofa in your room... usually takes a few seconds."* We pair this with progressive status indicators (e.g., *"Analyzing room lighting..."* → *"Matching perspective..."* → *"Compositing sofa..."*). In cognitive UX research, staged feedback dramatically compresses perceived wait times, keeping users engaged up to 15 seconds without bounce.
 
-Second, at the transport layer, we eliminate mobile payload bottlenecks. Mobile cameras capture 12–48 megapixel images (5–15MB). Uploading raw files over cellular 5G/LTE introduces 4–8 seconds of latency before model inference even begins. The native app uses on-device image processing to crop and downscale the room photo to $1024 \times 1024$ resolution at 80% quality, cutting upload times to under 600ms. 
+Second, at the transport layer, we eliminate mobile payload bottlenecks. Mobile cameras capture 12–48 megapixel images (5–15MB). Uploading raw files over cellular 5G/LTE introduces 4–8 seconds of latency before model inference even begins. The native app uses on-device image processing to crop and downscale the room photo to 1024 × 1024 resolution at 80% quality, cutting upload times to under 600ms. 
 
-Third, on the backend, we implement pre-warmed connections and model concurrency. For the pilot, we evaluate low-latency foundation models like **Gemini 2.5 Flash Image**, benchmarking p50 generation latency $\le 8\text{s}$ and p90 $\le 20\text{s}$. If generation ever exceeds 12 seconds, the client displays an engaging furniture tip or a subtle ambient shimmer rather than a stalled screen. Finally, because room photos are persisted, subsequent visualizations for other SKUs skip the photo capture step entirely, saving 10+ seconds of customer effort.
+Third, on the backend, we implement pre-warmed connections and model concurrency. For the pilot, we evaluate low-latency foundation models like **Gemini 2.5 Flash Image**, benchmarking p50 generation latency ≤ 8s and p90 ≤ 20s. If generation ever exceeds 12 seconds, the client displays an engaging furniture tip or a subtle ambient shimmer rather than a stalled screen. Finally, because room photos are persisted, subsequent visualizations for other SKUs skip the photo capture step entirely, saving 10+ seconds of customer effort.
 
 ---
 
@@ -75,7 +75,7 @@ Third, on the backend, we implement pre-warmed connections and model concurrency
 **Category:** Model Evaluation & Phase 0 Discovery  
 **Answer:**  
 In Phase 0, we do not commit to a single proprietary or vendor model in advance; we run a structured two-week benchmarking spike comparing three leading generative vision architectures:
-1. **Google Gemini 2.5 Flash Image:** Engineered specifically for multi-image fusion, multimodal reasoning, and ultra-fast inference. It exhibits strong spatial awareness and native lighting adjustment at competitive per-call API pricing ($\le \$0.05 - \$0.10$).
+1. **Google Gemini 2.5 Flash Image:** Engineered specifically for multi-image fusion, multimodal reasoning, and ultra-fast inference. It exhibits strong spatial awareness and native lighting adjustment at competitive per-call API pricing ($\le \$0.05 - \$0.10).
 2. **OpenAI GPT Image / DALL-E 3 Editing API:** Known for photorealistic texture preservation, prompt fidelity, and natural shadow rendering, though typically with higher latency.
 3. **Open-Source ControlNet + Stable Diffusion XL (Inpainting) hosted on AWS SageMaker:** Gives us complete control over weights, zero vendor lock-in, and custom fine-tuning capabilities, but carries fixed infrastructure hosting costs and Cold-Start GPU management.
 
@@ -110,7 +110,7 @@ In e-commerce, **product fidelity is legally and commercially non-negotiable**. 
 
 To enforce strict fidelity, we employ three architectural guardrails:
 1. **Reference Image Conditioning & Zero-Modification Penalties:** In our API payload, the catalog image is injected as an immutable reference asset. We configure prompt conditioning and structural parameters (such as **ControlNet Canny edge detection** or Depth maps if using custom endpoints) that lock the furniture's external geometry, button tufting, and cushion proportions. The model is given permission to adjust *ambient illumination, shadows, and perspective skew*, but explicitly forbidden from mutating product geometry or color hex palettes.
-2. **Post-Generation Feature Parity Verification:** In our automated pipeline, we compute an image similarity metric (such as **DINOv2** feature cosine similarity or SSIM on the isolated product bounding box) comparing the generated item against the catalog original. If the color delta ($\Delta E$) or structural similarity falls below a strict threshold (e.g., $>15\%$ deviation), the generation is flagged as a failure and auto-retried with higher fidelity weighting before reaching the user.
+2. **Post-Generation Feature Parity Verification:** In our automated pipeline, we compute an image similarity metric (such as **DINOv2** feature cosine similarity or SSIM on the isolated product bounding box) comparing the generated item against the catalog original. If the color delta (Delta E) or structural similarity falls below a strict threshold (e.g., > 15% deviation), the generation is flagged as a failure and auto-retried with higher fidelity weighting before reaching the user.
 3. **UI Disclaimer & Transparency:** On the Result Screen below the composite, we provide subtle, clear micro-copy: *"AI visual representation. See Product Overview below for exact dimensions and materials."* This manages expectations while preserving the emotional spark of seeing the piece in-room.
 
 ---
@@ -134,7 +134,7 @@ My data governance framework enforces four non-negotiable privacy pillars:
 Compositing quality is directly bound by the quality of input product imagery. A low-resolution, poorly lit photo with harsh studio artifacts or clipped edges will result in a distorted composite. Rooms To Go has tens of thousands of SKUs across living rooms, dining rooms, bedrooms, and patio sets; assuming the entire catalog is immediately ready for generative fusion is an operational trap.
 
 My catalog readiness strategy consists of three phases:
-1. **Merchandising & Creative Audit (Phase 0 Spike):** We partner directly with our internal creative and catalog photography teams to audit existing asset repositories. We establish a **"Visualization-Ready Asset Standard"**: minimum $2000 \times 2000$ resolution, isolated alpha channel cutout (transparent PNG), standardized frontal/three-quarter camera elevation, and neutral studio lighting.
+1. **Merchandising & Creative Audit (Phase 0 Spike):** We partner directly with our internal creative and catalog photography teams to audit existing asset repositories. We establish a **"Visualization-Ready Asset Standard"**: minimum 2000 × 2000 resolution, isolated alpha channel cutout (transparent PNG), standardized frontal/three-quarter camera elevation, and neutral studio lighting.
 2. **Category Prioritization Matrix:** We do not launch across all categories simultaneously. We prioritize categories with high purchase intent, significant visual friction, and standardized camera angles:
    - *Tier 1 (Pilot):* Sofas, Sectionals, and Accent Chairs (High price point, high consideration, clean front/3-quarter studio assets).
    - *Tier 2:* Dining Sets and Coffee Tables (More complex perspective and floor contact points).
@@ -168,8 +168,8 @@ To definitively validate the primary business hypothesis—that the visualizer d
 3. **Metrics Hierarchy & Guardrails:**
    - **Primary Metric:** Order Conversion Rate (Unique purchasing users / Unique users visiting pilot PDPs).
    - **Secondary Metrics:** Add-to-Cart rate, Time-to-Purchase (measuring if it compresses the decision window), and PDP return visits.
-   - **Guardrail Metrics:** Return rate (tracking whether visualized purchases have equal or lower return rates within 60 days of delivery), app crash-free sessions ($\ge 99.8\%$), and checkout funnel drop-off.
-4. **Sample Size & Statistical Power:** Based on baseline mobile conversion rates and traffic on the top 100 living room SKUs, we calculate the required sample size to detect a minimum detectable effect (MDE) of $10\%$ lift with $80\%$ statistical power and $\alpha = 0.05$, running the test for a minimum of two full business cycles (3 to 4 weeks) to eliminate weekend/holiday bias.
+   - **Guardrail Metrics:** Return rate (tracking whether visualized purchases have equal or lower return rates within 60 days of delivery), app crash-free sessions (≥ 99.8%), and checkout funnel drop-off.
+4. **Sample Size & Statistical Power:** Based on baseline mobile conversion rates and traffic on the top 100 living room SKUs, we calculate the required sample size to detect a minimum detectable effect (MDE) of 10% lift with 80% statistical power and alpha = 0.05, running the test for a minimum of two full business cycles (3 to 4 weeks) to eliminate weekend/holiday bias.
 
 ---
 
@@ -190,13 +190,13 @@ Our fault-tolerant error architecture operates at three levels:
 ### Q12: How will you track and optimize the unit economics of generative AI image API calls at scale?
 **Category:** Cost Optimization & Financial Viability  
 **Answer:**  
-Generative AI features can quickly become victims of their own success if unit economics are ignored. If millions of mobile app users trigger un-throttled image synthesis calls costing $\$0.15$ each, infrastructure bills can easily cannibalize e-commerce margins.
+Generative AI features can quickly become victims of their own success if unit economics are ignored. If millions of mobile app users trigger un-throttled image synthesis calls costing $\$0.15 each, infrastructure bills can easily cannibalize e-commerce margins.
 
-My cost control and optimization model targets a hard ceiling of **$\le \$0.10$ per successful composite** through four specific levers:
-1. **Model Selection & Tiered Inference:** In Phase 0, we prioritize cost-efficient vision-fusion APIs. For example, **Google Gemini 2.5 Flash Image** offers multi-modal input processing at roughly $\$0.02 - \$0.05$ per invocation, compared to heavier diffusion endpoints that charge $\$0.10 - \$0.20$.
+My cost control and optimization model targets a hard ceiling of **≤ $0.10 per successful composite** through four specific levers:
+1. **Model Selection & Tiered Inference:** In Phase 0, we prioritize cost-efficient vision-fusion APIs. For example, **Google Gemini 2.5 Flash Image** offers multi-modal input processing at roughly $\$0.02 - \$0.05 per invocation, compared to heavier diffusion endpoints that charge $\$0.10 - \$0.20.
 2. **Intelligent Caching & Deduplication:** If User A visualizes the Azurelee Sofa in "Living Room 1", that generated composite is hashed and cached in S3 and Redis keyed by `hash(room_photo_id + sku_id)`. If the user leaves the page and returns 20 minutes later, we serve the pre-rendered S3 image with zero generative compute cost.
 3. **Session Rate Limiting & Abuse Prevention:** In an unconstrained environment, a curious user might spam the "Retry" button 50 times in a row. We implement token bucket rate limiting on the API gateway: a user is permitted up to 5 generations per 10-minute window per SKU. If exceeded, a friendly prompt suggests saving the look or consulting RTGenie.
-4. **Value-Based ROI Justification:** Furniture is a high average order value (AOV) category ($AOV \approx \$1,500 - \$2,500$ at Rooms To Go). If our visualizer costs $\$0.08$ per generation and requires an average of 3 visualizations per purchasing customer ($\$0.24$ total AI cost), achieving even a modest $0.5\%$ absolute conversion lift on a $\$2,000$ purchase delivers over $\$10$ in gross margin lift per customer—generating an astronomical 40x ROI on AI compute spend.
+4. **Value-Based ROI Justification:** Furniture is a high average order value (AOV) category (AOV ≈ $1,500 - $2,500 at Rooms To Go). If our visualizer costs $\$0.08 per generation and requires an average of 3 visualizations per purchasing customer ($\$0.24 total AI cost), achieving even a modest 0.5% absolute conversion lift on a $\$2,000 purchase delivers over $\$10 in gross margin lift per customer—generating an astronomical 40x ROI on AI compute spend.
 
 ---
 
@@ -219,7 +219,7 @@ Here is the synchronized customer journey:
 Storing millions of high-resolution user-uploaded photographs and generated composites requires disciplined cloud lifecycle management on **AWS** to ensure high availability, compliance, and cost efficiency.
 
 The storage architecture implements the following best practices:
-1. **Direct-to-S3 Pre-Signed Uploads:** To avoid saturating our API servers with multi-megabyte image payloads, the client requests an upload authorization from our backend. The backend returns a short-lived **AWS S3 Pre-Signed URL** with cryptographically enforced content-type (JPEG/WebP) and file size constraints ($\le 5\text{MB}$). The mobile app uploads directly to an S3 Ingestion Bucket via HTTPS.
+1. **Direct-to-S3 Pre-Signed Uploads:** To avoid saturating our API servers with multi-megabyte image payloads, the client requests an upload authorization from our backend. The backend returns a short-lived **AWS S3 Pre-Signed URL** with cryptographically enforced content-type (JPEG/WebP) and file size constraints (≤ 5MB). The mobile app uploads directly to an S3 Ingestion Bucket via HTTPS.
 2. **S3 Quarantine & Event-Driven Processing:** The upload bucket triggers an **AWS Lambda** event upon `s3:ObjectCreated`. The Lambda runs anti-virus scanning (ClamAV) and runs our PII face/document blur filter. Clean images are moved to the primary `rtg-customer-rooms-prod` bucket, while infected or malformed files are dropped into a quarantine bucket with automated alerting.
 3. **S3 Intelligent-Tiering & Lifecycle Policies:** Room photos and saved looks are hot for the first 30–60 days during an active decorating cycle. We apply S3 Lifecycle Rules:
    - Days 1–60: S3 Standard for sub-100ms access.
@@ -238,7 +238,7 @@ In 0-to-1 AI product delivery, scope creep is the most dangerous risk. Teams oft
 1. Entry-point CTA banner on PDP for the top 100 living room pilot SKUs (Sofas & Sectionals).
 2. Native camera capture and photo library upload with on-device compression.
 3. Persistent room photo storage tied to the authenticated user account (saving 1 room photo).
-4. Generative AI compositing pipeline with p90 latency $\le 20\text{s}$.
+4. Generative AI compositing pipeline with p90 latency ≤ 20s.
 5. Result screen with four essential actions: *Add to Cart* (direct conversion), *Save this Look* (session persistence), *Retry* (quality recovery), and *Share* (viral/partner consultation).
 6. My Saved Looks gallery view inside the Account tab.
 7. Core instrumentation tracking conversion lift, retry rates, and upload completion.
@@ -273,15 +273,15 @@ My rollout framework is strictly **staged, gated, and evidence-driven**, ensurin
 
 **Rollout Stages:**
 1. **Internal Dogfooding (Week 1):** 100% release to internal Rooms To Go employees, executive stakeholders, and retail associates to validate end-to-end edge cases across diverse personal home environments.
-2. **Alpha Pilot (Weeks 2–3):** 5% of customer traffic on the pilot SKU set (top 100 living room items). Focus is 100% on **Technical Health Metrics**: crash-free sessions $\ge 99.8\%$, generation success rate $\ge 95\%$, and p90 latency $\le 20\text{s}$.
+2. **Alpha Pilot (Weeks 2–3):** 5% of customer traffic on the pilot SKU set (top 100 living room items). Focus is 100% on **Technical Health Metrics**: crash-free sessions ≥ 99.8%, generation success rate ≥ 95%, and p90 latency ≤ 20s.
 3. **A/B Experimentation Stage (Weeks 4–6):** 50/50 split across pilot SKUs to measure **Primary Value Metrics** (Conversion lift, Add-to-Cart velocity, and return rates).
 4. **General Availability (GA):** 100% release across all pilot SKUs, followed by systematic category expansion as merchandising assets are certified.
 
 **Hard Pause / Rollback Tripwires:**
-- *Tripwire 1 (Technical Stability):* Generation failure rate exceeds $5\%$ over a rolling 2-hour window, or p90 latency spikes above $25$ seconds.
-- *Tripwire 2 (Quality & Frustration):* "Retry" rate exceeds $25\%$ of sessions, indicating that generated composites are persistently inaccurate or unconvincing.
+- *Tripwire 1 (Technical Stability):* Generation failure rate exceeds 5% over a rolling 2-hour window, or p90 latency spikes above $25 seconds.
+- *Tripwire 2 (Quality & Frustration):* "Retry" rate exceeds 25% of sessions, indicating that generated composites are persistently inaccurate or unconvincing.
 - *Tripwire 3 (Commercial Cannibalization):* The A/B test reveals a statistically significant drop in Add-to-Cart rate or an increase in 30-day post-delivery returns on pilot items, signaling that visual artifacts are causing customer disappointment upon delivery.
-- *Tripwire 4 (Cost Threshold):* Cost per composite exceeds $\$0.12$ due to unexpected token/API overages.
+- *Tripwire 4 (Cost Threshold):* Cost per composite exceeds $\$0.12 due to unexpected token/API overages.
 
 If any tripwire is breached, the feature flag is instantly dialed back to 0% with zero app store binary updates required.
 
@@ -305,7 +305,7 @@ To build a deeply collaborative partnership, I employ three principles:
 Allowing unconstrained image uploads introduces potential brand and legal liabilities: users might upload copyrighted material, explicit or NSFW content, offensive imagery, or photos containing severe safety hazards. If a user shares an inappropriate generated composite containing Rooms To Go branding, the reputational fallout can be severe.
 
 We implement a **multi-layered defensive moderation pipeline**:
-1. **Pre-Processing Content Moderation API:** Before the uploaded room photo is passed to the generative compositing engine, it is evaluated by an automated computer vision safety filter (such as **AWS Rekognition / Google Cloud Vision SafeSearch** or OpenAI Moderation API). The filter inspects for Adult, Violent, Hate, and Explicit content. If confidence exceeds $80\%$, the upload is immediately rejected with a polite client error: *"Unable to process this image. Please upload a clear photo of your living room."*
+1. **Pre-Processing Content Moderation API:** Before the uploaded room photo is passed to the generative compositing engine, it is evaluated by an automated computer vision safety filter (such as **AWS Rekognition / Google Cloud Vision SafeSearch** or OpenAI Moderation API). The filter inspects for Adult, Violent, Hate, and Explicit content. If confidence exceeds 80%, the upload is immediately rejected with a polite client error: *"Unable to process this image. Please upload a clear photo of your living room."*
 2. **Model System Prompt Guardrails:** In our prompt construction to the generative API, we inject strict behavioral boundaries: *"Do not render any text, logos, human figures, or alterations to the room other than seamlessly compositing the specified furniture piece into the floor space."*
 3. **Watermarking & Share Controls:** When a user taps *"Share"* to send the composite to a family member, the exported image includes a discreet, tasteful watermark: *"Visualized with Rooms To Go App"*, with metadata stripped to protect home geolocation.
 4. **Automated Audit Logging:** Flagged safety events are logged anonymously for compliance review without exposing raw images to human eyes unless legally subpoenaed.
@@ -373,7 +373,7 @@ Our strategy combines **immediate user recovery controls with background active 
 **Answer:**  
 Once the living room pilot proves conversion lift and technical stability, category expansion must be prioritized using a structured scoring framework, not intuition. I use a tailored **RICE framework** modified for retail furniture constraints:
 
-$$\text{Priority Score} = \frac{\text{Reach (Catalog SKU Volume)} \times \text{Impact (AOV \& Conversion Upside)} \times \text{Return Protection}}{\text{Effort (3D/2D Asset Prep Complexity)}}$$
+**Priority Score = (Reach × Impact × Return Protection) / Effort**
 
 **Category Rollout Sequencing:**
 1. **Priority 1: Accent Chairs, Recliners, and End Tables (Living Room Add-ons):**
@@ -409,7 +409,7 @@ I maintain alignment through a four-part operating cadence:
 A common PM pitfall is chasing shiny AI features while neglecting foundational customer experience hygiene like checkout latency or credit application drop-offs. At Rooms To Go, the mobile app must excel at core e-commerce utility while simultaneously innovating on discovery.
 
 I approach roadmap balancing using the **60 / 30 / 10 Portfolio Allocation Model**:
-- **60% Core Conversion & Platform Foundations:** High-confidence optimization of core transactional funnels: 1-click financing pre-qualification with Synchrony/Affirm, guest checkout friction reduction, payment gateway performance, and native app stability ($\ge 99.8\%$ crash-free sessions). This protects our primary revenue engine.
+- **60% Core Conversion & Platform Foundations:** High-confidence optimization of core transactional funnels: 1-click financing pre-qualification with Synchrony/Affirm, guest checkout friction reduction, payment gateway performance, and native app stability (≥ 99.8% crash-free sessions). This protects our primary revenue engine.
 - **30% Differentiated Discovery & AI Initiatives (The In-Room Visualizer):** Strategic bets that create competitive distance between Rooms To Go and competitors, unlocking net-new conversion lift and solving high-friction pre-purchase uncertainty.
 - **10% Pure Exploratory Innovation:** Rapid prototyping of next-gen concepts: conversational voice shopping, spatial video integrations, or automated room aesthetic scoring.
 
@@ -455,8 +455,8 @@ Today, customer assistance on the Rooms To Go PDP is fragmented: the customer ta
 In executive interviews with the Head of Department, leadership is assessing three core competencies: **strategic commercial judgment, technical execution credibility, and cultural leadership**.
 
 I anchor my presentation around three concrete success pillars:
-1. **Commercial Impact (P&L Contribution):** Demonstrating how the visualizer directly moves the needle on enterprise EBITDA. A $15–25\%$ relative conversion lift across our top upholstery SKUs translates into millions in incremental top-line digital revenue. Simultaneously, reducing style-driven returns by even $2–3\%$ preserves critical logistics margin.
-2. **Pragmatic, Low-Risk Delivery:** Proving that we can validate this thesis in a disciplined, cost-controlled manner. The two-week Phase 0 feasibility spike costs less than $\$10,000$ in compute and tests our core assumptions before committing full engineering resources. We leverage existing 2D photography, avoiding the multi-million-dollar trap of 3D asset pipelines.
+1. **Commercial Impact (P&L Contribution):** Demonstrating how the visualizer directly moves the needle on enterprise EBITDA. A $15–25%$ relative conversion lift across our top upholstery SKUs translates into millions in incremental top-line digital revenue. Simultaneously, reducing style-driven returns by even $2–3%$ preserves critical logistics margin.
+2. **Pragmatic, Low-Risk Delivery:** Proving that we can validate this thesis in a disciplined, cost-controlled manner. The two-week Phase 0 feasibility spike costs less than $\$10,000 in compute and tests our core assumptions before committing full engineering resources. We leverage existing 2D photography, avoiding the multi-million-dollar trap of 3D asset pipelines.
 3. **Vision for the Mobile App as the Primary Customer Surface:** Showing how this feature positions the Rooms To Go mobile app as the central operating system for furniture shopping—connecting digital discovery, in-store showroom consultations, and future AI concierge capabilities into an unassailable omnichannel moat.
 
 ---
@@ -597,12 +597,12 @@ A frequent mistake made by product managers new to AI is defining success solely
 
 I structure AI product scorecards across a **three-tiered metrics hierarchy**:
 1. **Tier 1: Business Outcome & Value Metric (The "North Star"):** This measures real customer and commercial impact. For the Rooms To Go Visualizer, this is **Incremental Conversion Lift (+15–25%)** and **Reduction in Style-Driven Returns**. At Intuit, it was **Reduction in Manual Customer Effort (-38%)**.
-2. **Tier 2: User Adoption & Behavioral Metrics:** These explain *why* the business metric is moving. For example: CTA Tap Rate (8–15%), Photo Upload Completion Rate (60–75%), and Repeat Usage ($\ge 2$ products visualized per user). If adoption is high but conversion is flat, the UX is engaging but the output quality is unconvincing.
+2. **Tier 2: User Adoption & Behavioral Metrics:** These explain *why* the business metric is moving. For example: CTA Tap Rate (8–15%), Photo Upload Completion Rate (60–75%), and Repeat Usage (≥ 2 products visualized per user). If adoption is high but conversion is flat, the UX is engaging but the output quality is unconvincing.
 3. **Tier 3: Technical Health & Model Quality Guardrails:** These ensure the underlying ML engine operates reliably without degrading user trust:
-   - **Generation Latency (p50 $\le 8\text{s}$, p90 $\le 20\text{s}$)**
-   - **Generation Success Rate ($\ge 95\%$)**
-   - **Retry Rate ($< 20\%$)** — an implicit proxy for customer dissatisfaction with image fidelity.
-   - **Cost per successful inference ($\le \$0.10$)**
+   - **Generation Latency (p50 ≤ 8s, p90 ≤ 20s)**
+   - **Generation Success Rate (≥ 95%)**
+   - **Retry Rate (< 20%)** — an implicit proxy for customer dissatisfaction with image fidelity.
+   - **Cost per successful inference (≤ $0.10)**
 
 By tying model health directly to user adoption and top-line conversion, the entire engineering and product pod stays focused on solving human problems rather than endlessly tuning algorithms in a vacuum.
 
@@ -643,7 +643,7 @@ I synthesized these findings into a differentiated strategic hypothesis: **Win o
 **Category:** Data Fluency & Funnel Analytics  
 **Situation:** At **Stripe**, during the rollout of a new merchant onboarding flow, our aggregate conversion funnel indicated a sudden 7% drop in week-over-week completions, but aggregate dashboards could not explain the root cause.  
 **Task:** I needed to deep-dive into the underlying data to identify the exact step, segment, and failure point driving the funnel breakdown.  
-**Action:** I wrote custom **SQL queries** against our data warehouse (Snowflake) to segment completion funnels by browser, operating system, merchant geography, and business entity type (LLC vs Sole Proprietor). Cross-referencing this in **Amplitude**, I isolated the anomaly: the drop-off was concentrated almost entirely ($>85\%$) among mobile Safari users on iOS. Inspecting the session replays and event telemetry, I discovered that a recently deployed JavaScript address autofill library had introduced a viewport rendering bug on mobile Safari, pushing the "Submit Application" button beneath the virtual keyboard where users could not see it.  
+**Action:** I wrote custom **SQL queries** against our data warehouse (Snowflake) to segment completion funnels by browser, operating system, merchant geography, and business entity type (LLC vs Sole Proprietor). Cross-referencing this in **Amplitude**, I isolated the anomaly: the drop-off was concentrated almost entirely (> 85%) among mobile Safari users on iOS. Inspecting the session replays and event telemetry, I discovered that a recently deployed JavaScript address autofill library had introduced a viewport rendering bug on mobile Safari, pushing the "Submit Application" button beneath the virtual keyboard where users could not see it.  
 **Result:** I immediately flagged the issue with mobile engineering, deployed a hotfix within 4 hours, and restored onboarding conversion to baseline. This experience demonstrated the critical importance of pairing quantitative SQL segmentation with granular client telemetry to diagnose systemic product issues rapidly.
 
 ---
@@ -688,7 +688,7 @@ Rooms To Go represents a rare, compelling product opportunity: a beloved brand a
   - Finalize the comprehensive PRD, UX flows (Figma), and instrumentation schemas for the Phase 1 MVP.
 - **Days 61–90 (Ship Pilot MVP & Launch A/B Experiment):**
   - Ship the Phase 1 MVP behind a feature flag to internal dogfooding users, followed by a 5% customer alpha release.
-  - Launch the 50/50 A/B experiment across pilot SKUs, monitoring crash-free sessions ($\ge 99.8\%$), generation latency, and initial conversion lift indicators.
+  - Launch the 50/50 A/B experiment across pilot SKUs, monitoring crash-free sessions (≥ 99.8%), generation latency, and initial conversion lift indicators.
   - Present early pilot findings to the Head of Department and executive steering committee, laying out the validated roadmap for category expansion and unified RTGenie conversational integration.
 
 ---
