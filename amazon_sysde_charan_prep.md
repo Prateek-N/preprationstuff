@@ -1,0 +1,994 @@
+# Amazon Systems Development Engineer (SysDE) — Devices Technologies & Robotics
+## Master Interview Preparation Guide (30 Leadership Principle Q&As + 15 SysDE Coding Challenges)
+
+**Candidate:** Charan Kumar Kundavarapu  
+**Target Role:** Systems Development Engineer (SysDE), Devices Technologies (Fulfillment Technology & Robotics) — Amazon (Austin, TX)  
+**Job ID:** 10485027 | Amazon.com Services LLC  
+**Target Organization:** Amazon Device Tech — Edge compute, on-premise infrastructure, robotics, and automated fulfillment operations across thousands of global sites.  
+**Passcode Lock:** `CHARAN`
+
+---
+
+# TABLE OF CONTENTS
+1. [PART 1: 30 Amazon Leadership Principle (LP) Questions & Answers](#part-1-30-amazon-leadership-principle-lp-questions--answers)
+   - 1.1 Customer Obsession (Q1 – Q3)
+   - 1.2 Ownership (Q4 – Q6)
+   - 1.3 Invent and Simplify (Q7 – Q9)
+   - 1.4 Are Right, A Lot (Q10 – Q12)
+   - 1.5 Learn and Be Curious (Q13 – Q14)
+   - 1.6 Insist on the Highest Standards (Q15 – Q17)
+   - 1.7 Think Big (Q18 – Q19)
+   - 1.8 Bias for Action (Q20 – Q22)
+   - 1.9 Frugality (Q23 – Q24)
+   - 1.10 Earn Trust (Q25 – Q26)
+   - 1.11 Dive Deep (Q27 – Q28)
+   - 1.12 Have Backbone; Disagree and Commit (Q29)
+   - 1.13 Deliver Results (Q30)
+2. [PART 2: Top 15 Systems Development Engineer (SysDE) Coding Challenges](#part-2-top-15-systems-development-engineer-sysde-coding-challenges)
+   - Coding Problems 1 through 15 (Thought Process, Line-by-Line Commented Python Code, Complexity)
+3. [PART 3: Questions to Ask the Amazon Interviewer (10-Minute Close)](#part-3-questions-to-ask-the-amazon-interviewer-10-minute-close)
+
+---
+
+# PART 1: 30 Amazon Leadership Principle (LP) Questions & Answers
+*Each answer is structured using the STAR method (~300 words), highlighting Charan's direct experience across bare-metal compute (HP, Dell, ZT Systems), OpenShift (OCP), OpenStack (OSP), Ansible, Python, Linux (RHEL), and AWS infrastructure at Salient Global Technologies (Verizon VCP Lab) and Cognizant.*
+
+---
+
+### Q1: Tell me about a time you worked backwards from an application team’s need to build an automated infrastructure platform.
+**LP Alignment:** Customer Obsession  
+**Situation:** At **Salient Global Technologies**, working within the **Verizon SME VCP Lab**, dozens of application and 5G network function teams were onboarding to shared bare-metal compute infrastructure. Previously, application developers waited 3 to 4 weeks for manual server provisioning, network VLAN mapping, and **OpenShift (OCP)** cluster bootstrapping, leading to blocked delivery timelines and frequent complaints.  
+**Task:** As Cloud Engineer, I owned the initiative to eliminate onboarding friction by building a self-service-style automated deployment workflow that abstracted hardware and networking complexities for application developers.  
+**Action:** I conducted discovery sessions with application leads to define their exact requirements: automated node provisioning, reproducible network boundaries, and instant post-install validation. I built end-to-end **Ansible** playbooks coupled with **Python** scripts that integrated with out-of-band management controllers (**iLO, iDRAC, BMC**). The automation powered PXE booting, automated BIOS/UEFI configurations, orchestrated network bonding across **VLANs**, deployed local utility/DNS services, and bootstrapped **OpenShift Container Platform (OCP)** and **OpenStack (OSP)** clusters. I also established a local **JFrog Artifactory** repository mirror and integrated **LDAP** directory services to provide role-based access control out of the box.  
+**Result:** This self-service automation slashed cluster provisioning turnaround time from **3 weeks down to under 4 hours** with zero manual engineer intervention. Application teams onboarded with 100% self-service autonomy, eliminating over **70% of support tickets** and allowing downstream teams to deploy carrier-grade workloads weeks ahead of schedule.
+
+---
+
+### Q2: Describe a time you advocated for an internal customer when their requirements conflicted with established infrastructure policies.
+**LP Alignment:** Customer Obsession  
+**Situation:** In the **Verizon VCP Lab**, an application team deploying latency-critical **Ericsson 5G Core (5GC)** network functions required direct SR-IOV network attachment and non-standard MTU 9000 jumbo frames. Our centralized infrastructure security policy mandated standard virtualized interfaces and locked-down MTU 1500 to maintain uniform cluster monitoring.  
+**Task:** The rigid policy threatened to degrade the customer's 5G throughput by over 40% and miss their regulatory latency benchmark. I needed to champion the customer's technical necessity while preserving infrastructure isolation and cluster stability.  
+**Action:** Rather than flatly rejecting the request, I organized a technical spike. I isolated a dedicated compute rack of **Dell PowerEdge** and **HP ProLiant** nodes. Working with our network engineering leads, I configured custom sub-interfaces on our **Cisco IOS XR** leaf routers and established isolated VLANs supporting jumbo frames without polluting the management control plane. I automated the host kernel parameter tuning using **Ansible** and built synthetic packet injection scripts in **Python** using `iperf3` to prove that adjacent multi-tenant workloads experienced zero packet drops or CPU starvation.  
+**Result:** My empirical test data earned policy approval from security and infrastructure leadership. The customer team deployed their 5GC network functions on schedule, achieving **sub-5ms packet latency** and a **35% throughput increase**, establishing a new multi-tenant template for high-throughput edge workloads.
+
+---
+
+### Q3: How do you gather customer feedback from application teams to drive continuous improvements in your infrastructure tooling?
+**LP Alignment:** Customer Obsession  
+**Situation:** At **Salient Global Tech**, our infrastructure automation tools were deployed across multiple internal development teams, but we lacked structured visibility into recurring user pain points, silent script failures, and developer workarounds.  
+**Task:** I wanted to establish an ongoing customer feedback mechanism to transition our infrastructure engineering team from reactive firefighting to proactive, customer-centric tooling enhancements.  
+**Action:** I implemented three customer listening channels. First, I instrumented our **Bash** and **Python** automation wrappers with structured JSON logging, capturing exit codes, step execution durations, and error stack traces sent to a centralized logging endpoint. Second, I instituted a bi-weekly "Infrastructure Office Hours" for application teams to raise friction points directly. Third, I conducted a thematic analysis of our Jira ticket queues, discovering that 45% of customer escalations were caused by obscure DNS resolution failures and missing NTP time sync during cluster bootstrapping. In response, I authored pre-flight validation scripts in **Ansible** that tested DNS records, gateway reachability, and clock drift *before* provisioning began.  
+**Result:** Pre-flight validation eliminated **80% of bootstrapping failures**, saving developers roughly **15 hours of debugging time per week**. Customer satisfaction scores among application teams rose by **40%**, transforming our infrastructure team into a trusted partner.
+
+---
+
+### Q4: Tell me about a time you took complete ownership of a critical infrastructure problem outside your formal job scope.
+**LP Alignment:** Ownership  
+**Situation:** At **Salient Global Tech**, during an off-hours firmware upgrade cycle, a widespread outage struck our central **LDAP** and **DNS** infrastructure servers. This halted all user authentication, SSH access, and automated CI/CD cluster deployments across 50+ Linux servers. The dedicated directory services administrator was unavailable.  
+**Task:** Although my core responsibility was server compute provisioning, the entire development organization was completely blocked. I stepped up to take immediate end-to-end ownership of resolving the directory and DNS outage.  
+**Action:** I immediately established an incident bridge and began triaging using Linux diagnostic tools. Inspecting `/var/log/messages`, `slapd` debug logs, and `named` service states, I discovered an uncoordinated automated patch had updated the TLS cipher suite configuration, causing LDAP daemon startup crashes and locking out client bind requests. Concurrently, the DNS forwarders were timing out due to socket exhaustion. I safely reverted the corrupted SSL/TLS configuration to the previous stable release, restarted the `slapd` service, flushed the caching name server, and validated client bind requests across both **RHEL** and **Ubuntu** nodes. To permanently prevent recurrence, I authored an **Ansible** playbook enforcing automated configuration syntax checks prior to service restarts.  
+**Result:** Core authentication and DNS resolution were fully restored within **45 minutes**, unblocking 40+ engineers. I authored a comprehensive post-mortem and runbook that became the standard operating procedure for all future identity infrastructure updates.
+
+---
+
+### Q5: Describe a time you made a short-term sacrifice in project delivery to ensure long-term architectural stability.
+**LP Alignment:** Ownership  
+**Situation:** At **Cognizant**, we were tasked with provisioning a new multi-region cloud infrastructure on **AWS** (VPCs, subnets, EC2 instances, security groups) for an enterprise banking client under an aggressive two-week deadline. The team lead suggested writing quick, hardcoded shell scripts with manual AWS Console clicks to hit the milestone date.  
+**Task:** I recognized that manual provisioning would create crippling technical debt, configuration drift, and un-reproducible environments, making future disaster recovery and maintenance audits a nightmare. I owned the decision to advocate for modular **Infrastructure-as-Code (IaC)**.  
+**Action:** I negotiated a structured 48-hour delivery extension with stakeholders by presenting the long-term maintenance risks of unmanaged infrastructure. Working extended hours, I designed reusable, parameterized **Terraform** modules for VPC networking, security group baselines, and auto-scaled **EC2** clusters. I embedded automated linting with `tflint` and incorporated environment-specific `.tfvars` for staging and production parity. I documented state locking via **AWS S3** and **DynamoDB** to ensure safe concurrent team operations.  
+**Result:** Although initial delivery required two extra days, the reusable Terraform modules reduced subsequent environment deployment times by **25%**, eliminated configuration drift across three environments, and passed client compliance audits on the first review with zero security defects.
+
+---
+
+### Q6: Tell me about a time you proactively identified and mitigated a single point of failure before it impacted production operations.
+**LP Alignment:** Ownership  
+**Situation:** In the **Verizon VCP Lab**, our air-gapped **OpenShift** and **OpenStack** clusters relied on a single standalone utility host serving as our **JFrog Artifactory** container mirror and local RPM repository.  
+**Task:** I recognized that this standalone utility host was a catastrophic single point of failure (SPOF): if its storage array failed or its network interface dropped, all bare-metal node installations, rolling patch cycles, and container deployments across 8 compute racks would instantly fail.  
+**Action:** I took ownership of redesigning the repository infrastructure into a resilient, high-availability architecture. I provisioned a secondary standby node across an independent physical rack with redundant power feeds. I configured **LVM** storage mirroring and scheduled automated bidirectional rsync jobs managed by systemd timers to synchronize container image layers and RPM package metadata continuously. Furthermore, I implemented **Keepalived** with a Virtual IP (VIP) to provide automatic failover with sub-second health checks, and updated our DNS configurations to point cluster pull-secrets to the VIP.  
+**Result:** Two months later, the primary utility server suffered a hardware RAID controller failure during a carrier test run. The VIP failed over seamlessly to the secondary node with **zero dropped requests** and zero deployment interruptions, saving the team an estimated **12 hours of critical outage downtime**.
+
+---
+
+### Q7: Describe a time you invented a simple tool or automation that eliminated repetitive manual toil for your engineering team.
+**LP Alignment:** Invent and Simplify  
+**Situation:** At **Salient Global Tech**, whenever new bare-metal compute servers (HP ProLiant, Dell PowerEdge, ZT Systems) arrived at our lab, systems engineers manually connected crash carts, configured BIOS power settings, set up out-of-band management (**iLO/iDRAC**), and recorded MAC addresses in spreadsheets—taking over 4 hours per server across hundreds of nodes.  
+**Task:** I wanted to eliminate this repetitive manual toil by designing an automated, zero-touch discovery and configuration pipeline.  
+**Action:** I engineered a modular automation toolkit using **Python** and **Redfish APIs**. I wrote a Python script that scanned newly energized subnets, authenticated against default BMC credentials, and pushed standardized BIOS/UEFI profiles (enabling virtualization extensions, SRIOV, and setting deterministic boot orders) via Redfish JSON schemas. The script automatically extracted server hardware inventory (CPU cores, memory DIMMs, NIC MAC addresses), formatted the data into structured YAML host inventories for **Ansible**, and auto-generated DNS reverse-lookup records.  
+**Result:** Server onboarding time plummeted from **4 hours to under 8 minutes per server**, eliminating **95% of manual labor**. Over a 12-month period, this simple tool saved our infrastructure team over **300 hours of manual toil** across 200+ bare-metal servers.
+
+---
+
+### Q8: Tell me about a time you simplified a complex deployment process that had become bloated and prone to human error.
+**LP Alignment:** Invent and Simplify  
+**Situation:** In the **Verizon SME VCP Lab**, the deployment procedure for air-gapped **OpenShift (OCP)** clusters spanned a convoluted 60-page PDF runbook requiring over 80 manual CLI commands across jump hosts, bastion servers, and DNS zones. Minor typographical errors frequently stalled deployments for days.  
+**Task:** I sought to radically simplify the deployment process into an automated, single-command pipeline that any engineer on call could execute reliably.  
+**Action:** I audited the entire 80-step procedure, breaking it down into modular, idempotent **Ansible** roles: (1) Pre-flight environment validation, (2) DNS and DHCP reservation provisioning, (3) PXE boot and coreOS image serving, (4) Bootstrap node ignition, and (5) Post-install cluster operator health verification. I wrapped these playbooks in a unified Python CLI tool with clear command-line flags (e.g., `deploy-cluster --config site-a.yaml`). I introduced automated rollback logic and pre-installation linting to catch subnet conflicts before bare-metal nodes were wiped.  
+**Result:** The manual 60-page runbook was replaced by a **single-command automated workflow**. Deployment cycle times dropped from **3 days down to 4 hours**, human operational error rates fell to **0%**, and onboarding time for new team members was reduced from **4 weeks to 2 days**.
+
+---
+
+### Q9: Tell me about a time you chose a lightweight, simple solution over a complex, over-engineered technology.
+**LP Alignment:** Invent and Simplify  
+**Situation:** At **Salient Global Tech**, our team needed a system to monitor the operational health, CPU temperature, and disk SMART status of 50+ lab servers. A senior colleague proposed standing up a heavyweight enterprise telemetry stack involving distributed Kafka clusters, multi-node Elasticsearch, and complex Logstash pipelines.  
+**Task:** I recognized that maintaining a distributed streaming platform just to monitor 50 local servers would require more engineering effort to maintain than the infrastructure itself. I advocated for a lightweight, robust, and maintainable alternative.  
+**Action:** I designed a simple, self-contained monitoring architecture using **Prometheus**, **Node Exporter**, and **Grafana**. I authored an **Ansible** playbook that installed and configured Node Exporter across all 50 nodes in under 10 minutes. I wrote custom Python collector scripts using `ipmitool` to expose hardware fan speeds and ambient temperatures as Prometheus metric endpoints. I configured localized alertmanager rules routing critical thresholds directly to Slack and email.  
+**Result:** The entire monitoring stack was deployed and fully operational in **two days** rather than four weeks, consumed less than **1% of server CPU/memory overhead**, and operated reliably with zero maintenance overhead for over two years, validating that simple architectures are often the most durable.
+
+---
+
+### Q10: Tell me about a time you had to make an architectural decision with incomplete data. How did you ensure you were right?
+**LP Alignment:** Are Right, A Lot  
+**Situation:** During the initial design of an air-gapped **OpenStack Platform (OSP)** deployment in the **Verizon Lab**, hardware vendor documentation was contradictory regarding whether our specific batch of **ZT Systems** and **HP ProLiant** servers supported SR-IOV virtual functions concurrently with Linux bonding on our installed NIC firmware versions.  
+**Task:** Waiting for vendor engineering replies would have delayed our multi-million-dollar carrier testing milestone by three weeks. I had to determine the correct host networking architecture immediately.  
+**Action:** Relying on my deep foundation in Linux networking fundamentals, I established an isolated empirical testbed. I flashed two test nodes with the target **RHEL** OS and kernel modules. I wrote a **Python** automation script to dynamically rebind PCI device drivers between `vfio-pci` and kernel drivers while stressing synthetic network traffic over 802.3ad LACP bonds. I analyzed kernel ring buffers (`dmesg`) and PCI capability registers via `lspci -vvv`. The test revealed that while concurrent bonding with SR-IOV was stable on Mellanox ConnectX-5 NICs, Intel X520 NICs suffered kernel panics under high packet rates with older firmware.  
+**Result:** Armed with empirical data, I architected a dual-profile configuration matrix in our **Ansible** inventory, applying bonded interfaces on Mellanox nodes and dedicated physical separation on Intel nodes. The deployment succeeded without a single kernel failure, saving three weeks of project delay.
+
+---
+
+### Q11: Describe a time you made a technical judgment call that went against the consensus of your team, and you were proven right.
+**LP Alignment:** Are Right, A Lot  
+**Situation:** At **Salient Global Tech**, during an operating system upgrade from **CentOS 7** to **RHEL 8/9**, several engineers advocated performing in-place operating system upgrades (`leapp` tool) across our fleet of 50+ physical servers to save setup time.  
+**Task:** Having thoroughly researched the historical pitfalls of in-place enterprise Linux upgrades across diverse physical hardware with proprietary RAID and out-of-band management drivers, I believed in-place upgrades would introduce subtle library corruptions, broken kernel modules, and prolonged outages.  
+**Action:** I respectfully voiced my concerns and proposed a small-scale proof of concept: test the in-place upgrade on two representative staging servers while I concurrently tested a clean, PXE-automated bare-metal redeployment using **Ansible** and Kickstart. Within 48 hours, the in-place upgrade bricked one server due to incompatible RAID controller drivers and left the second with broken Python 3 dependencies. Meanwhile, my PXE Kickstart automation cleanly wiped, re-provisioned, and configured the target operating system with all security baselines in under 15 minutes.  
+**Result:** The team unanimously abandoned in-place upgrades. We adopted the automated reprovisioning pipeline across all 50+ nodes, completing the fleet-wide operating system migration with **zero production downtime** and 100% configuration consistency.
+
+---
+
+### Q12: Tell me about a time you made a mistake in production. How did you diagnose it, fix it, and what did you learn?
+**LP Alignment:** Are Right, A Lot  
+**Situation:** Early in my time at **Cognizant**, I was tasked with updating an **AWS Security Group** attached to critical production EC2 instances to permit access for a new internal monitoring tool.  
+**Task:** I made an error while editing the CIDR block parameter in a shared **Terraform** configuration, accidentally overwriting an ingress rule that permitted port 443 HTTPS traffic from our corporate VPN gateway.  
+**Action:** The moment `terraform apply` completed, our team monitoring alerts fired, signaling loss of internal dashboard connectivity. I did not panic or attempt to hide the mistake. I immediately declared the incident on our team channel, took ownership, and executed an immediate rollback via `git revert` and re-applied the previous known-good Terraform state within 3 minutes, restoring service. Next, I performed a thorough root-cause analysis: our CI/CD pipeline lacked automated plan inspection and pre-apply policy checks. I authored a **Terraform validation check** using `checkov` and pre-commit hooks that enforced strict ingress CIDR rules and prevented destructive security group overwrites.  
+**Result:** Outage duration was held to **under 4 minutes** with zero data loss. My post-incident safeguards were adopted across our entire client account, preventing similar configuration regressions for over two years.
+
+---
+
+### Q13: Tell me about a new technology or domain you had to master rapidly to deliver a critical project.
+**LP Alignment:** Learn and Be Curious  
+**Situation:** When I transitioned to the **Verizon SME VCP Lab**, our team was tasked with supporting cloud-native infrastructure running on **Wind River Linux** and **Wind River Cloud Platform (StarlingX)** integrated with **Ericsson 5G Core** network functions—platforms I had never encountered before.  
+**Task:** I had two weeks to master Wind River's low-latency real-time kernel architecture, distributed edge cloud orchestration, and specialized telecom networking protocols to support oncoming carrier customer deployments.  
+**Action:** I designed a rigorous daily immersion plan. In the evenings, I studied Wind River architectural documentation, real-time Linux patchsets (`PREEMPT_RT`), and O-RAN cloud infrastructure standards. During the day, I secured an unallocated lab rack to stand up a sandbox environment from scratch. I experimented with host CPU pinning, DPDK (Data Plane Development Kit), and hugepages configurations. I captured packet traces via **Wireshark** to understand how 5G User Plane Functions (UPF) routed traffic through virtualized switches. Whenever I hit roadblocks, I proactively engaged vendor field application engineers with targeted, highly technical questions.  
+**Result:** Within 10 days, I successfully deployed, validated, and benchmarked our first **Wind River Cloud Platform** node cluster. I authored a comprehensive 15-page internal onboarding guide and runbook that enabled four other engineers to operate the platform with confidence.
+
+---
+
+### Q14: Describe a time you pursued a technical certification or deep-dive study and directly applied that knowledge to improve your team’s operations.
+**LP Alignment:** Learn and Be Curious  
+**Situation:** While managing physical and virtual Linux infrastructure at **Salient Global Tech**, I recognized that as enterprise environments adopted containerization and immutable infrastructure, advanced systems administration and storage management were essential to eliminate operational bottlenecks.  
+**Task:** I committed to earning the **Red Hat Certified System Administrator (RHCSA)** credential to deepen my technical expertise in SELinux, systemd, storage management (LVM/VDO), and automated scripting.  
+**Action:** Over four months of intensive hands-on lab practice, I mastered low-level enterprise Linux administration, earning my **RHCSA** certification in 2024. I immediately translated this knowledge into production enhancements for our lab. I discovered that our OpenShift worker nodes were experiencing intermittent I/O throttling because storage volumes were configured on basic ext4 partitions without dynamic volume management. I re-architected our storage baselines using **LVM thin-provisioning** with optimized read-ahead caching, and implemented strict **SELinux** mandatory access control policies across all multi-tenant jump hosts rather than disabling security enforcement.  
+**Result:** Storage I/O throughput across our Linux compute nodes increased by **25%**, and security audit compliance scores reached **100%**, proving that structured technical continuous learning directly elevates infrastructure reliability.
+
+---
+
+### Q15: Tell me about a time you refused to compromise on quality or security standards despite severe schedule pressure.
+**LP Alignment:** Insist on the Highest Standards  
+**Situation:** In the **Verizon VCP Lab**, a customer team was racing against an executive deadline to launch a test deployment of their 5G network application. To bypass a 3-day wait for security approvals, they requested direct root access and SSH key injection onto bare-metal compute nodes, asking us to disable **SELinux** and bypass our centralized **LDAP** role-based access control.  
+**Task:** Rejecting their request would cause their milestone deadline to slip, exposing me to significant customer pressure. However, compromising root access and disabling security enforcement in a carrier-grade multi-tenant environment was an unacceptable security risk.  
+**Action:** I maintained my technical ground with professional diplomacy. I met with the customer lead and explained the severe blast radius: disabling SELinux and granting unmanaged root access would violate carrier compliance, void hardware support agreements, and jeopardize co-located tenant workloads. Instead of a dead end, I offered an accelerated, secure alternative: I wrote a custom **Ansible** playbook that provisioned an isolated staging environment with granular `sudo` privileges restricted to their specific container runtimes, integrated their team accounts into an automated **LDAP** group within 4 hours, and configured permissive SELinux audit policies that logged events without disabling the security subsystem.  
+**Result:** The customer completed their testing safely without security violations. Security leadership commended the approach, and the configuration pattern was codified into our official security compliance matrix.
+
+---
+
+### Q16: Describe a time you established an automated testing or validation standard that raised the bar for operational excellence across your team.
+**LP Alignment:** Insist on the Highest Standards  
+**Situation:** At **Salient Global Tech**, firmware updates on our server fleet (**HP ProLiant, Dell PowerEdge, ZT Systems**) were historically applied manually by engineers without standardized post-installation stress testing. Occasionally, subtle firmware regressions (such as thermal throttling or NIC link drops under load) escaped into production, causing unpredictable cluster crashes.  
+**Task:** I decided to raise the bar for hardware reliability by designing a rigorous, mandatory **firmware validation and compliance framework**.  
+**Action:** I developed an automated hardware certification test suite using **Python** and **Bash**. Whenever a new BIOS, iLO, or NIC firmware was released, our automation staged the update onto canary nodes. The test harness executed a standardized 6-hour burn-in suite: running memory stress tests via `stress-ng`, generating 100Gbps saturated network traffic with `pktgen`, monitoring PCIe bus error counters using `mcelog`, and logging IPMI thermal curves. The script automatically compiled pass/fail stability matrices and published audit reports.  
+**Result:** This automated validation caught two severe vendor firmware regressions—including an Intel NIC firmware bug causing random interface resets—*before* fleet-wide rollout. This raised our hardware uptime to **99.9%** and established our lab's hardware compliance matrix as the gold standard across carrier operations.
+
+---
+
+### Q17: How do you ensure runbooks, technical procedures, and infrastructure configurations stay accurate and up to date over time?
+**LP Alignment:** Insist on the Highest Standards  
+**Situation:** At **Salient Global Tech**, infrastructure documentation had historically fallen into disrepair: wiki pages had outdated IP schemes, broken CLI commands, and missing configuration flags, resulting in junior engineers making mistakes during on-call rotations.  
+**Task:** I wanted to treat documentation with the same engineering rigor as production software, ensuring operational procedures were always accurate, tested, and reliable.  
+**Action:** I spearheaded a **"Documentation as Code"** initiative. I migrated all sprawling wiki runbooks into Markdown repositories hosted in Git alongside our infrastructure automation code. I instituted a team standard: no pull request for an Ansible playbook or architectural change could be merged without an accompanying update to the corresponding operational runbook. Furthermore, I scheduled quarterly "Runbook Game Days": during maintenance windows, engineers executed routine recovery procedures strictly following the written documentation without verbal assistance; any ambiguity, missing step, or outdated command was flagged as a defect and fixed immediately.  
+**Result:** On-call incident resolution time (MTTR) dropped by **35%**, operational onboarding time for new engineers was cut in half, and documentation defects across our 50+ server environments were reduced to near zero.
+
+---
+
+### Q18: Tell me about a time you envisioned a large-scale architectural solution rather than patching an immediate symptom.
+**LP Alignment:** Think Big  
+**Situation:** In the **Verizon VCP Lab**, our team spent roughly 15 hours each week repeatedly standing up temporary test environments for different network engineering teams. Each environment required setting up ephemeral DNS records, localized DHCP scopes, jump boxes, and container mirrors. Engineers treated each request as an isolated, manual ticket.  
+**Task:** I recognized that treating these requests as individual tickets was small thinking. We needed an ambitious, **self-service multi-tenant infrastructure platform** that could spin up complete, isolated cluster environments dynamically.  
+**Action:** I proposed and architected an end-to-end multi-tenant automation framework. Leveraging **Ansible**, **Terraform**, and **Python**, I designed modular infrastructure blueprints. When an application team submitted a structured YAML specification defining their node counts and networking requirements, our platform dynamically carved out isolated VLANs on our **Cisco IOS XR** switches, provisioned bare-metal nodes via PXE and Redfish APIs, spun up dedicated ephemeral DNS/LDAP containers on a central utility cluster, and handed off a fully functioning **OpenShift (OCP)** or **OpenStack (OSP)** cluster with complete zero-trust role-based access control.  
+**Result:** This transformed our lab from a slow, ticket-driven service desk into an agile, internal cloud provider. Over 18 months, the platform deployed over **60 isolated test clusters**, cutting aggregate provisioning time by **85%** and enabling Verizon carrier testing teams to accelerate their 5G release schedules by months.
+
+---
+
+### Q19: Describe a project where you designed an infrastructure system capable of scaling significantly beyond current operational demands.
+**LP Alignment:** Think Big  
+**Situation:** At **Cognizant**, our team was tasked with designing a centralized logging and telemetry storage solution for a client whose infrastructure was growing from 50 Linux servers to an anticipated fleet of over 500 nodes across hybrid cloud environments within 18 months.  
+**Task:** The existing architecture stored system logs locally on server disks with nightly cron rsyncs, which was already bottlenecking network bandwidth and would completely collapse at 500-node scale.  
+**Action:** I designed a scalable, forward-looking centralized logging pipeline on **AWS**. I configured lightweight log forwarders (**Fluent Bit**) on all Linux servers to stream systemd journal logs and audit events asynchronously. On the cloud backend, I architected an ingestion pipeline leveraging **AWS SQS** as a buffer, processed by **AWS Lambda** workers that batched records into compressed columnar formats stored in **Amazon S3** with strict lifecycle policies. I configured **AWS Athena** and **CloudWatch** for sub-second query analytics, ensuring the system decoupled log ingestion from storage costs.  
+**Result:** The architecture scaled effortlessly from 50 to 500+ servers without a single dropped log packet. Query retrieval times improved by **70%**, and utilizing S3 lifecycle tiering slashed long-term storage costs by **45%** compared to traditional enterprise log management appliances.
+
+---
+
+### Q20: Tell me about a time you had to take quick, decisive action during a live infrastructure incident without having all the answers.
+**LP Alignment:** Bias for Action  
+**Situation:** At **Salient Global Tech**, during an active carrier network testing window, a critical gateway switch began intermittently flapping, causing split-brain symptoms across a live multi-node **OpenShift** cluster. Applications were losing database quorum, and alerts were firing across hundreds of monitoring endpoints.  
+**Task:** If the cluster remained in a split-brain state, data corruption on distributed storage volumes (**Ceph/ODF**) would become irreversible. I had to act decisively within minutes to isolate the failure and prevent cluster-wide data corruption.  
+**Action:** Recognizing that immediate containment superseded prolonged diagnosis, I initiated emergency triage. I quickly accessed the out-of-band management console (**iDRAC**) of the master nodes to inspect etcd cluster quorum health. Confirming that two master nodes were partitioned on the flapping network segment, I executed a controlled isolation: I immediately disabled the flapping switch port on our **Cisco IOS XR** router, forcing deterministic failover to our secondary bonded network path. Concurrently, I gracefully halted non-essential batch worker nodes to reduce I/O contention and prevent dirty writes to the shared storage pool.  
+**Result:** Immediate network isolation preserved etcd database integrity and prevented persistent storage corruption. Once the network stabilized, the cluster converged automatically within **8 minutes**. A post-incident hardware audit confirmed a faulty SFP+ optical transceiver on the switch port, validating my decision to isolate the link immediately.
+
+---
+
+### Q21: Describe a scenario where you delivered a functioning MVP (Minimum Viable Product) quickly rather than waiting for a perfect solution.
+**LP Alignment:** Bias for Action  
+**Situation:** In the **Verizon VCP Lab**, a strategic carrier partner was scheduled to arrive on site in 48 hours to demo an emergency 5G network slicing prototype, but our automated bare-metal provisioning pipeline had not yet implemented full integration with our centralized LDAP identity provider.  
+**Task:** Waiting to architect and test the complete enterprise LDAP directory integration would have taken two weeks, causing the high-profile partner demo to be canceled.  
+**Action:** I adopted a high-bias-for-action MVP approach. In 24 hours, I engineered a secure, lightweight interim solution: I authored an **Ansible** playbook that generated temporary, cryptographically secure ed25519 SSH keypairs and injected restricted, role-based local accounts onto the target test nodes with strict session timeout parameters. I wrote an automated cleanup script scheduled via `cron` to purge these temporary accounts automatically 72 hours after the demo concluded. I documented the interim architecture and obtained sign-off from our security lead.  
+**Result:** The customer partner demo executed flawlessly on schedule, resulting in executive commendation. Two weeks later, having unblocked the critical demo, I completed the permanent, production-grade LDAP directory service integration.
+
+---
+
+### Q22: Tell me about a time you calculated a smart risk to accelerate a critical infrastructure delivery.
+**LP Alignment:** Bias for Action  
+**Situation:** At **Salient Global Tech**, an urgent vulnerability advisory (CVE) required patching the Linux kernel across 50 production-adjacent servers within 24 hours. The standard operational change management policy required sequential canary patching across 5 separate stages over 5 days.  
+**Task:** Strictly following the 5-day sequential schedule would leave critical infrastructure exposed to an active exploit window over the weekend. I needed to safely accelerate the patching cycle without compromising infrastructure availability.  
+**Action:** I calculated the operational risk: the servers were divided across redundant, load-balanced pairs running identical hardware configurations (**HP ProLiant** and **Dell PowerEdge**). Rather than patching one server per day, I designed a parallelized rolling patch strategy using **Ansible**. I grouped servers into two alternating batches (odd vs. even racks). I built automated pre-patch health checks verifying service redundancy, applied the kernel patch and rebooted Batch 1, verified full cluster convergence, and only then triggered Batch 2.  
+**Result:** The entire fleet of 50+ servers was successfully patched and validated in **under 3 hours** with **zero service disruption**, closing the critical security vulnerability four days ahead of the standard schedule.
+
+---
+
+### Q23: Tell me about a time you reduced infrastructure costs or saved company resources without sacrificing operational quality.
+**LP Alignment:** Frugality  
+**Situation:** At **Cognizant**, our client’s development and testing environments on **AWS** were generating escalating monthly cloud bills exceeding budget by 30%, primarily driven by non-production **EC2** instances and unattached **EBS** volumes left running 24/7 across weekends and holidays.  
+**Task:** I was tasked with auditing cloud expenditures and implementing automated cost-reduction measures without hindering developer productivity.  
+**Action:** I conducted an infrastructure waste audit using AWS Cost Explorer and CloudWatch metrics. I wrote a serverless automation tool using **Python** and **AWS Lambda** that scanned resource tags. The Lambda automatically stopped all development and staging EC2 instances at 8:00 PM on weekdays and kept them offline during weekends, while providing a simple Slack webhook command for on-call engineers to spin up specific instances on demand. Furthermore, the script identified and purged unattached EBS snapshots older than 30 days and downgraded underutilized provisioned IOPS volumes to gp3.  
+**Result:** This automated frugality initiative slashed the client’s monthly non-production AWS infrastructure spend by **35%**, saving over **$4,000 monthly** with zero impact on active engineering delivery.
+
+---
+
+### Q24: Describe a time you maximized the utility of existing on-premise hardware rather than purchasing expensive new equipment.
+**LP Alignment:** Frugality  
+**Situation:** In the **Verizon VCP Lab**, our team was requested to stand up a secondary OpenShift test cluster for performance benchmarking. Management initially prepared a capital expenditure requisition of $60,000 to purchase new server nodes, with a 12-week procurement lead time.  
+**Task:** Believing that purchasing new hardware was wasteful and slow, I set out to determine whether we could repurpose decommissioned and underutilized compute nodes already sitting in our lab racks.  
+**Action:** I conducted a comprehensive physical and hardware audit across our decommissioned inventory. I identified 8 decommissioned **Dell PowerEdge R740** servers that had been retired due to obsolete storage drives. I harvested compatible DDR4 memory DIMMs and 10GbE network cards from unallocated racks to upgrade the nodes to our target cluster specifications. I used our automated **Ansible** and Redfish scripts to flash all out-of-band controllers (**iDRAC**) to the latest firmware, wiped and reconfigured the RAID arrays, and validated memory integrity using `memtest86`.  
+**Result:** I delivered a fully certified, high-performance 8-node test cluster in **one week** instead of twelve, saving the company **$60,000 in capital expenditures** and proving that inventive frugality drives faster business outcomes.
+
+---
+
+### Q25: Tell me about a time you had to earn trust with a cross-functional team that had lost confidence in your infrastructure platform.
+**LP Alignment:** Earn Trust  
+**Situation:** At **Salient Global Tech**, an automated deployment script had previously wiped the wrong network configuration on a shared router, causing a 6-hour outage for a partner network engineering team. Relations were strained, and the network team began blocking all subsequent automation requests, demanding manual change tickets.  
+**Task:** I needed to rebuild trust with the network engineering team, demonstrate that our infrastructure automation was safe and disciplined, and restore collaborative velocity.  
+**Action:** I initiated a blameless listening session with the network leads, acknowledging the severity of the past incident without defensiveness. I instituted three trust-building measures: First, I established a strict peer-review policy where network engineers were designated mandatory approvers on all network-related **Ansible** pull requests. Second, I introduced dry-run (`--check` mode) execution and automated diff previews into our CI/CD pipeline, allowing network engineers to inspect exact planned configuration changes before execution. Third, for the first four automated rollouts, I sat side-by-side with their senior engineer, walking through execution logs in real time.  
+**Result:** The transparent, risk-controlled process eliminated surprises. Within two months, the network engineering team fully restored our automated deployment privileges, praised our operational discipline, and collaborated with us to automate complex BGP routing workflows.
+
+---
+
+### Q26: Describe a time you uncovered an uncomfortable truth about system reliability and communicated it transparently to leadership.
+**LP Alignment:** Earn Trust  
+**Situation:** In the **Verizon VCP Lab**, leadership was preparing to declare our bare-metal **OpenShift (OCP)** cluster environment fully production-ready for carrier customer onboarding.  
+**Task:** While conducting routine load testing, I observed subtle kernel packet drop counters on our primary **Cisco IOS XR** network interfaces during high-concurrency 5G packet bursts. Announcing this finding would delay the high-profile readiness declaration, but hiding it would lead to catastrophic failures for onboarding customers.  
+**Action:** I chose radical transparency. I compiled empirical packet capture telemetry using **Wireshark** and interface queue statistics from `ethtool -S`. I demonstrated that under bursty traffic, our network interface buffer rings were overflowing due to misconfigured interrupt CPU affinities on our host Linux servers. I scheduled an immediate technical review with our engineering director and presented the data honestly, along with an actionable mitigation plan: reconfigure Linux host CPU core pinning and expand RX/TX ring buffers from 1024 to 4096 via automated **Ansible** tuning.  
+**Result:** Leadership commended my integrity and deep diagnostic rigor. We delayed the rollout by just 48 hours, applied the host network optimizations across all bare-metal nodes, and verified zero packet drops under 100Gbps saturated load, protecting our reputation and customer trust.
+
+---
+
+### Q27: Walk me through a complex, multi-layered production issue where you had to dive deep to find the root cause.
+**LP Alignment:** Dive Deep  
+**Situation:** In the **Verizon VCP Lab**, compute nodes running latency-critical **Ericsson 5G Core** network functions were intermittently failing health checks and experiencing mysterious 15-second network stalls every few hours. Standard monitoring showed normal average CPU, memory, and disk usage.  
+**Task:** Application and network teams were blaming each other. As the Systems Engineer on call, I had to dive deep beneath surface-level metrics to isolate the true root cause across the hardware, OS, and network layers.  
+**Action:** I systematically peeled back the layers. First, I analyzed Linux kernel ring buffers (`dmesg`), network socket statistics (`ss -s`), and hardware error registers via IPMI. Finding no hardware faults, I deployed `ftrace` and `perf` to trace kernel system calls during the latency spikes. The deep dive revealed the culprit: a background memory compaction routine (`kcompactd0`) was periodically stalling CPU cores for hundreds of milliseconds due to extreme memory fragmentation caused by unaligned Linux **Hugepages** configurations. Furthermore, an uncoordinated cron job was running heavy vulnerability scans simultaneously, inducing PCIe bus contention.  
+**Result:** I resolved the issue by tuning Linux virtual memory parameters (`vm.compaction_proactiveness = 0`), configuring static allocation of 1GB Hugepages at system boot time, and rescheduling the scanning jobs to low-traffic maintenance windows. The mysterious latency spikes were completely eliminated, restoring **sub-millisecond determinism**.
+
+---
+
+### Q28: Describe a time you inspected low-level system metrics (kernel logs, network packets, hardware registers) to solve a stubborn problem.
+**LP Alignment:** Dive Deep  
+**Situation:** At **Salient Global Tech**, an **OpenStack** compute node equipped with dual 25GbE network interfaces began intermittently dropping out of cluster membership, but standard `ping` and interface status commands showed the links as "UP" with zero CRC errors.  
+**Task:** The superficial tools indicated everything was fine, yet the node was failing tenant traffic. I had to investigate low-level hardware registers and network telemetry to diagnose the failure.  
+**Action:** I accessed the server via out-of-band management (**iDRAC**) and inspected the PCIe bus telemetry using `lspci -vvv`. I observed an escalating counter of Correctable PCIe Bus Errors on the network adapter slot. Diving deeper, I ran `ethtool -m` to inspect the optical transceiver's Digital Optical Monitoring (DOM) diagnostics. The low-level telemetry revealed that the optical receive power (RX Power) on interface 2 was fluctuating near $-18\text{ dBm}$, well below the $-10\text{ dBm}$ operational threshold. I inspected the physical fiber patch cable in the rack and discovered a micro-bend and dust contamination on the optical LC connector, causing intermittent optical signal degradation that standard layer-2 tools masked.  
+**Result:** I cleaned and replaced the fiber patch cable, restoring RX power to a healthy $-3.2\text{ dBm}$. The link stabilized instantly, and the compute node resumed 100% error-free operation, demonstrating that low-level hardware inspection is indispensable for distributed systems reliability.
+
+---
+
+### Q29: Tell me about a time you strongly disagreed with a senior engineer or technical lead. How did you handle it, and what was the outcome?
+**LP Alignment:** Have Backbone; Disagree and Commit  
+**Situation:** At **Salient Global Tech**, our technical lead proposed migrating our entire on-premise infrastructure configuration management from **Ansible** to a custom, in-house shell-scripting framework running over raw SSH to avoid installing Python dependencies on target nodes.  
+**Task:** I strongly disagreed. Custom shell scripts lack state management, idempotent guarantees, built-in error handling, and community modules, which would result in massive technical debt and unmaintainable infrastructure across our 50+ server fleet.  
+**Action:** I exercised backbone with professional respect. Rather than arguing subjectively, I drafted a technical white paper comparing both paradigms across four objective dimensions: **idempotency**, **maintainability**, **security auditability**, and **onboarding velocity**. I built a live demonstration: I showed how an Ansible playbook safely handles partial network interruptions and rolls back cleanly, whereas a 200-line shell script failed midway, leaving a test server in a half-configured, unbootable state. I presented this comparison to the lead and engineering team during our architecture review.  
+**Result:** The lead appreciated the rigorous empirical demonstration and agreed to retain Ansible. However, respecting his valid concern regarding Python footprint, I committed to optimizing our Ansible runtime by pre-baking minimal Python execution environments into our golden base OS images. The decision preserved infrastructure stability and unified our team.
+
+---
+
+### Q30: Describe your proudest technical accomplishment where you overcame significant obstacles to deliver outstanding operational results.
+**LP Alignment:** Deliver Results  
+**Situation:** In the **Verizon SME VCP Lab**, our team was tasked with delivering a complete, air-gapped carrier-grade infrastructure deployment of **OpenShift Container Platform (OCP)** and **OpenStack (OSP)** across 8 physical server racks within an aggressive 6-week window to support nationwide 5G Core testing. The deployment was blocked by hardware firmware incompatibilities, lack of external internet access, and delayed switch configurations.  
+**Task:** As Cloud Engineer, I was accountable for driving the end-to-end execution: node provisioning, air-gapped utility mirroring, network coordination, and post-installation cluster verification under intense deadline pressure.  
+**Action:** I established a relentless delivery cadence. To overcome the air-gapped constraint, I engineered an automated **JFrog Artifactory** repository mirror, staging over 500GB of certified container images and RPM packages. I automated server BIOS/UEFI configurations across HP, Dell, and ZT Systems nodes using **Ansible** and Redfish APIs. I collaborated daily with network engineers to validate VLAN tagging and bonding across **Cisco IOS XR** switches. Working through complex hardware bugs and leading cross-functional troubleshooting sessions, I built automated post-install validation scripts that executed 200+ health checks verifying cluster operator stability, storage failover, and network latency.  
+**Result:** We delivered the fully operational, carrier-grade OCP/OSP cloud platform **3 days ahead of the 6-week deadline**. The platform achieved **99.9% uptime** throughout intensive 5G Core carrier testing, processing thousands of simulated network sessions flawlessly and earning formal commendation from senior leadership.
+
+---
+
+# PART 2: Top 15 Systems Development Engineer (SysDE) Coding Challenges
+*Curated specifically for Amazon SysDE interviews (Python). Each problem addresses real-world systems, edge infrastructure, log analysis, networking, and resource management with line-by-line comments and complexity analysis.*
+
+---
+
+### 1. High-Performance Log File Parser & Aggregator
+**SysDE Context:** Analyzing gigabytes of web server or robotics gateway logs to detect HTTP status error spikes and top offending client IPs.
+
+**Thought Process:**
+1. Log files are often too large to load into memory at once; we must stream line-by-line using a generator.
+2. Use regular expressions to extract IP, timestamp, HTTP method, status code, and latency.
+3. Maintain frequency counts of 4xx/5xx status codes and aggregate top $K$ offending client IPs using `collections.Counter` or a min-heap.
+
+```python
+import re
+from collections import Counter
+from typing import Iterator, Dict, List, Tuple
+
+# Sample log line format: '192.168.1.10 - - [14/Sep/2026:12:00:00 +0000] "POST /api/v1/telemetry HTTP/1.1" 500 240'
+LOG_PATTERN = re.compile(r'(?P<ip>\S+) \S+ \S+ \[(?P<time>[^\]]+)\] "(?P<method>\S+) (?P<path>\S+) [^"]+" (?P<status>\d{3}) (?P<latency>\d+)')
+
+def parse_log_stream(log_lines: Iterator[str]) -> Tuple[Dict[str, int], List[Tuple[str, int]]]:
+    status_counts = Counter()
+    client_error_counts = Counter()
+    
+    # Process line-by-line for constant O(1) memory overhead
+    for line in log_lines:
+        match = LOG_PATTERN.match(line.strip())
+        if not match:
+            continue # Skip corrupted or malformed log lines
+            
+        data = match.groupdict()
+        status = data['status']
+        ip = data['ip']
+        
+        # Track aggregate status codes
+        status_counts[status] += 1
+        
+        # Track client IPs causing server/client errors (4xx / 5xx)
+        if status.startswith('4') or status.startswith('5'):
+            client_error_counts[ip] += 1
+            
+    # Retrieve top 5 offending IP addresses
+    top_error_ips = client_error_counts.most_common(5)
+    return dict(status_counts), top_error_ips
+
+# Complexity:
+# Time: O(N) where N is the total number of lines in the log file.
+# Space: O(U) where U is the number of unique IP addresses and status codes.
+```
+
+---
+
+### 2. IP Subnet Overlap & CIDR Validator
+**SysDE Context:** Validating that a newly provisioned edge rack or OpenShift node subnet does not collide with existing Amazon VPC or fulfillment center CIDRs.
+
+**Thought Process:**
+1. An IPv4 CIDR (e.g., `10.0.0.0/24`) can be represented as a 32-bit integer range: $[start\_ip, end\_ip]$.
+2. Convert IP strings to 32-bit integers using bitwise shifts.
+3. Compute the network mask: `mask = (0xFFFFFFFF << (32 - prefix)) & 0xFFFFFFFF`.
+4. Two ranges $[A_{start}, A_{end}]$ and $[B_{start}, B_{end}]$ overlap if and only if $A_{start} \le B_{end} \text{ and } B_{start} \le A_{end}$.
+
+```python
+from typing import List, Tuple
+
+def ip_to_int(ip: str) -> int:
+    """Converts dotted-decimal IPv4 string to 32-bit unsigned integer."""
+    octets = [int(o) for o in ip.split('.')]
+    return (octets[0] << 24) | (octets[1] << 16) | (octets[2] << 8) | octets[3]
+
+def cidr_to_range(cidr: str) -> Tuple[int, int]:
+    """Converts a CIDR block to (start_ip, end_ip) integers."""
+    ip_str, prefix_str = cidr.split('/')
+    prefix = int(prefix_str)
+    base_ip = ip_to_int(ip_str)
+    
+    # Calculate mask and bounds
+    mask = (0xFFFFFFFF << (32 - prefix)) & 0xFFFFFFFF if prefix > 0 else 0
+    start_ip = base_ip & mask
+    end_ip = start_ip | (~mask & 0xFFFFFFFF)
+    return start_ip, end_ip
+
+def find_overlapping_cidrs(existing_cidrs: List[str], new_cidr: str) -> List[str]:
+    """Returns all existing CIDRs that overlap with the new CIDR."""
+    new_start, new_end = cidr_to_range(new_cidr)
+    overlaps = []
+    
+    for existing in existing_cidrs:
+        ext_start, ext_end = cidr_to_range(existing)
+        # Check for range intersection
+        if new_start <= ext_end and ext_start <= new_end:
+            overlaps.append(existing)
+            
+    return overlaps
+
+# Complexity:
+# Time: O(M) where M is the number of existing CIDRs (constant bitwise ops).
+# Space: O(K) where K is the number of overlapping CIDRs found.
+```
+
+---
+
+### 3. Sliding Window Host Metric Rate / Anomaly Detector
+**SysDE Context:** Detecting if a compute node exceeds an error rate threshold of $E$ errors within the past $W$ seconds.
+
+**Thought Process:**
+1. Timestamps arrive in ascending order.
+2. Use a double-ended queue (`collections.deque`) to maintain timestamps occurring within the active sliding window $[current\_time - W, current\_time]$.
+3. On every new error event, append timestamp and pop expired timestamps from the left in $O(1)$.
+4. If the queue length exceeds threshold $E$, trigger an alarm.
+
+```python
+from collections import deque
+
+class MetricRateDetector:
+    def __init__(self, window_seconds: int, max_threshold: int):
+        self.window = window_seconds
+        self.max_threshold = max_threshold
+        self.timestamps = deque()
+
+    def record_event(self, timestamp: int) -> bool:
+        """
+        Records an error event timestamp.
+        Returns True if error rate exceeds threshold (Anomaly Alarm), else False.
+        """
+        self.timestamps.append(timestamp)
+        
+        # Evict all timestamps outside the active sliding window
+        while self.timestamps and self.timestamps[0] <= timestamp - self.window:
+            self.timestamps.popleft()
+            
+        # Check if current count breaches threshold
+        return len(self.timestamps) > self.max_threshold
+
+# Complexity:
+# Time: O(1) amortized per record_event call (each timestamp added and removed once).
+# Space: O(K) where K is the maximum number of events in the sliding window.
+```
+
+---
+
+### 4. LRU Cache for Device Metadata
+**SysDE Context:** Caching robot/controller telemetry tokens in memory with $O(1)$ read and eviction.
+
+**Thought Process:**
+1. Combine a Hash Map (Key $\rightarrow$ Node) with a Doubly Linked List (maintains recency).
+2. Use dummy head (MRU) and dummy tail (LRU) sentinels to eliminate null boundary checks.
+3. On `get`, detach node and move to head. On `put`, update or insert at head; evict node preceding tail if capacity exceeded.
+
+```python
+class Node:
+    def __init__(self, key: str = "", val: str = ""):
+        self.key, self.val = key, val
+        self.prev = None
+        self.next = None
+
+class DeviceLRUCache:
+    def __init__(self, capacity: int):
+        self.cap = capacity
+        self.cache = {} # key -> Node
+        self.head, self.tail = Node(), Node()
+        self.head.next = self.tail
+        self.tail.prev = self.head
+
+    def _remove(self, node: Node) -> None:
+        """Detaches a node from its current linked list position."""
+        node.prev.next = node.next
+        node.next.prev = node.prev
+
+    def _insert_head(self, node: Node) -> None:
+        """Inserts a node immediately after the dummy head (MRU)."""
+        node.next = self.head.next
+        node.prev = self.head
+        self.head.next.prev = node
+        self.head.next = node
+
+    def get(self, key: str) -> str:
+        if key in self.cache:
+            node = self.cache[key]
+            self._remove(node)
+            self._insert_head(node)
+            return node.val
+        return ""
+
+    def put(self, key: str, value: str) -> None:
+        if key in self.cache:
+            node = self.cache[key]
+            node.val = value
+            self._remove(node)
+            self._insert_head(node)
+        else:
+            if len(self.cache) >= self.cap:
+                # Evict least recently used (node before tail)
+                lru = self.tail.prev
+                self._remove(lru)
+                del self.cache[lru.key]
+            new_node = Node(key, value)
+            self.cache[key] = new_node
+            self._insert_head(new_node)
+
+# Complexity:
+# Time: O(1) strictly for both get() and put().
+# Space: O(capacity) storage for hash map and linked list nodes.
+```
+
+---
+
+### 5. Dependency Resolver for Service Provisioning (Topological Sort)
+**SysDE Context:** Determining the correct deployment order for cloud services with inter-dependencies (e.g., DNS before Database, Database before Application).
+
+**Thought Process:**
+1. Model dependencies as a Directed Acyclic Graph (DAG) where an edge $U \rightarrow V$ means service $U$ must be provisioned before service $V$.
+2. Use Kahn's Algorithm (BFS with in-degree tracking):
+   - Compute in-degree for each service.
+   - Queue services with in-degree 0 (can be deployed immediately).
+   - Pop service, append to order, decrement in-degree of dependent services.
+3. If ordered services count equals total services, return order; else return cycle detected (deadlock).
+
+```python
+from collections import defaultdict, deque
+from typing import List, Dict
+
+def resolve_provisioning_order(services: List[str], dependencies: List[Tuple[str, str]]) -> List[str]:
+    """
+    dependencies = [(dependency, dependent_service)] -> dependency must deploy before dependent_service
+    """
+    adj = defaultdict(list)
+    in_degree = {s: 0 for s in services}
+    
+    for prereq, svc in dependencies:
+        adj[prereq].append(svc)
+        in_degree[svc] += 1
+        
+    queue = deque([s for s in services if in_degree[s] == 0])
+    order = []
+    
+    while queue:
+        curr = queue.popleft()
+        order.append(curr)
+        for dependent in adj[curr]:
+            in_degree[dependent] -= 1
+            if in_degree[dependent] == 0:
+                queue.append(dependent)
+                
+    if len(order) == len(services):
+        return order
+    return [] # Circular dependency detected (invalid plan)
+
+# Complexity:
+# Time: O(V + E) where V is number of services, E is number of dependency pairs.
+# Space: O(V + E) for adjacency list and in-degree map.
+```
+
+---
+
+### 6. Token Bucket Rate Limiter
+**SysDE Context:** Throttling API requests from automated deployment agents to prevent overwhelming fulfillment center control nodes.
+
+**Thought Process:**
+1. A token bucket holds at most $C$ tokens and refills at a steady rate of $R$ tokens per second.
+2. Instead of running a background timer, compute tokens dynamically on each incoming request based on elapsed time: $\Delta t = current\_time - last\_refill$.
+3. If tokens $\ge 1$, decrement token and allow request; otherwise reject.
+
+```python
+import time
+
+class TokenBucketRateLimiter:
+    def __init__(self, capacity: int, refill_rate_per_sec: float):
+        self.capacity = capacity
+        self.refill_rate = refill_rate_per_sec
+        self.tokens = float(capacity)
+        self.last_refill = time.time()
+
+    def allow_request(self) -> bool:
+        now = time.time()
+        elapsed = now - self.last_refill
+        self.last_refill = now
+        
+        # Add tokens accrued during elapsed time, bounded by capacity
+        self.tokens = min(float(self.capacity), self.tokens + elapsed * self.refill_rate)
+        
+        if self.tokens >= 1.0:
+            self.tokens -= 1.0
+            return True # Request permitted
+        return False # Rate limited
+
+# Complexity:
+# Time: O(1) constant time mathematical calculation.
+# Space: O(1) constant memory.
+```
+
+---
+
+### 7. Unix File System Tree & Disk Usage Simulator
+**SysDE Context:** Calculating recursive disk space utilization across Linux directory trees and finding the largest files/directories.
+
+**Thought Process:**
+1. Model files and directories as tree nodes.
+2. Calculate total size using recursive depth-first search (DFS).
+3. Aggregate top directories exceeding a threshold.
+
+```python
+from typing import Dict, Any, List
+
+class FSNode:
+    def __init__(self, name: str, is_dir: bool = False, size: int = 0):
+        self.name = name
+        self.is_dir = is_dir
+        self.size = size
+        self.children: Dict[str, 'FSNode'] = {}
+
+def calculate_sizes(node: FSNode) -> int:
+    """Recursively computes and updates total directory sizes."""
+    if not node.is_dir:
+        return node.size
+        
+    total_size = 0
+    for child in node.children.values():
+        total_size += calculate_sizes(child)
+        
+    node.size = total_size
+    return total_size
+
+def find_large_directories(root: FSNode, min_size: int) -> List[Tuple[str, int]]:
+    """Returns all directories consuming at least min_size bytes."""
+    results = []
+    
+    def dfs(curr: FSNode, path: str):
+        if curr.is_dir:
+            curr_path = f"{path}/{curr.name}" if path else curr.name
+            if curr.size >= min_size:
+                results.append((curr_path, curr.size))
+            for child in curr.children.values():
+                dfs(child, curr_path)
+                
+    dfs(root, "")
+    return results
+
+# Complexity:
+# Time: O(N) where N is total nodes in file system.
+# Space: O(H) recursion stack height.
+```
+
+---
+
+### 8. Interval Scheduling: Minimum Maintenance Windows
+**SysDE Context:** Finding the minimum number of parallel maintenance technicians needed to upgrade compute racks with overlapping maintenance schedules.
+
+**Thought Process:**
+1. Separate scheduled start times and end times into two independent arrays and sort both.
+2. Use two pointers: if `start[i] < end[j]`, a maintenance task has started before an earlier one completed $\implies$ increment required worker count.
+3. Otherwise, an earlier task has completed $\implies$ advance `end` pointer and decrement worker count.
+
+```python
+from typing import List
+
+def min_technicians_needed(schedules: List[List[int]]) -> int:
+    if not schedules:
+        return 0
+        
+    starts = sorted([s[0] for s in schedules])
+    ends = sorted([s[1] for s in schedules])
+    
+    s_ptr, e_ptr = 0, 0
+    current_workers, max_workers = 0, 0
+    
+    while s_ptr < len(schedules):
+        if starts[s_ptr] < ends[e_ptr]:
+            current_workers += 1
+            s_ptr += 1
+        else:
+            current_workers -= 1
+            e_ptr += 1
+        max_workers = max(max_workers, current_workers)
+        
+    return max_workers
+
+# Complexity:
+# Time: O(N log N) due to sorting.
+# Space: O(N) auxiliary storage.
+```
+
+---
+
+### 9. Key-Value Configuration File Parser with Inheritance
+**SysDE Context:** Parsing nested Linux configuration files where environments inherit and override base profile values.
+
+**Thought Process:**
+1. Read configuration dictionary hierarchically.
+2. Recursively merge dictionary keys: child overrides parent for scalar keys, and recursively merges nested dictionaries.
+
+```python
+from typing import Dict, Any
+
+def deep_merge_configs(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
+    """Recursively merges override dictionary into base dictionary."""
+    result = base.copy()
+    
+    for key, value in override.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = deep_merge_configs(result[key], value)
+        else:
+            result[key] = value
+            
+    return result
+
+# Example:
+# base = {"network": {"mtu": 1500, "dhcp": True}, "debug": False}
+# override = {"network": {"mtu": 9000}, "debug": True}
+# output = {"network": {"mtu": 9000, "dhcp": True}, "debug": True}
+
+# Complexity:
+# Time: O(K) where K is total keys across nested configs.
+# Space: O(K) new dictionary allocation.
+```
+
+---
+
+### 10. Process Resource Allocator with Priority (Min-Heap / Max-Heap)
+**SysDE Context:** Allocating available compute nodes to the highest-priority automation jobs in the fulfillment center queue.
+
+**Thought Process:**
+1. Maintain a Priority Queue (Max-Heap) for pending jobs ordered by `priority` (and arrival timestamp for tie-breaking).
+2. Store jobs as `(-priority, timestamp, job_id, required_memory)`.
+3. Pop highest priority job and assign to available compute node.
+
+```python
+import heapq
+from typing import List, Tuple, Optional
+
+class JobScheduler:
+    def __init__(self):
+        self.heap = []
+        self.counter = 0
+
+    def submit_job(self, job_id: str, priority: int, memory_mb: int) -> None:
+        """Higher priority value executes first; tie-broken by arrival."""
+        # Python heapq is a min-heap, so negate priority for max-heap behavior
+        heapq.heappush(self.heap, (-priority, self.counter, job_id, memory_mb))
+        self.counter += 1
+
+    def dispatch_next_job(self) -> Optional[Tuple[str, int]]:
+        """Dispatches the next highest-priority job."""
+        if not self.heap:
+            return None
+        neg_prio, _, job_id, mem = heapq.heappop(self.heap)
+        return job_id, mem
+
+# Complexity:
+# Time: O(log N) for submit_job() and dispatch_next_job().
+# Space: O(N) where N is queued jobs.
+```
+
+---
+
+### 11. Network Hop Tracer / Shortest Latency Route (Dijkstra)
+**SysDE Context:** Routing device telemetry from an edge robot through intermediate network switches to the gateway along the lowest-latency path.
+
+**Thought Process:**
+1. Model switch topology as a weighted directed graph where edge weights represent network latency in milliseconds.
+2. Use Dijkstra's Algorithm with a min-heap priority queue tracking `(cumulative_latency, current_node, path)`.
+3. Maintain shortest distances map; early exit when destination reached.
+
+```python
+import heapq
+from collections import defaultdict
+from typing import Dict, List, Tuple
+
+def find_lowest_latency_route(nodes: List[str], edges: List[Tuple[str, str, int]], 
+                              start: str, dest: str) -> Tuple[int, List[str]]:
+    adj = defaultdict(list)
+    for u, v, latency in edges:
+        adj[u].append((v, latency))
+        adj[v].append((u, latency)) # Bidirectional network links
+        
+    pq = [(0, start, [start])] # (cost, node, path)
+    visited = {}
+    
+    while pq:
+        curr_latency, curr_node, path = heapq.heappop(pq)
+        
+        if curr_node in visited and visited[curr_node] <= curr_latency:
+            continue
+        visited[curr_node] = curr_latency
+        
+        if curr_node == dest:
+            return curr_latency, path
+            
+        for nbr, weight in adj[curr_node]:
+            if nbr not in visited:
+                heapq.heappush(pq, (curr_latency + weight, nbr, path + [nbr]))
+                
+    return -1, [] # Destination unreachable
+
+# Complexity:
+# Time: O(E log V) where E is network links, V is nodes.
+# Space: O(V + E) storage for graph and queue.
+```
+
+---
+
+### 12. Linux Log Rotate & Inode Cleanup Simulator
+**SysDE Context:** Simulating `logrotate` to prevent disk partition full outages on edge servers.
+
+**Thought Process:**
+1. A directory stores up to $K$ rotated logs for a service: `app.log`, `app.log.1`, ..., `app.log.K`.
+2. When rotating: delete `app.log.K` if present, rename `app.log.i` to `app.log.(i+1)` in descending order, rename active `app.log` to `app.log.1`, and initialize empty `app.log`.
+
+```python
+from typing import List
+
+def simulate_logrotate(existing_logs: List[str], max_rotations: int) -> List[str]:
+    """
+    Simulates rotation of logs up to max_rotations.
+    Input existing_logs: e.g. ['app.log', 'app.log.1', 'app.log.2']
+    """
+    # Parse existing rotation indices
+    rotated_set = set(existing_logs)
+    new_logs = []
+    
+    # Check if max rotation needs deletion
+    oldest = f"app.log.{max_rotations}"
+    if oldest in rotated_set:
+        rotated_set.remove(oldest)
+        
+    # Shift existing rotated files up by 1
+    for i in range(max_rotations - 1, 0, -1):
+        target = f"app.log.{i}"
+        if target in rotated_set:
+            new_logs.append(f"app.log.{i + 1}")
+            
+    # Rotate active log
+    if "app.log" in existing_logs:
+        new_logs.append("app.log.1")
+        
+    # New active log created
+    new_logs.append("app.log")
+    return sorted(new_logs)
+
+# Complexity:
+# Time: O(K log K) where K is max_rotations.
+# Space: O(K) allocation.
+```
+
+---
+
+### 13. Deadlock Detector in Resource Allocation (Cycle Detection in Directed Graph)
+**SysDE Context:** Detecting distributed locks deadlocked across robotics tasks competing for peripheral sensors.
+
+**Thought Process:**
+1. Model resource allocations and requests as a directed "Wait-For" graph.
+2. A deadlock exists if and only if there is a cycle in the Wait-For graph.
+3. Use DFS with three node states: 0 = Unvisited, 1 = Visiting (in current recursion stack), 2 = Visited.
+
+```python
+from collections import defaultdict
+from typing import List, Tuple
+
+def has_deadlock(num_tasks: int, wait_for_edges: List[Tuple[int, int]]) -> bool:
+    """
+    wait_for_edges = [(Task_A, Task_B)] -> Task A is waiting for Task B to release a lock
+    """
+    adj = defaultdict(list)
+    for u, v in wait_for_edges:
+        adj[u].append(v)
+        
+    state = [0] * num_tasks # 0: unvisited, 1: visiting, 2: visited
+    
+    def dfs(u: int) -> bool:
+        state[u] = 1 # Mark as active in recursion stack
+        for v in adj[u]:
+            if state[v] == 1:
+                return True # Cycle detected (Deadlock!)
+            if state[v] == 0:
+                if dfs(v):
+                    return True
+        state[u] = 2 # Processed
+        return False
+        
+    for task in range(num_tasks):
+        if state[task] == 0:
+            if dfs(task):
+                return True
+                
+    return False
+
+# Complexity:
+# Time: O(V + E) where V is tasks, E is wait-for dependencies.
+# Space: O(V + E) recursion depth and graph representation.
+```
+
+---
+
+### 14. Rolling Average Latency with Sliding Window
+**SysDE Context:** Computing real-time average RPC latency over a fixed time window for automated edge canary health validation.
+
+**Thought Process:**
+1. Maintain queue of `(timestamp, latency_val)` tuples.
+2. Maintain running `sum_latency`.
+3. When adding a metric, add to sum, append to queue.
+4. Evict expired entries older than `timestamp - window`, subtracting their values from `sum_latency`.
+5. Return `sum_latency / len(queue)`.
+
+```python
+from collections import deque
+from typing import Tuple
+
+class MovingAverageLatency:
+    def __init__(self, window_seconds: int):
+        self.window = window_seconds
+        self.queue = deque() # (timestamp, latency)
+        self.total_sum = 0.0
+
+    def add_latency(self, timestamp: int, latency: float) -> float:
+        self.queue.append((timestamp, latency))
+        self.total_sum += latency
+        
+        # Evict outside window
+        while self.queue and self.queue[0][0] <= timestamp - self.window:
+            _, old_lat = self.queue.popleft()
+            self.total_sum -= old_lat
+            
+        return self.total_sum / len(self.queue) if self.queue else 0.0
+
+# Complexity:
+# Time: O(1) amortized.
+# Space: O(W) where W is metrics stored in window.
+```
+
+---
+
+### 15. Server Inventory Search & Filter (Trie / Prefix Search)
+**SysDE Context:** Real-time autocomplete for searching server hostnames (e.g., `iad-edge-rack01-srv02`) across thousands of fulfillment center nodes.
+
+**Thought Process:**
+1. A Trie (Prefix Tree) provides $O(L)$ prefix lookup time where $L$ is hostname length.
+2. Each node holds children dictionary and a list of matching server names (up to top 5).
+
+```python
+class TrieNode:
+    def __init__(self):
+        self.children = {}
+        self.suggestions = [] # Stores up to 5 matching hostnames
+
+class ServerInventoryTrie:
+    def __init__(self):
+        self.root = TrieNode()
+
+    def insert(self, hostname: str) -> None:
+        curr = self.root
+        for ch in hostname:
+            if ch not in curr.children:
+                curr.children[ch] = TrieNode()
+            curr = curr.children[ch]
+            if len(curr.suggestions) < 5:
+                curr.suggestions.append(hostname)
+
+    def search_prefix(self, prefix: str) -> List[str]:
+        curr = self.root
+        for ch in prefix:
+            if ch not in curr.children:
+                return []
+            curr = curr.children[ch]
+        return curr.suggestions
+
+# Complexity:
+# Time: O(L) for insert and search_prefix where L is length of prefix string.
+# Space: O(Total characters across all hostnames).
+```
+
+---
+
+# PART 3: Questions to Ask the Amazon Interviewer (10-Minute Close)
+
+Prepare these strategic, high-impact questions to demonstrate deep technical curiosity and operational empathy for Amazon's Device Tech team:
+
+1. **On Edge Scale & Diversity:**  
+   *"Given that Amazon's Device Tech team powers on-premise compute and storage across robotics fulfillment centers, sort centers, and delivery stations globally, what is the biggest challenge the team faces when managing configuration drift and firmware parity across such heterogeneous hardware generations?"*
+
+2. **On Hybrid Cloud & Self-Service Tooling:**  
+   *"The JD mentions writing AWS CDK constructs to build self-service abstractions for application teams. How does the team balance running workloads locally on edge hardware versus offloading telemetry and orchestration to central AWS regions like us-east-1 when edge connectivity degrades?"*
+
+3. **On Operational Excellence & On-Call:**  
+   *"What does a healthy on-call rotation look like for this team, and what is an example of an operational pain point that the team recently automated away using Python or AWS CDK?"*
+
+---
+*End of Amazon Systems Development Engineer (SysDE) Master Preparation Guide.*

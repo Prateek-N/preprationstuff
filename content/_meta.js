@@ -1,5 +1,6 @@
 export default {
   index: 'Docs Home',
+  'charan-amazon-sysde-prep': 'Charan Kumar Amazon SysDE Prep',
   'pranavi-rooms-to-go-prep': 'Pranavi Myneni Rooms To Go Prep',
   'ashutosh-oscar-health-prep': 'Ashutosh Rudraksh Oscar Health Prep',
   'suvishal-operations-analyst-prep': 'Suvishal Operations Analyst Prep',

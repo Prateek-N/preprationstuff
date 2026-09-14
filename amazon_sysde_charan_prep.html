@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Amazon SysDE — Devices Tech & Robotics Interview Prep Suite · Charan Kumar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #0b1120;
+      --bg-surface: #111d33;
+      --bg-card: #172642;
+      --bg-card-hover: #1e3256;
+      --border: #233758;
+      --border-accent: #ff9900;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --amz-orange: #ff9900;
+      --amz-gold: #fbbf24;
+      --amz-blue: #38bdf8;
+      --amz-green: #34d399;
+      --amz-rose: #fb7185;
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* LOCK SCREEN */
+    #lockScreen {
+      position: fixed; inset: 0;
+      background: radial-gradient(circle at center, #1e3256 0%, #070c18 100%);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 99999; padding: 1.5rem;
+    }
+    .lock-box {
+      background: rgba(17, 29, 51, 0.92);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 153, 0, 0.3);
+      border-radius: 20px;
+      padding: 2.5rem;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 40px rgba(255, 153, 0, 0.18);
+    }
+    .lock-icon-wrap {
+      width: 72px; height: 72px; margin: 0 auto 1.5rem;
+      background: linear-gradient(135deg, rgba(255, 153, 0, 0.25), rgba(56, 189, 248, 0.2));
+      border: 1px solid var(--amz-orange);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--amz-orange);
+    }
+    .lock-box h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+    .lock-box p { color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.75rem; }
+    .input-group { position: relative; margin-bottom: 1.25rem; }
+    .input-group input {
+      width: 100%;
+      background: rgba(11, 17, 32, 0.85);
+      border: 1px solid var(--border);
+      padding: 0.9rem 1.2rem;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.2s;
+      text-align: center;
+      letter-spacing: 0.15em;
+    }
+    .input-group input:focus { border-color: var(--amz-orange); box-shadow: 0 0 0 3px rgba(255, 153, 0, 0.25); }
+    .unlock-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #ff9900, #ea580c);
+      color: #0b1120;
+      border: none;
+      padding: 0.9rem;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .unlock-btn:hover { opacity: 0.95; transform: translateY(-1px); box-shadow: 0 10px 20px -5px rgba(255, 153, 0, 0.4); }
+    .lock-error { color: var(--amz-rose); font-size: 0.825rem; margin-top: 0.75rem; display: none; }
+
+    /* APP LAYOUT */
+    #appContent { display: none; opacity: 0; transition: opacity 0.4s ease; }
+    .app-header {
+      background: rgba(17, 29, 51, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 1000;
+      padding: 1rem 2rem;
+    }
+    .header-inner {
+      max-width: 1440px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1.5rem; flex-wrap: wrap;
+    }
+    .brand-title { display: flex; align-items: center; gap: 14px; }
+    .brand-badge {
+      background: linear-gradient(135deg, #ff9900, #f59e0b);
+      color: #0b1120; font-size: 0.75rem; font-weight: 800;
+      padding: 5px 10px; border-radius: 6px; letter-spacing: 0.05em;
+    }
+    .brand-title h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.01em; }
+    .brand-sub { font-size: 0.8rem; color: var(--text-muted); }
+
+    .tab-nav {
+      display: flex; gap: 6px; background: rgba(11, 17, 32, 0.7);
+      padding: 4px; border-radius: 12px; border: 1px solid var(--border);
+    }
+    .tab-btn {
+      background: transparent; border: none; color: var(--text-muted);
+      padding: 8px 16px; border-radius: 8px; font-size: 0.85rem;
+      font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .tab-btn:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.05); }
+    .tab-btn.active {
+      background: var(--amz-orange); color: #0b1120;
+      box-shadow: 0 4px 12px rgba(255, 153, 0, 0.3);
+    }
+
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+    .stat-pill {
+      background: var(--bg-card); border: 1px solid var(--border);
+      padding: 6px 12px; border-radius: 8px; font-size: 0.75rem;
+      font-weight: 600; color: var(--amz-orange);
+    }
+    .lock-action-btn {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text-muted); padding: 6px 12px; border-radius: 8px;
+      font-size: 0.75rem; cursor: pointer;
+    }
+    .lock-action-btn:hover { color: var(--text-main); border-color: var(--amz-rose); }
+
+    .container { max-width: 1440px; margin: 2rem auto; padding: 0 1.5rem 4rem; }
+
+    /* SEARCH & FILTER */
+    .search-section {
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 1.25rem 1.5rem; margin-bottom: 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; flex-wrap: wrap;
+    }
+    .search-input-wrap { flex: 1; min-width: 280px; position: relative; }
+    .search-input-wrap input {
+      width: 100%; background: var(--bg-base); border: 1px solid var(--border);
+      padding: 0.75rem 1rem 0.75rem 2.5rem; border-radius: 10px;
+      color: #fff; font-size: 0.9rem; outline: none;
+    }
+    .search-input-wrap input:focus { border-color: var(--amz-orange); }
+    .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-dim); }
+    .category-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .cat-pill {
+      background: var(--bg-base); border: 1px solid var(--border);
+      color: var(--text-muted); font-size: 0.75rem; padding: 6px 12px;
+      border-radius: 20px; cursor: pointer; transition: all 0.15s;
+    }
+    .cat-pill:hover, .cat-pill.active {
+      background: rgba(255, 153, 0, 0.15); border-color: var(--amz-orange); color: var(--amz-orange);
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* CARDS */
+    .item-card {
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: 14px; margin-bottom: 1.25rem; overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .item-card:hover { border-color: rgba(255, 153, 0, 0.4); }
+    .card-header {
+      padding: 1.25rem 1.5rem; display: flex; align-items: center;
+      justify-content: space-between; cursor: pointer; user-select: none; gap: 1rem;
+    }
+    .card-title-group { display: flex; align-items: center; gap: 12px; flex: 1; }
+    .badge-num {
+      width: 38px; height: 38px; border-radius: 8px;
+      background: rgba(255, 153, 0, 0.15); color: var(--amz-orange);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem; font-weight: 700; font-family: var(--font-mono); flex-shrink: 0;
+    }
+    .card-title-text h3 { font-size: 1rem; font-weight: 600; color: var(--text-main); line-height: 1.4; }
+    .tag-category {
+      font-size: 0.7rem; font-weight: 600; padding: 3px 8px; border-radius: 4px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      color: var(--text-muted); margin-top: 4px; display: inline-block;
+    }
+    .chevron-icon { color: var(--text-dim); transition: transform 0.2s ease; flex-shrink: 0; }
+    .item-card.open .chevron-icon { transform: rotate(180deg); color: var(--amz-orange); }
+
+    .card-body {
+      display: none; padding: 1.5rem; border-top: 1px solid var(--border);
+      background: var(--bg-card); font-size: 0.925rem; color: #cbd5e1; line-height: 1.8;
+    }
+    .item-card.open .card-body { display: block; }
+    .card-body b { color: #fde68a; font-weight: 600; }
+
+    /* STAR BLOCKS */
+    .star-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .star-segment {
+      background: rgba(11, 17, 32, 0.6); border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px; padding: 1rem 1.25rem;
+    }
+    .star-badge {
+      display: inline-block; font-size: 0.72rem; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px; margin-bottom: 6px; letter-spacing: 0.05em;
+    }
+    .badge-s { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+    .badge-t { background: rgba(255, 153, 0, 0.2); color: #fbbf24; }
+    .badge-a { background: rgba(52, 211, 153, 0.2); color: #34d399; }
+    .badge-r { background: rgba(251, 113, 133, 0.2); color: #fb7185; }
+
+    /* CODE BLOCKS */
+    .code-wrapper {
+      position: relative; margin: 1.25rem 0; border-radius: 12px;
+      overflow: hidden; border: 1px solid var(--border);
+    }
+    .code-header {
+      background: #0d1527; padding: 0.5rem 1rem; display: flex;
+      justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border); font-size: 0.75rem;
+      color: var(--text-muted); font-family: var(--font-mono);
+    }
+    .copy-btn {
+      background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border);
+      color: var(--text-muted); padding: 4px 10px; border-radius: 6px;
+      font-size: 0.7rem; cursor: pointer; transition: all 0.2s;
+    }
+    .copy-btn:hover { background: var(--amz-orange); color: #0b1120; }
+    pre {
+      background: #080d19 !important; padding: 1.25rem; overflow-x: auto;
+      font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.6; color: #e2e8f0;
+    }
+
+    .complexity-bar { display: flex; gap: 12px; margin: 1rem 0; flex-wrap: wrap; }
+    .complexity-pill {
+      background: rgba(11, 17, 32, 0.7); border: 1px solid var(--border);
+      padding: 6px 14px; border-radius: 8px; font-size: 0.8rem; font-family: var(--font-mono);
+    }
+    .complexity-pill span { color: var(--amz-orange); font-weight: 600; }
+
+    .alert-box {
+      background: rgba(255, 153, 0, 0.08); border-left: 4px solid var(--amz-orange);
+      padding: 1rem 1.25rem; border-radius: 0 10px 10px 0; margin: 1rem 0; font-size: 0.875rem;
+    }
+    .alert-box strong { color: var(--amz-orange); }
+
+    .progress-bar-wrap {
+      background: var(--bg-card); border-radius: 99px; height: 6px;
+      width: 140px; overflow: hidden; border: 1px solid var(--border);
+    }
+    .progress-fill {
+      background: linear-gradient(90deg, #ff9900, #38bdf8);
+      height: 100%; width: 0%; transition: width 0.3s;
+    }
+
+    .overview-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem; margin-bottom: 2rem;
+    }
+    .metric-card {
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 1.5rem;
+    }
+    .metric-card h4 {
+      font-size: 0.85rem; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--text-dim); margin-bottom: 0.5rem;
+    }
+    .metric-val { font-size: 1.75rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.5rem; }
+    .metric-desc { font-size: 0.825rem; color: var(--text-muted); }
+
+    footer {
+      text-align: center; padding: 3rem 1rem 1rem; color: var(--text-dim);
+      font-size: 0.8rem; border-top: 1px solid var(--border); max-width: 1440px; margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PASSWORD GATE -->
+  <div id="lockScreen">
+    <div class="lock-box">
+      <div class="lock-icon-wrap">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+      </div>
+      <h2>Amazon SysDE Interview Prep</h2>
+      <p>Candidate: Charan Kumar Kundavarapu<br>Systems Development Engineer (Devices Tech & Robotics)</p>
+      
+      <div class="input-group">
+        <input type="password" id="passInput" placeholder="Enter Access Password" autofocus onkeydown="if(event.key==='Enter') unlockApp()">
+      </div>
+      <button class="unlock-btn" onclick="unlockApp()">Unlock Preparation Suite</button>
+      <div class="lock-error" id="lockError">Incorrect password. Please enter the authorized passcode.</div>
+    </div>
+  </div>
+
+  <!-- APP CONTENT -->
+  <div id="appContent">
+    <header class="app-header">
+      <div class="header-inner">
+        <div class="brand-title">
+          <div class="brand-badge">AMAZON SYSDE</div>
+          <div>
+            <h1>Charan Kumar Kundavarapu · SysDE Interview Master Suite</h1>
+            <div class="brand-sub">Device Tech (Robotics & Fulfillment) · 30 LP Answers + 15 Live Coding Challenges</div>
+          </div>
+        </div>
+
+        <nav class="tab-nav">
+          <button class="tab-btn active" onclick="switchTab('tab-overview')">Interview Strategy</button>
+          <button class="tab-btn" onclick="switchTab('tab-lp')">Part 1: 30 LP Answers</button>
+          <button class="tab-btn" onclick="switchTab('tab-coding')">Part 2: 15 Coding Challenges</button>
+          <button class="tab-btn" onclick="switchTab('tab-close')">Part 3: 10-Min Close Questions</button>
+        </nav>
+
+        <div class="header-actions">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="progress-bar-wrap"><div class="progress-fill" id="topProgress"></div></div>
+            <span class="stat-pill" id="readCounter">0 / 45 Ready</span>
+          </div>
+          <button class="lock-action-btn" onclick="relockApp()">Lock</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="search-section">
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="globalSearch" placeholder="Search across all 30 LPs, 15 coding problems, Ansible, OpenShift, CIDR, Redfish..." oninput="handleSearch()">
+        </div>
+        <div class="category-pills">
+          <button class="cat-pill active" onclick="filterByTag('all')">All (45)</button>
+          <button class="cat-pill" onclick="filterByTag('lp')">Leadership Principles (30)</button>
+          <button class="cat-pill" onclick="filterByTag('coding')">Coding Challenges (15)</button>
+          <button class="cat-pill" onclick="filterByTag('customer')">Customer Obsession</button>
+          <button class="cat-pill" onclick="filterByTag('ownership')">Ownership & Standards</button>
+          <button class="cat-pill" onclick="filterByTag('automation')">Ansible & Bare-Metal</button>
+        </div>
+      </section>
+
+      <!-- TAB 0: OVERVIEW -->
+      <div id="tab-overview" class="tab-panel active">
+        <div class="overview-grid">
+          <div class="metric-card">
+            <h4>Target Role</h4>
+            <div class="metric-val" style="color: var(--amz-orange);">Systems Dev Engineer</div>
+            <div class="metric-desc">Device Tech (Fulfillment Technology & Robotics). Multi-tenant edge compute, bare metal, OpenShift/OpenStack, AWS CDK.</div>
+          </div>
+          <div class="metric-card">
+            <h4>60-Minute Interview Format</h4>
+            <div class="metric-val" style="color: var(--amz-blue);">30m Code / 20m LP / 10m Qs</div>
+            <div class="metric-desc">Live coding challenge + 1–2 behavioral questions in STAR format backed by quantitative data metrics + candidate questions.</div>
+          </div>
+          <div class="metric-card">
+            <h4>Core Technical Competencies</h4>
+            <div class="metric-val" style="color: var(--amz-green);">Python · Ansible · Linux</div>
+            <div class="metric-desc">Bare-metal automation (iLO/iDRAC/BMC), carrier-grade Linux (RHEL), network routing, self-service infrastructure platforms.</div>
+          </div>
+        </div>
+
+        <div class="alert-box">
+          <strong>Amazon Interview Structure & Strategy:</strong>
+          • <strong>First 30 Minutes (Technical Live Coding):</strong> Focus on clean Python, thinking out loud, clarifying constraints upfront, handling edge cases, and stating Time/Space complexity.<br>
+          • <strong>Next 20 Minutes (Behavioral / Leadership Principles):</strong> Expect 1–2 questions answered strictly in STAR format (~300 words). Emphasize data-backed outcomes (saved XX hours, reduced errors by XX%).<br>
+          • <strong>Final 10 Minutes (Your Turn to Ask):</strong> Ask high-impact questions regarding edge scale, hardware heterogeneity, and operational on-call hygiene.
+        </div>
+      </div>
+
+      <!-- TAB 1: 30 LP ANSWERS -->
+      <div id="tab-lp" class="tab-panel">
+        <div id="lpContainer"></div>
+      </div>
+
+      <!-- TAB 2: 15 CODING CHALLENGES -->
+      <div id="tab-coding" class="tab-panel">
+        <div id="codingContainer"></div>
+      </div>
+
+      <!-- TAB 3: 10-MIN CLOSE QUESTIONS -->
+      <div id="tab-close" class="tab-panel">
+        <div class="item-card open">
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="badge-num" style="background:rgba(255,153,0,0.2);color:#ff9900;">Q1</div>
+              <div class="card-title-text">
+                <h3>Edge Hardware Heterogeneity & Configuration Drift</h3>
+                <span class="tag-category">Systems Architecture</span>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <p><em>"Given that Amazon's Device Tech team powers on-premise compute and storage across robotics fulfillment centers, sort centers, and delivery stations globally, what is the biggest challenge the team faces when managing configuration drift and firmware parity across such heterogeneous hardware generations?"</em></p>
+          </div>
+        </div>
+
+        <div class="item-card open">
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="badge-num" style="background:rgba(255,153,0,0.2);color:#ff9900;">Q2</div>
+              <div class="card-title-text">
+                <h3>Hybrid Cloud & Self-Service Tooling (AWS CDK)</h3>
+                <span class="tag-category">Hybrid Infrastructure</span>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <p><em>"The JD mentions writing AWS CDK constructs to build self-service abstractions for application teams. How does the team balance running workloads locally on edge hardware versus offloading telemetry and orchestration to central AWS regions like us-east-1 when edge connectivity degrades?"</em></p>
+          </div>
+        </div>
+
+        <div class="item-card open">
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="badge-num" style="background:rgba(255,153,0,0.2);color:#ff9900;">Q3</div>
+              <div class="card-title-text">
+                <h3>Operational Excellence & Eliminating On-Call Toil</h3>
+                <span class="tag-category">Operational Excellence</span>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <p><em>"What does a healthy on-call rotation look like for this team, and what is an example of an operational pain point that the team recently automated away using Python or AWS CDK?"</em></p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <p>Amazon Systems Development Engineer (SysDE) Interview Preparation Suite · Curated for Charan Kumar Kundavarapu · Confidential</p>
+    </footer>
+  </div>
+
+  <script>
+    const MASTER_PASS = "CHARAN";
+
+    function checkAuth() {
+      if (sessionStorage.getItem("charan_prep_unlocked") === "true") {
+        document.getElementById("lockScreen").style.display = "none";
+        const app = document.getElementById("appContent");
+        app.style.display = "block";
+        setTimeout(() => app.style.opacity = "1", 50);
+      }
+    }
+
+    function unlockApp() {
+      const input = document.getElementById("passInput");
+      const err = document.getElementById("lockError");
+      const entered = input.value.trim().toUpperCase();
+      if (entered === MASTER_PASS) {
+        sessionStorage.setItem("charan_prep_unlocked", "true");
+        document.getElementById("lockScreen").style.display = "none";
+        const app = document.getElementById("appContent");
+        app.style.display = "block";
+        setTimeout(() => app.style.opacity = "1", 50);
+      } else {
+        err.style.display = "block";
+        input.value = "";
+        input.focus();
+      }
+    }
+
+    function relockApp() {
+      sessionStorage.removeItem("charan_prep_unlocked");
+      location.reload();
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.getElementById(tabId).classList.add("active");
+      event.target.classList.add("active");
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Load data from master MD
+    async function loadMarkdownData() {
+      try {
+        const res = await fetch('amazon_sysde_charan_prep.md');
+        const text = await res.text();
+        parseMarkdown(text);
+      } catch (e) {
+        console.error("Failed to load markdown", e);
+      }
+    }
+
+    let lpList = [];
+    let codingList = [];
+
+    function parseMarkdown(md) {
+      // 1. Parse LPs (Q1 to Q30)
+      const lpParts = md.split(/### Q(\d+):/g);
+      for (let i = 1; i < lpParts.length; i += 2) {
+        const num = parseInt(lpParts[i]);
+        if (num > 30) continue;
+        const block = lpParts[i+1];
+        const titleLine = block.split("\n")[0].trim();
+        
+        let alignMatch = block.match(/\*\*LP Alignment:\*\*\s*(.+)/);
+        let alignment = alignMatch ? alignMatch[1].trim() : "Leadership Principle";
+
+        let content = block.replace(titleLine, "").trim();
+        content = content.replace(/\*\*LP Alignment:\*\*.+/, "").trim();
+
+        let subTags = ["lp"];
+        if (alignment.includes("Customer")) subTags.push("customer");
+        if (alignment.includes("Ownership") || alignment.includes("Standards")) subTags.push("ownership");
+        if (content.includes("Ansible") || content.includes("bare-metal") || content.includes("OpenShift")) subTags.push("automation");
+
+        lpList.push({
+          num: num,
+          title: titleLine,
+          alignment: alignment,
+          subTags: subTags,
+          content: content
+        });
+      }
+
+      // 2. Parse Coding (1 to 15)
+      const codeParts = md.split(/### (\d+)\.\s+(.+)/g);
+      for (let i = 1; i < codeParts.length; i += 3) {
+        const num = parseInt(codeParts[i]);
+        const title = codeParts[i+1].trim();
+        const block = codeParts[i+2];
+
+        let contextMatch = block.match(/\*\*SysDE Context:\*\*\s*([\s\S]*?)\n\n\*\*Thought Process:\*\*/);
+        let context = contextMatch ? contextMatch[1].trim() : "";
+
+        let thoughtMatch = block.match(/\*\*Thought Process:\*\*\s*([\s\S]*?)\n\n```python/);
+        let thought = thoughtMatch ? thoughtMatch[1].trim() : "";
+
+        let codeMatch = block.match(/```python([\s\S]*?)```/);
+        let code = codeMatch ? codeMatch[1].trim() : "";
+
+        let timeMatch = block.match(/# Time:\s*(.+)/);
+        let timeComp = timeMatch ? timeMatch[1].trim() : "O(N)";
+
+        let spaceMatch = block.match(/# Space:\s*(.+)/);
+        let spaceComp = spaceMatch ? spaceMatch[1].trim() : "O(1)";
+
+        codingList.push({
+          num: num,
+          title: title,
+          context: context,
+          thought: thought,
+          code: code,
+          timeComp: timeComp,
+          spaceComp: spaceComp,
+          subTags: ["coding"]
+        });
+      }
+
+      renderAll();
+    }
+
+    function renderAll() {
+      renderLPs();
+      renderCoding();
+      updateProgress();
+    }
+
+    function renderLPs() {
+      const container = document.getElementById("lpContainer");
+      container.innerHTML = lpList.map(q => {
+        let formatted = q.content
+          .replace(/\n\n/g, "<br><br>")
+          .replace(/\*\*Situation:\*\*/g, "<span class='star-badge badge-s'>SITUATION</span>")
+          .replace(/\*\*Task:\*\*/g, "<br><br><span class='star-badge badge-t'>TASK</span>")
+          .replace(/\*\*Action:\*\*/g, "<br><br><span class='star-badge badge-a'>ACTION</span>")
+          .replace(/\*\*Result:\*\*/g, "<br><br><span class='star-badge badge-r'>RESULT</span>")
+          .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
+
+        return `
+          <div class="item-card" data-tags="${q.subTags.join(' ')}" data-search="${(q.title + ' ' + q.alignment + ' ' + q.content).toLowerCase()}">
+            <div class="card-header" onclick="toggleCard(this)">
+              <div class="card-title-group">
+                <div class="badge-num">Q${q.num}</div>
+                <div class="card-title-text">
+                  <h3>${q.title}</h3>
+                  <span class="tag-category">${q.alignment}</span>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap: 10px;">
+                <input type="checkbox" class="read-checkbox" onclick="event.stopPropagation(); updateProgress()" title="Mark as ready">
+                <span class="chevron-icon">▼</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div>${formatted}</div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderCoding() {
+      const container = document.getElementById("codingContainer");
+      container.innerHTML = codingList.map(c => `
+        <div class="item-card" data-tags="coding" data-search="${(c.title + ' ' + c.context + ' ' + c.thought).toLowerCase()}">
+          <div class="card-header" onclick="toggleCard(this)">
+            <div class="card-title-group">
+              <div class="badge-num" style="background:rgba(56,189,248,0.15);color:#38bdf8;">#${c.num}</div>
+              <div class="card-title-text">
+                <h3>${c.title}</h3>
+                <span class="tag-category">Live Coding Challenge</span>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap: 10px;">
+              <input type="checkbox" class="read-checkbox" onclick="event.stopPropagation(); updateProgress()" title="Mark as ready">
+              <span class="chevron-icon">▼</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="alert-box">
+              <strong>Amazon SysDE Context:</strong> ${c.context}
+            </div>
+            <div style="margin: 1rem 0;">
+              <strong style="color: var(--amz-orange);">Thought Process:</strong>
+              <div style="white-space: pre-line; margin-top: 4px;">${c.thought}</div>
+            </div>
+            <div class="complexity-bar">
+              <div class="complexity-pill">Time: <span>${c.timeComp}</span></div>
+              <div class="complexity-pill">Space: <span>${c.spaceComp}</span></div>
+            </div>
+            <div class="code-wrapper">
+              <div class="code-header">
+                <span>python3</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy Code</button>
+              </div>
+              <pre><code>${escapeHtml(c.code)}</code></pre>
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function toggleCard(headerEl) {
+      headerEl.parentElement.classList.toggle("open");
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function copyCode(btn) {
+      const code = btn.closest(".code-wrapper").querySelector("pre code").innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const orig = btn.innerText;
+        btn.innerText = "Copied!";
+        setTimeout(() => btn.innerText = orig, 1500);
+      });
+    }
+
+    function updateProgress() {
+      const allCheckboxes = document.querySelectorAll(".read-checkbox");
+      const checked = document.querySelectorAll(".read-checkbox:checked");
+      const pct = allCheckboxes.length > 0 ? (checked.length / allCheckboxes.length) * 100 : 0;
+      document.getElementById("topProgress").style.width = pct + "%";
+      document.getElementById("readCounter").innerText = `${checked.length} / ${allCheckboxes.length || 45} Ready`;
+    }
+
+    function handleSearch() {
+      const query = document.getElementById("globalSearch").value.toLowerCase().trim();
+      document.querySelectorAll(".item-card").forEach(card => {
+        const text = card.getAttribute("data-search") || "";
+        if (!query || text.includes(query)) {
+          card.style.display = "block";
+        } else {
+          card.style.display = "none";
+        }
+      });
+    }
+
+    function filterByTag(tag) {
+      document.querySelectorAll(".cat-pill").forEach(p => p.classList.remove("active"));
+      event.target.classList.add("active");
+      
+      document.querySelectorAll(".item-card").forEach(card => {
+        const tags = (card.getAttribute("data-tags") || "").split(" ");
+        if (tag === 'all' || tags.includes(tag)) {
+          card.style.display = "block";
+        } else {
+          card.style.display = "none";
+        }
+      });
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      checkAuth();
+      loadMarkdownData();
+    });
+  </script>
+</body>
+</html>
