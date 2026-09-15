@@ -1,5 +1,6 @@
 export default {
   index: 'Docs Home',
+  'lawrence-cybersecurity-analyst-prep': 'Lawrence Doh Cybersecurity Analyst Prep',
   'ashish-fedex-data-scientist-prep': 'Sai Ashish Chavali FedEx Data Scientist Prep',
   'charan-amazon-sysde-prep': 'Charan Kumar Amazon SysDE Prep',
   'pranavi-rooms-to-go-prep': 'Pranavi Myneni Rooms To Go Prep',
