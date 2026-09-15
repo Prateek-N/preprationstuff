@@ -635,3 +635,1187 @@ Regarding relocation: I am 100% committed and enthusiastic about relocating from
 
 ---
 
+
+
+---
+
+# PART 2: 20 Core DSA Coding Challenges for Senior Data & Software Engineers
+
+### Table of Contents — DSA Challenges
+1. [Challenge 1: LRU Cache (Least Recently Used Cache)](#dsa-1-lru-cache-least-recently-used-cache)
+2. [Challenge 2: Sliding Window Maximum (Real-Time Telemetry Rolling Max)](#dsa-2-sliding-window-maximum-real-time-telemet)
+3. [Challenge 3: Merge K Sorted Streams / Ingestion Logs](#dsa-3-merge-k-sorted-streams-ingestion-logs)
+4. [Challenge 4: Design a Distributed Rate Limiter (Token Bucket Algorithm)](#dsa-4-design-a-distributed-rate-limiter-token-)
+5. [Challenge 5: Top K Frequent Elements / Heavy Hitters in Ingestion Streams](#dsa-5-top-k-frequent-elements-heavy-hitters-in)
+6. [Challenge 6: Find Median from Data Stream (Two Heaps for p50 Latency)](#dsa-6-find-median-from-data-stream-two-heaps-f)
+7. [Challenge 7: Subarray Sum Equals K (Prefix Sum with Hash Map)](#dsa-7-subarray-sum-equals-k-prefix-sum-with-ha)
+8. [Challenge 8: Course Schedule II / Topological Sort (dbt & Airflow DAG Dependency Resolution)](#dsa-8-course-schedule-ii-topological-sort-dbt-)
+9. [Challenge 9: Design In-Memory Key-Value Store with Nested Transactions](#dsa-9-design-in-memory-key-value-store-with-ne)
+10. [Challenge 10: Design a Scalable Request Hit Counter (Last 300 Seconds)](#dsa-10-design-a-scalable-request-hit-counter-la)
+11. [Challenge 11: Longest Substring Without Repeating Characters (Sliding Window)](#dsa-11-longest-substring-without-repeating-char)
+12. [Challenge 12: Insert Delete GetRandom O(1) (Real-Time Telemetry Sampling)](#dsa-12-insert-delete-getrandom-o-1-real-time-te)
+13. [Challenge 13: Trapping Rain Water (Two Pointers)](#dsa-13-trapping-rain-water-two-pointers)
+14. [Challenge 14: Task Scheduler with Cooldown (GPU Batch / Worker Scheduling)](#dsa-14-task-scheduler-with-cooldown-gpu-batch-w)
+15. [Challenge 15: Kth Largest Element in an Array (Quickselect Algorithm)](#dsa-15-kth-largest-element-in-an-array-quicksel)
+16. [Challenge 16: Search in Rotated Sorted Array (Log Segment Partition Lookup)](#dsa-16-search-in-rotated-sorted-array-log-segme)
+17. [Challenge 17: Lowest Common Ancestor in a Binary Tree (Pipeline Lineage Trace)](#dsa-17-lowest-common-ancestor-in-a-binary-tree-)
+18. [Challenge 18: Serialize and Deserialize Tree / Graph Structure](#dsa-18-serialize-and-deserialize-tree-graph-str)
+19. [Challenge 19: Word Break / Prompt Tokenization Segmentation (Dynamic Programming)](#dsa-19-word-break-prompt-tokenization-segmentat)
+20. [Challenge 20: LFU Cache (Least Frequently Used Cache)](#dsa-20-lfu-cache-least-frequently-used-cache)
+
+---
+
+### DSA Challenge 1: LRU Cache (Least Recently Used Cache)
+**Engineering Context:** Critical for in-memory model weight caching, KV-cache management, and fast API token/metadata lookups where older unused items are evicted under strict VRAM or RAM constraints.  
+
+#### Thought Process:
+To achieve O(1) time complexity for both get() and put() operations:
+1. We need constant time lookups by key, which points to a Hash Map (dictionary).
+2. We need constant time updates and evictions of the least recently used item, which points to a Doubly Linked List.
+3. Combining them: the Hash Map stores key -> Node mappings, where each Node contains (key, value, prev, next).
+4. We use pseudo-head and pseudo-tail dummy nodes to eliminate edge cases when inserting or removing head/tail nodes.
+5. In get(key): if key exists, move the node to the head (most recently used) and return its value. If not, return -1.
+6. In put(key, value): if key exists, update its value and move to head. If key is new, instantiate a new node and add to head. If capacity is exceeded, evict the node right before the dummy tail (least recently used) and delete it from the hash map.
+
+#### Python 3 Implementation:
+```python
+class DLinkedNode:
+    def __init__(self, key: int = 0, value: int = 0):
+        self.key = key
+        self.value = value
+        self.prev = None
+        self.next = None
+
+class LRUCache:
+    def __init__(self, capacity: int):
+        self.capacity = capacity
+        self.cache = {}  # Maps key -> DLinkedNode
+        self.size = 0
+        
+        # Sentinel / dummy head and tail nodes to avoid edge cases
+        self.head = DLinkedNode()
+        self.tail = DLinkedNode()
+        self.head.next = self.tail
+        self.tail.prev = self.head
+
+    def _add_node_to_head(self, node: DLinkedNode) -> None:
+        """Always insert the given node right after head (most recently used position)."""
+        node.prev = self.head
+        node.next = self.head.next
+        self.head.next.prev = node
+        self.head.next = node
+
+    def _remove_node(self, node: DLinkedNode) -> None:
+        """Unlink an existing node from the doubly linked list."""
+        prev_node = node.prev
+        next_node = node.next
+        prev_node.next = next_node
+        next_node.prev = prev_node
+
+    def _move_to_head(self, node: DLinkedNode) -> None:
+        """Move an accessed node to the most recently used position."""
+        self._remove_node(node)
+        self._add_node_to_head(node)
+
+    def _pop_tail(self) -> DLinkedNode:
+        """Pop the least recently used node right before dummy tail."""
+        lru_node = self.tail.prev
+        self._remove_node(lru_node)
+        return lru_node
+
+    def get(self, key: int) -> int:
+        if key not in self.cache:
+            return -1
+        node = self.cache[key]
+        # Move the accessed node to head (marked as recently used)
+        self._move_to_head(node)
+        return node.value
+
+    def put(self, key: int, value: int) -> None:
+        if key in self.cache:
+            node = self.cache[key]
+            node.value = value  # Update value
+            self._move_to_head(node)
+        else:
+            new_node = DLinkedNode(key, value)
+            self.cache[key] = new_node
+            self._add_node_to_head(new_node)
+            self.size += 1
+            
+            # Check capacity and evict least recently used node if needed
+            if self.size > self.capacity:
+                tail_node = self._pop_tail()
+                del self.cache[tail_node.key]
+                self.size -= 1
+```
+
+#### Complexity Analysis:
+- **Time Complexity:** O(1) for both get() and put()
+- **Space Complexity:** O(capacity) to store up to capacity elements in hash map and doubly linked list
+
+---
+
+### DSA Challenge 2: Sliding Window Maximum (Real-Time Telemetry Rolling Max)
+**Engineering Context:** Real-time streaming metric aggregation: calculating the maximum GPU memory spike or peak request volume over a moving time window (e.g., last k seconds).  
+
+#### Thought Process:
+To find the maximum in every sliding window of size k in an array of length N in O(N) linear time:
+1. A naive approach of scanning the window of size k takes O(N * k), which stalls under large streaming windows.
+2. A heap approach takes O(N log k), but removing elements falling out of the window is non-trivial.
+3. Optimal approach: Monotonic Deque (Double-Ended Queue) storing indices.
+4. Maintain a strictly decreasing deque: elements are stored such that values are in descending order from front to back.
+5. For each incoming element nums[i]:
+   a. Evict indices from the front that have fallen outside the window (i - k >= deque[0]).
+   b. Evict indices from the back whose values are <= nums[i], since they can never be the maximum in any future window that includes nums[i].
+   c. Push the current index i to the back of the deque.
+   d. Once i >= k - 1, the front of the deque (deque[0]) is always the maximum for the current window.
+
+#### Python 3 Implementation:
+```python
+from collections import deque
+from typing import List
+
+def maxSlidingWindow(nums: List[int], k: int) -> List[int]:
+    """
+    Computes maximum value in every sliding window of size k using a monotonic decreasing deque.
+    """
+    if not nums or k == 0:
+        return []
+    if k == 1:
+        return nums
+
+    dq = deque()  # Stores indices of elements in descending value order
+    result = []
+
+    for i, val in enumerate(nums):
+        # 1. Remove indices that are out of the current sliding window boundary
+        while dq and dq[0] <= i - k:
+            dq.popleft()
+
+        # 2. Maintain monotonic property: remove elements smaller than current val from the back
+        while dq and nums[dq[-1]] <= val:
+            dq.pop()
+
+        # 3. Add current element index to the back
+        dq.append(i)
+
+        # 4. Once we have populated the first window, append front of deque to result
+        if i >= k - 1:
+            result.append(nums[dq[0]])
+
+    return result
+```
+
+#### Complexity Analysis:
+- **Time Complexity:** O(N) - each element index is pushed and popped from the deque at most once
+- **Space Complexity:** O(k) auxiliary space for the deque holding at most k elements
+
+---
+
+### DSA Challenge 3: Merge K Sorted Streams / Ingestion Logs
+**Engineering Context:** Merging partitioned Kafka event streams, sorted log files, or multi-threaded metric streams ordered by timestamp into a single chronologically sorted analytical feed.  
+
+#### Thought Process:
+To merge K sorted arrays or linked lists with total N elements:
+1. A naive sequential merge takes O(K * N) time.
+2. Divide-and-conquer takes O(N log K).
+3. Best streaming approach: Min-Heap (Priority Queue).
+4. Initialize a min-heap containing the first element from each of the K streams along with their stream and index identifier.
+5. In a loop, extract the smallest element from the min-heap (root) and append it to the merged output.
+6. If the stream from which the minimum element came has more elements, push its next element into the min-heap.
+7. Repeat until the heap is empty. The heap never holds more than K elements at any moment.
+
+#### Python 3 Implementation:
+```python
+import heapq
+from typing import List
+
+def mergeKSortedStreams(streams: List[List[int]]) -> List[int]:
+    """
+    Merges K chronologically sorted streams using a min-heap.
+    Each item in heap is a tuple: (value, stream_idx, element_idx).
+    """
+    min_heap = []
+    result = []
+
+    # 1. Initialize heap with the first element of each non-empty stream
+    for stream_idx, stream in enumerate(streams):
+        if stream:
+            heapq.heappush(min_heap, (stream[0], stream_idx, 0))
+
+    # 2. Continuously extract smallest element and advance in that stream
+    while min_heap:
+        val, stream_idx, elem_idx = heapq.heappop(min_heap)
+        result.append(val)
+
+        # If current stream has next element, push it into the min-heap
+        next_elem_idx = elem_idx + 1
+        if next_elem_idx < len(streams[stream_idx]):
+            next_val = streams[stream_idx][next_elem_idx]
+            heapq.heappush(min_heap, (next_val, stream_idx, next_elem_idx))
+
+    return result
+```
+
+#### Complexity Analysis:
+- **Time Complexity:** O(N log K) where N is the total number of elements across all streams and K is the number of streams
+- **Space Complexity:** O(K) auxiliary space for the min-heap holding at most K entries at any given time
+
+---
+
+### DSA Challenge 4: Design a Distributed Rate Limiter (Token Bucket Algorithm)
+**Engineering Context:** Guarding fal.ai's public inference API endpoints against abusive traffic spikes, preventing GPU queue saturation, and enforcing per-tier tenant quotas.  
+
+#### Thought Process:
+To design an efficient, thread-safe rate limiter using the Token Bucket algorithm:
+1. The bucket has a maximum capacity of tokens and continuously refills at a constant rate of tokens per second.
+2. Each incoming request consumes 1 (or more) tokens. If sufficient tokens are available, the request is permitted; otherwise, it is dropped or throttled (HTTP 429).
+3. Naive approaches use a background timer thread to replenish tokens, which wastes CPU cycles.
+4. Optimal approach: Lazy Refill. On every request invocation, calculate how many tokens should have accumulated since the `last_refill_timestamp` based on elapsed time:
+   `new_tokens = elapsed_time * refill_rate`.
+5. Add `new_tokens` to the current token count (capped at `capacity`), update `last_refill_timestamp`, and check if tokens >= requested tokens.
+6. Use a lock (or Redis Lua script in distributed settings) for thread safety.
+
+#### Python 3 Implementation:
+```python
+import time
+import threading
+
+class TokenBucketRateLimiter:
+    def __init__(self, capacity: int, refill_rate_per_sec: float):
+        """
+        capacity: Maximum burst capacity of tokens in the bucket.
+        refill_rate_per_sec: Number of tokens added to bucket every second.
+        """
+        self.capacity = float(capacity)
+        self.refill_rate = float(refill_rate_per_sec)
+        self.current_tokens = float(capacity)
+        self.last_refill_timestamp = time.time()
+        self.lock = threading.Lock()
+
+    def _refill(self, now: float) -> None:
+        """Calculate and add tokens accumulated since last check (lazy refill)."""
+        elapsed = now - self.last_refill_timestamp
+        tokens_to_add = elapsed * self.refill_rate
+        self.current_tokens = min(self.capacity, self.current_tokens + tokens_to_add)
+        self.last_refill_timestamp = now
+
+    def allow_request(self, tokens_needed: int = 1) -> bool:
+        """
+        Thread-safe check to determine if a request with token cost can be permitted.
+        Returns True if allowed, False if rate-limited.
+        """
+        with self.lock:
+            now = time.time()
+            self._refill(now)
+            
+            if self.current_tokens >= tokens_needed:
+                self.current_tokens -= tokens_needed
+                return True
+            return False
+```
+
+#### Complexity Analysis:
+- **Time Complexity:** O(1) time per request - simple arithmetic and timestamp comparison
+- **Space Complexity:** O(1) memory footprint per user/tenant bucket
+
+---
+
+### DSA Challenge 5: Top K Frequent Elements / Heavy Hitters in Ingestion Streams
+**Engineering Context:** Identifying the top K most active models, heaviest API consumers, or cost-draining workspaces in high-velocity request streams.  
+
+#### Thought Process:
+To find the top K frequent elements from N items:
+1. Count the frequencies of each element using a Hash Map (dictionary) in O(N) time.
+2. Selection method 1: Sort by frequency in O(M log M) where M is unique elements.
+3. Selection method 2 (Heap): Maintain a min-heap of size K based on frequency. Iterate through frequency pairs; if heap size exceeds K, pop the smallest. Total time O(N + M log K).
+4. Selection method 3 (Bucket Sort - Optimal O(N)):
+   - An array of buckets where index represents frequency (0 to N).
+   - Each bucket contains a list of elements with that exact frequency.
+   - Iterate from the highest possible frequency (N) down to 0, collecting elements until K elements are gathered.
+   - Runs in strictly O(N) time without comparison-based sorting.
+
+#### Python 3 Implementation:
+```python
+from typing import List
+from collections import Counter
+
+def topKFrequent(nums: List[str], k: int) -> List[str]:
+    """
+    Finds top K most frequent elements in O(N) time using Bucket Sort.
+    Example input: list of model_names from request logs.
+    """
+    if not nums or k <= 0:
+        return []
+
+    # 1. Count occurrences of each element
+    count_map = Counter(nums)
+    n = len(nums)
+
+    # 2. Buckets array where index i contains elements with frequency i
+    buckets = [[] for _ in range(n + 1)]
+    for item, freq in count_map.items():
+        buckets[freq].append(item)
+
+    # 3. Traverse buckets from highest frequency down to 1
+    result = []
+    for freq in range(n, 0, -1):
+        for item in buckets[freq]:
+            result.append(item)
+            if len(result) == k:
+                return result
+
+    return result
+```
+
+#### Complexity Analysis:
+- **Time Complexity:** O(N) linear time - frequency counting and bucket traversal both take O(N)
+- **Space Complexity:** O(N) to store frequency map and bucket arrays
+
+---
+
+### DSA Challenge 6: Find Median from Data Stream (Two Heaps for p50 Latency)
+**Engineering Context:** Tracking real-time median (p50) GPU inference latency or model execution duration over unbounded telemetry streams.  
+
+#### Thought Process:
+To calculate the median dynamically as numbers are streamed in:
+1. If we maintain a sorted list, insertion takes O(N) time, which is too slow for high-throughput streams.
+2. Optimal design: Two Heaps pattern.
+   - Max-Heap (`small`): stores the smaller half of the numbers (inverted signs in Python).
+   - Min-Heap (`large`): stores the larger half of the numbers.
+3. Invariants maintained:
+   a. Every element in `small` <= every element in `large`.
+   b. Size balance: `small` either has the same number of elements as `large`, or exactly 1 more element.
+4. On `addNum(num)`:
+   - Push to `small` (max-heap).
+   - Balance order: pop from `small` and push to `large` to guarantee invariant (a).
+   - Balance size: if `len(large) > len(small)`, pop from `large` and push back to `small` to guarantee invariant (b).
+5. On `findMedian()`:
+   - If total count is odd, median is the root of `small`.
+   - If even, median is `(root of small + root of large) / 2.0`.
+
+#### Python 3 Implementation:
+```python
+import heapq
+
+class MedianFinder:
+    def __init__(self):
+        # Max-heap for lower half (store negative values to emulate max-heap)
+        self.small = []
+        # Min-heap for upper half
+        self.large = []
+
+    def addNum(self, num: int) -> None:
+        """
+        Adds an incoming metric value to the dual-heap data structure.
+        """
+        # Step 1: Add to small (max-heap)
+        heapq.heappush(self.small, -num)
+
+        # Step 2: Ensure all elements in small are <= elements in large
+        val = -heapq.heappop(self.small)
+        heapq.heappush(self.large, val)
+
+        # Step 3: Maintain size balance: len(small) >= len(large)
+        if len(self.large) > len(self.small):
+            heapq.heappush(self.small, -heapq.heappop(self.large))
+
+    def findMedian(self) -> float:
+        """Returns the median of current data stream in O(1) time."""
+        if len(self.small) > len(self.large):
+            return float(-self.small[0])
+        return (-self.small[0] + self.large[0]) / 2.0
+```
+
+#### Complexity Analysis:
+- **Time Complexity:** O(log N) for addNum(), O(1) for findMedian()
+- **Space Complexity:** O(N) to store all stream elements across both heaps
+
+---
+
+### DSA Challenge 7: Subarray Sum Equals K (Prefix Sum with Hash Map)
+**Engineering Context:** Detecting contiguous operational windows where total compute cost, error counts, or token spikes exactly hit a threshold K.  
+
+#### Thought Process:
+To find the total number of continuous subarrays whose sum equals K:
+1. A brute-force check of all pairs (i, j) takes O(N^2) time.
+2. Optimal approach: Prefix Sum + Hash Map.
+3. Let `prefix_sum[i]` be the sum of elements from index 0 to i.
+4. The sum of subarray from index j to i is: `sum(nums[j..i]) = prefix_sum[i] - prefix_sum[j-1]`.
+5. We want: `prefix_sum[i] - prefix_sum[j-1] == K` => `prefix_sum[j-1] == prefix_sum[i] - K`.
+6. Maintain a running `current_sum` and a hash map `prefix_counts` that tracks how many times each prefix sum has occurred.
+7. Initialize `prefix_counts = {0: 1}` to account for subarrays starting at index 0.
+8. For each number, add to `current_sum`, check if `(current_sum - K)` is in the map, add its count to `total_matches`, and increment `prefix_counts[current_sum]`.
+
+#### Python 3 Implementation:
+```python
+from typing import List
+from collections import defaultdict
+
+def subarraySum(nums: List[int], k: int) -> int:
+    """
+    Finds total count of continuous subarrays whose sum equals k in O(N) time.
+    """
+    prefix_counts = defaultdict(int)
+    prefix_counts[0] = 1  # Base case: empty prefix sum
+    
+    current_sum = 0
+    count = 0
+
+    for num in nums:
+        current_sum += num
+        # If (current_sum - k) exists in history, those prefixes form valid subarrays
+        target_prefix = current_sum - k
+        if target_prefix in prefix_counts:
+            count += prefix_counts[target_prefix]
+            
+        # Record current prefix sum in frequency map
+        prefix_counts[current_sum] += 1
+
+    return count
+```
+
+#### Complexity Analysis:
+- **Time Complexity:** O(N) single-pass linear time
+- **Space Complexity:** O(N) memory for prefix sum hash map in worst case of all unique sums
+
+---
+
+### DSA Challenge 8: Course Schedule II / Topological Sort (dbt & Airflow DAG Dependency Resolution)
+**Engineering Context:** Resolving pipeline execution sequence in dbt and Airflow: determining a valid, cycle-free task execution order given upstream and downstream dependencies.  
+
+#### Thought Process:
+Given numTasks and a list of directed dependency edges [task, dependency]:
+1. A valid build order exists if and only if the dependency graph is a Directed Acyclic Graph (DAG) with no cycles.
+2. Optimal approach: Kahn's Algorithm (BFS with In-Degree array).
+3. Build an adjacency list (graph) and compute the `in_degree` (number of incoming dependencies) for each node.
+4. Initialize a queue with all nodes having `in_degree == 0` (nodes that have zero dependencies and can run immediately).
+5. In a BFS loop, dequeue a node, append it to our `execution_order` result, and for each downstream dependent node:
+   - Decrement its `in_degree` by 1.
+   - If its `in_degree` reaches 0, push it to the queue.
+6. If the length of `execution_order == numTasks`, return the order. If it is less, a circular dependency (cycle) exists, and execution must fail.
+
+#### Python 3 Implementation:
+```python
+from collections import deque, defaultdict
+from typing import List
+
+def findOrder(numTasks: int, prerequisites: List[List[int]]) -> List[int]:
+    """
+    Resolves execution order using Kahn's Algorithm (Topological Sort).
+    prerequisites: list of [dependent_task, prerequisite_task]
+    """
+    adj = defaultdict(list)
+    in_degree = [0] * numTasks
+
+    # 1. Build adjacency list and in-degree table
+    for dest, src in prerequisites:
+        adj[src].append(dest)
+        in_degree[dest] += 1
+
+    # 2. Queue all tasks with zero incoming dependencies
+    queue = deque([i for i in range(numTasks) if in_degree[i] == 0])
+    execution_order = []
+
+    # 3. Process tasks via BFS
+    while queue:
+        curr = queue.popleft()
+        execution_order.append(curr)
+
+        for neighbor in adj[curr]:
+            in_degree[neighbor] -= 1
+            if in_degree[neighbor] == 0:
+                queue.append(neighbor)
+
+    # 4. Check if all tasks were scheduled (cycle detection)
+    if len(execution_order) == numTasks:
+        return execution_order
+    return []  # Cycle detected; impossible to resolve execution order
+```
+
+#### Complexity Analysis:
+- **Time Complexity:** O(V + E) where V is number of tasks and E is number of dependency edges
+- **Space Complexity:** O(V + E) for adjacency list, in-degree array, and BFS queue
+
+---
+
+### DSA Challenge 9: Design In-Memory Key-Value Store with Nested Transactions
+**Engineering Context:** Building an in-memory transactional state store supporting commit, rollback, and nested transaction contexts for pipeline metadata and configuration states.  
+
+#### Thought Process:
+To implement a key-value store supporting nested transactions (begin, commit, rollback):
+1. A global state dictionary holds the committed key-value pairs.
+2. To support nested transactions, maintain a stack of transaction contexts (list of dictionaries).
+3. `begin()`: Push an empty dictionary onto the transaction stack.
+4. `set(key, val)`: If inside a transaction, record the write in the active (top) transaction dictionary. If not in a transaction, write directly to global state.
+5. `get(key)`: Search from the top of the transaction stack downwards to the bottom. If key is found in any transaction layer (or marked deleted), return it. If not found in any active layer, fall back to global state.
+6. `rollback()`: Pop the topmost transaction dictionary from the stack, discarding uncommitted writes. Return false if no transaction is active.
+7. `commit()`: Pop the topmost transaction. If other transactions remain in the stack, merge the changes into the new top transaction layer. If the stack is now empty, apply the writes into the global state.
+
+#### Python 3 Implementation:
+```python
+class TransactionalKVStore:
+    def __init__(self):
+        # Global committed state
+        self.global_store = {}
+        # Stack of transaction dictionaries: each maps key -> value (or None for deleted)
+        self.transaction_stack = []
+
+    def begin(self) -> None:
+        """Starts a new nested transaction context."""
+        self.transaction_stack.append({})
+
+    def get(self, key: str) -> str:
+        """Retrieves value checking active transactions from top to bottom."""
+        for txn in reversed(self.transaction_stack):
+            if key in txn:
+                return txn[key]
+        return self.global_store.get(key, None)
+
+    def set(self, key: str, value: str) -> None:
+        """Sets a key-value pair in active transaction or global store."""
+        if self.transaction_stack:
+            self.transaction_stack[-1][key] = value
+        else:
+            self.global_store[key] = value
+
+    def delete(self, key: str) -> None:
+        """Deletes a key (marks as None in active transaction)."""
+        if self.transaction_stack:
+            self.transaction_stack[-1][key] = None
+        else:
+            self.global_store.pop(key, None)
+
+    def rollback(self) -> bool:
+        """Discards the current active transaction. Returns False if no transaction active."""
+        if not self.transaction_stack:
+            return False
+        self.transaction_stack.pop()
+        return True
+
+    def commit(self) -> bool:
+        """Commits the active transaction into parent or global store."""
+        if not self.transaction_stack:
+            return False
+        
+        top_txn = self.transaction_stack.pop()
+        if self.transaction_stack:
+            # Merge into parent transaction layer
+            self.transaction_stack[-1].update(top_txn)
+        else:
+            # Merge into global committed store
+            for k, v in top_txn.items():
+                if v is None:
+                    self.global_store.pop(k, None)
+                else:
+                    self.global_store[k] = v
+        return True
+```
+
+#### Complexity Analysis:
+- **Time Complexity:** O(1) average for begin(), rollback(), set(); O(D) for get() where D is transaction depth (typically small)
+- **Space Complexity:** O(N + M) where N is number of global keys and M is uncommitted keys in transaction stack
+
+---
+
+### DSA Challenge 10: Design a Scalable Request Hit Counter (Last 300 Seconds)
+**Engineering Context:** High-throughput metric rate tracking: counting total API requests or model invocations received in the past 5 minutes (300 seconds) in real time without storing every timestamp.  
+
+#### Thought Process:
+To design a Hit Counter tracking hits in the last 300 seconds:
+1. Storing every timestamp in a dynamic list or queue leads to unbounded memory growth when traffic hits 100,000 QPS.
+2. Optimal approach: Fixed-Size Circular Array with 300 Buckets.
+   - Use two fixed arrays of size 300: `times = [0] * 300` and `hits = [0] * 300`.
+   - Index is computed as: `idx = timestamp % 300`.
+3. When `hit(timestamp)` is called:
+   - Check `times[idx]`: if `times[idx] != timestamp`, it means a full 300-second cycle has completed. Reset `times[idx] = timestamp` and reset `hits[idx] = 1`.
+   - If `times[idx] == timestamp`, simply increment `hits[idx] += 1`.
+4. When `getHits(timestamp)` is called:
+   - Iterate through the 300 buckets.
+   - If `timestamp - times[i] < 300`, accumulate `hits[i]` into total.
+5. Memory is strictly constant O(1) regardless of whether traffic is 10 hits or 100 million hits.
+
+#### Python 3 Implementation:
+```python
+class HitCounter:
+    def __init__(self):
+        # 300 buckets for the 300-second sliding window
+        self.times = [0] * 300
+        self.hits = [0] * 300
+
+    def hit(self, timestamp: int) -> None:
+        """Record a hit at the given second timestamp."""
+        idx = timestamp % 300
+        if self.times[idx] != timestamp:
+            # A new cycle has begun for this bucket; reset
+            self.times[idx] = timestamp
+            self.hits[idx] = 1
+        else:
+            self.hits[idx] += 1
+
+    def getHits(self, timestamp: int) -> int:
+        """Return total hits received in the past 300 seconds [timestamp - 299, timestamp]."""
+        total_hits = 0
+        for i in range(300):
+            # Only count buckets within the last 300 seconds
+            if timestamp - self.times[i] < 300:
+                total_hits += self.hits[i]
+        return total_hits
+```
+
+#### Complexity Analysis:
+- **Time Complexity:** O(1) for hit(), O(1) for getHits() (fixed iteration over 300 buckets)
+- **Space Complexity:** O(1) strictly constant auxiliary space (2 arrays of length 300)
+
+---
+
+### DSA Challenge 11: Longest Substring Without Repeating Characters (Sliding Window)
+**Engineering Context:** Stream token parsing and unique feature extraction in generative AI prompt pipelines.  
+
+#### Thought Process:
+To find the length of the longest substring with all distinct characters:
+1. Use the Sliding Window technique with two pointers (`left` and `right`).
+2. Maintain a hash map `char_index_map` storing the most recent index where each character was seen.
+3. As `right` iterates through string `s`:
+   - If `s[right]` was seen at or after `left`, move `left` forward to `char_index_map[s[right]] + 1` to skip the duplicate.
+   - Update `char_index_map[s[right]] = right`.
+   - Update `max_len = max(max_len, right - left + 1)`.
+4. Runs in single-pass O(N) time.
+
+#### Python 3 Implementation:
+```python
+def lengthOfLongestSubstring(s: str) -> int:
+    """
+    Computes length of longest substring without repeating characters in O(N) time.
+    """
+    char_index_map = {}
+    left = 0
+    max_len = 0
+
+    for right, char in enumerate(s):
+        # If character is already seen and inside the active window, shift left pointer
+        if char in char_index_map and char_index_map[char] >= left:
+            left = char_index_map[char] + 1
+
+        char_index_map[char] = right
+        max_len = max(max_len, right - left + 1)
+
+    return max_len
+```
+
+#### Complexity Analysis:
+- **Time Complexity:** O(N) where N is length of string
+- **Space Complexity:** O(min(N, M)) where M is character set size
+
+---
+
+### DSA Challenge 12: Insert Delete GetRandom O(1) (Real-Time Telemetry Sampling)
+**Engineering Context:** High-throughput randomized sampling of inference telemetry traces and feature rows with uniform probability in constant O(1) time.  
+
+#### Thought Process:
+To support insert, delete, and getRandom in strict O(1) average time:
+1. A Hash Set gives O(1) insert and delete, but picking a random element uniformly in O(1) is impossible.
+2. An Array gives O(1) random access via index, but deleting an arbitrary element takes O(N) due to shifting.
+3. Optimal combination: Dynamic Array + Hash Map.
+   - Dynamic Array (`nums`) stores the values.
+   - Hash Map (`val_to_idx`) maps value -> its index in `nums`.
+4. `insert(val)`: Append to `nums`, record index in `val_to_idx`.
+5. `remove(val)` (The Trick):
+   - Swap the element to be deleted with the *last* element in `nums`.
+   - Update the swapped element's index in `val_to_idx`.
+   - Pop the last element from `nums` in O(1) time.
+   - Delete `val` from `val_to_idx`.
+6. `getRandom()`: Generate random index from `0` to `len(nums)-1` and return `nums[idx]`.
+
+#### Python 3 Implementation:
+```python
+import random
+
+class RandomizedSet:
+    def __init__(self):
+        self.nums = []          # Stores elements contiguously
+        self.val_to_idx = {}    # Maps element value -> index in self.nums
+
+    def insert(self, val: int) -> bool:
+        """Inserts a value. Returns False if already present."""
+        if val in self.val_to_idx:
+            return False
+        self.val_to_idx[val] = len(self.nums)
+        self.nums.append(val)
+        return True
+
+    def remove(self, val: int) -> bool:
+        """Removes a value in O(1) by swapping with the last element."""
+        if val not in self.val_to_idx:
+            return False
+
+        # Move the last element to the index of element to be deleted
+        idx_to_remove = self.val_to_idx[val]
+        last_val = self.nums[-1]
+
+        self.nums[idx_to_remove] = last_val
+        self.val_to_idx[last_val] = idx_to_remove
+
+        # Pop the last element in O(1)
+        self.nums.pop()
+        del self.val_to_idx[val]
+        return True
+
+    def getRandom(self) -> int:
+        """Returns a random element with uniform probability in O(1)."""
+        return random.choice(self.nums)
+```
+
+#### Complexity Analysis:
+- **Time Complexity:** O(1) average time for insert(), remove(), and getRandom()
+- **Space Complexity:** O(N) to store N elements in array and hash map
+
+---
+
+### DSA Challenge 13: Trapping Rain Water (Two Pointers)
+**Engineering Context:** Algorithmic capacity and buffering analysis: calculating cumulative backlog retention across variable processing rates.  
+
+#### Thought Process:
+To compute the total trapped water in O(N) time and O(1) auxiliary space:
+1. Water trapped at index i is determined by: `min(max_left, max_right) - height[i]`.
+2. Two Pointers approach: initialize `left = 0`, `right = n - 1`, `left_max = 0`, `right_max = 0`.
+3. If `height[left] < height[right]`:
+   - If `height[left] >= left_max`, update `left_max`.
+   - Else, add `left_max - height[left]` to trapped water.
+   - Increment `left`.
+4. Else:
+   - If `height[right] >= right_max`, update `right_max`.
+   - Else, add `right_max - height[right]` to trapped water.
+   - Decrement `right`.
+5. When `left >= right`, total trapped water is computed with zero auxiliary arrays.
+
+#### Python 3 Implementation:
+```python
+from typing import List
+
+def trap(height: List[int]) -> int:
+    """
+    Computes trapped water using Two Pointers in O(N) time and O(1) space.
+    """
+    if not height:
+        return 0
+
+    left, right = 0, len(height) - 1
+    left_max, right_max = 0, 0
+    total_water = 0
+
+    while left < right:
+        if height[left] < height[right]:
+            if height[left] >= left_max:
+                left_max = height[left]
+            else:
+                total_water += left_max - height[left]
+            left += 1
+        else:
+            if height[right] >= right_max:
+                right_max = height[right]
+            else:
+                total_water += right_max - height[right]
+            right -= 1
+
+    return total_water
+```
+
+#### Complexity Analysis:
+- **Time Complexity:** O(N) single-pass linear time
+- **Space Complexity:** O(1) constant auxiliary space
+
+---
+
+### DSA Challenge 14: Task Scheduler with Cooldown (GPU Batch / Worker Scheduling)
+**Engineering Context:** Scheduling heterogenous AI inference tasks with mandatory GPU cooldown or warm-up intervals to minimize total execution idle time.  
+
+#### Thought Process:
+Given an array of CPU/GPU tasks and an integer cooldown n:
+1. The most frequent tasks determine the minimum frame size.
+2. Let the maximum frequency of any task be `max_freq`.
+3. There are `(max_freq - 1)` chunks of size `(n + 1)`.
+4. Count how many distinct tasks share this `max_freq` (say `count_max_freq`).
+5. The minimum required time based on the most frequent task is:
+   `formula_time = (max_freq - 1) * (n + 1) + count_max_freq`.
+6. However, if there are so many distinct tasks that all cooldown idle slots are filled without any idle time, the total time is simply `len(tasks)`.
+7. Therefore, result is: `max(len(tasks), (max_freq - 1) * (n + 1) + count_max_freq)`.
+
+#### Python 3 Implementation:
+```python
+from collections import Counter
+from typing import List
+
+def leastInterval(tasks: List[str], n: int) -> int:
+    """
+    Computes minimum intervals needed to execute all tasks with cooldown n.
+    """
+    if n == 0:
+        return len(tasks)
+
+    counts = Counter(tasks)
+    max_freq = max(counts.values())
+    
+    # Count how many tasks share the maximum frequency
+    max_freq_tasks = sum(1 for freq in counts.values() if freq == max_freq)
+
+    # Calculate theoretical minimum interval slots
+    part_count = max_freq - 1
+    part_length = n - (max_freq_tasks - 1)
+    empty_slots = part_count * part_length
+    available_tasks = len(tasks) - (max_freq * max_freq_tasks)
+    idles = max(0, empty_slots - available_tasks)
+
+    return len(tasks) + idles
+```
+
+#### Complexity Analysis:
+- **Time Complexity:** O(N) where N is total number of tasks
+- **Space Complexity:** O(1) auxiliary space (at most 26 uppercase letters or fixed task categories)
+
+---
+
+### DSA Challenge 15: Kth Largest Element in an Array (Quickselect Algorithm)
+**Engineering Context:** Calculating statistical percentiles (e.g., p95 or p99 request duration) over sample arrays without full O(N log N) sorting.  
+
+#### Thought Process:
+To find the Kth largest element in an unsorted array:
+1. Sorting the array takes O(N log N).
+2. Using a min-heap takes O(N log K).
+3. Optimal expected linear approach: Quickselect (Hoare's selection algorithm).
+4. Finding the Kth largest is equivalent to finding the element at index `target = len(nums) - k` in a 0-indexed sorted array.
+5. Partition the array around a random pivot: elements smaller than pivot go left, elements greater go right.
+6. If the pivot index == target, we found the element!
+7. If pivot index < target, recurse on the right partition.
+8. If pivot index > target, recurse on the left partition.
+9. Average time complexity is O(N) because the partition halves on average at each step: N + N/2 + N/4 + ... = 2N.
+
+#### Python 3 Implementation:
+```python
+import random
+from typing import List
+
+def findKthLargest(nums: List[int], k: int) -> int:
+    """
+    Finds Kth largest element using Quickselect in average O(N) time.
+    """
+    target_idx = len(nums) - k
+
+    def quickselect(left: int, right: int) -> int:
+        pivot_idx = random.randint(left, right)
+        pivot_val = nums[pivot_idx]
+
+        # Three-way partition (Dutch National Flag) to handle duplicates cleanly
+        i, l, r = left, left, right
+        while i <= r:
+            if nums[i] < pivot_val:
+                nums[l], nums[i] = nums[i], nums[l]
+                l += 1
+                i += 1
+            elif nums[i] > pivot_val:
+                nums[i], nums[r] = nums[r], nums[i]
+                r -= 1
+            else:
+                i += 1
+
+        # Check partition regions: [left..l-1] < pivot, [l..r] == pivot, [r+1..right] > pivot
+        if target_idx < l:
+            return quickselect(left, l - 1)
+        elif target_idx > r:
+            return quickselect(r + 1, right)
+        else:
+            return nums[target_idx]
+
+    return quickselect(0, len(nums) - 1)
+```
+
+#### Complexity Analysis:
+- **Time Complexity:** O(N) average time complexity, O(N^2) worst case with randomized pivot
+- **Space Complexity:** O(1) auxiliary space (in-place partitioning, recursion stack O(log N))
+
+---
+
+### DSA Challenge 16: Search in Rotated Sorted Array (Log Segment Partition Lookup)
+**Engineering Context:** Searching for specific sequence numbers or partition offsets across ring buffers and rotated log segment files.  
+
+#### Thought Process:
+Given an array sorted in ascending order that has been rotated at some unknown pivot:
+1. We must find the target in O(log N) time.
+2. In any rotated sorted array, when split at midpoint `mid`, at least one half (either `[left..mid]` or `[mid..right]`) is guaranteed to be sorted!
+3. If `nums[left] <= nums[mid]`, the left half is normally sorted:
+   - Check if `nums[left] <= target < nums[mid]`: if so, search left (`right = mid - 1`), else search right (`left = mid + 1`).
+4. Otherwise, the right half must be normally sorted:
+   - Check if `nums[mid] < target <= nums[right]`: if so, search right (`left = mid + 1`), else search left (`right = mid - 1`).
+5. Repeat binary search until target is found or pointers cross.
+
+#### Python 3 Implementation:
+```python
+from typing import List
+
+def searchRotated(nums: List[int], target: int) -> int:
+    """
+    Searches for target in rotated sorted array in O(log N) time.
+    Returns index if found, or -1 if not found.
+    """
+    if not nums:
+        return -1
+
+    left, right = 0, len(nums) - 1
+
+    while left <= right:
+        mid = (left + right) // 2
+        if nums[mid] == target:
+            return mid
+
+        # Check if left half is normally sorted
+        if nums[left] <= nums[mid]:
+            if nums[left] <= target < nums[mid]:
+                right = mid - 1
+            else:
+                left = mid + 1
+        # Otherwise right half is normally sorted
+        else:
+            if nums[mid] < target <= nums[right]:
+                left = mid + 1
+            else:
+                right = mid - 1
+
+    return -1
+```
+
+#### Complexity Analysis:
+- **Time Complexity:** O(log N) binary search time
+- **Space Complexity:** O(1) constant auxiliary space
+
+---
+
+### DSA Challenge 17: Lowest Common Ancestor in a Binary Tree (Pipeline Lineage Trace)
+**Engineering Context:** Tracing data lineage and upstream root causes: finding the closest shared parent node or source transform in pipeline execution trees.  
+
+#### Thought Process:
+To find the Lowest Common Ancestor (LCA) of two nodes p and q in a tree:
+1. Base cases:
+   - If current root is None, return None.
+   - If current root is p or q, return root (we found one of the target nodes).
+2. Recursively search left subtree and right subtree.
+3. If both left search and right search return non-None values, it means p is in one subtree and q is in the other; therefore, current root is their lowest common ancestor!
+4. If only one branch returns non-None, propagate that non-None node upwards.
+
+#### Python 3 Implementation:
+```python
+class TreeNode:
+    def __init__(self, val: int = 0):
+        self.val = val
+        self.left = None
+        self.right = None
+
+def lowestCommonAncestor(root: TreeNode, p: TreeNode, q: TreeNode) -> TreeNode:
+    """
+    Finds the Lowest Common Ancestor of nodes p and q in O(N) time.
+    """
+    # Base cases: reached leaf or found one of the target nodes
+    if root is None or root == p or root == q:
+        return root
+
+    # Search left and right subtrees
+    left = lowestCommonAncestor(root.left, p, q)
+    right = lowestCommonAncestor(root.right, p, q)
+
+    # If both subtrees returned a match, root is the LCA
+    if left is not None and right is not None:
+        return root
+
+    # Otherwise return whichever side found a target node
+    return left if left is not None else right
+```
+
+#### Complexity Analysis:
+- **Time Complexity:** O(N) where N is number of nodes in tree
+- **Space Complexity:** O(H) recursion stack where H is tree height (O(log N) balanced, O(N) worst case)
+
+---
+
+### DSA Challenge 18: Serialize and Deserialize Tree / Graph Structure
+**Engineering Context:** Encoding and decoding complex execution graphs, query plans, or hierarchical data contracts across network boundaries.  
+
+#### Thought Process:
+To serialize and deserialize a binary tree to and from a string format:
+1. Pre-order traversal (DFS: Root -> Left -> Right) with delimiters and null indicators.
+2. In `serialize(root)`:
+   - If node is None, append a sentinel marker `'#'`.
+   - Otherwise append `str(node.val)` followed by a comma `,`, then recurse left and right.
+3. In `deserialize(data)`:
+   - Split string by comma into an iterator or queue of token values.
+   - In recursive helper `build_tree()`:
+     - Pop next token. If token is `'#'`, return None.
+     - Otherwise create `TreeNode(int(token))`.
+     - Recursively construct left child, then right child, and return node.
+
+#### Python 3 Implementation:
+```python
+class Codec:
+    def serialize(self, root: TreeNode) -> str:
+        """Encodes a tree to a single string using preorder traversal."""
+        tokens = []
+        def dfs(node):
+            if not node:
+                tokens.append('#')
+                return
+            tokens.append(str(node.val))
+            dfs(node.left)
+            dfs(node.right)
+        dfs(root)
+        return ','.join(tokens)
+
+    def deserialize(self, data: str) -> TreeNode:
+        """Decodes your encoded string back to tree structure."""
+        if not data:
+            return None
+        tokens = iter(data.split(','))
+        
+        def dfs():
+            val = next(tokens)
+            if val == '#':
+                return None
+            node = TreeNode(int(val))
+            node.left = dfs()
+            node.right = dfs()
+            return node
+
+        return dfs()
+```
+
+#### Complexity Analysis:
+- **Time Complexity:** O(N) for both serialize and deserialize where N is number of nodes
+- **Space Complexity:** O(N) for string representation and recursion call stack
+
+---
+
+### DSA Challenge 19: Word Break / Prompt Tokenization Segmentation (Dynamic Programming)
+**Engineering Context:** Validating and parsing customer prompt strings against internal vocabulary dictionaries or restricted domain keyword catalogs.  
+
+#### Thought Process:
+Given string s and a dictionary of words `wordDict`:
+1. We need to determine if s can be segmented into a space-separated sequence of dictionary words.
+2. Optimal approach: Dynamic Programming.
+3. Define `dp[i]` as a boolean indicating whether the prefix `s[0..i]` can be segmented using words in `wordDict`.
+4. Base case: `dp[0] = True` (empty string is valid).
+5. For each index `i` from 1 to `len(s)`:
+   - For each index `j` from 0 to `i`:
+     - If `dp[j] is True` AND substring `s[j..i]` is in `wordDict_set`, then `dp[i] = True` and break.
+6. Return `dp[len(s)]`.
+
+#### Python 3 Implementation:
+```python
+from typing import List
+
+def wordBreak(s: str, wordDict: List[str]) -> bool:
+    """
+    Determines if string s can be segmented into words from wordDict using DP.
+    """
+    word_set = set(wordDict)
+    n = len(s)
+    dp = [False] * (n + 1)
+    dp[0] = True  # Base case: empty string
+
+    for i in range(1, n + 1):
+        for j in range(i):
+            if dp[j] and s[j:i] in word_set:
+                dp[i] = True
+                break  # Found valid segment for index i
+
+    return dp[n]
+```
+
+#### Complexity Analysis:
+- **Time Complexity:** O(N^2) where N is length of string s
+- **Space Complexity:** O(N + M) for DP array of length N+1 and word set of size M
+
+---
+
+### DSA Challenge 20: LFU Cache (Least Frequently Used Cache)
+**Engineering Context:** Advanced caching tier for multi-tenant model inferences: evicting the least frequently accessed model checkpoints when VRAM is full, breaking ties using LRU.  
+
+#### Thought Process:
+To design an LFU Cache with O(1) operations for get() and put():
+1. Every key has a value, a frequency count, and an age (recency).
+2. When capacity is exceeded, evict the key with the minimum frequency. If multiple keys have the same minimum frequency, evict the least recently used among them.
+3. Data structures:
+   - `key_to_val`: key -> value.
+   - `key_to_freq`: key -> frequency.
+   - `freq_to_keys`: frequency -> OrderedDict (or Doubly Linked List) maintaining LRU ordering among keys of the same frequency.
+   - `min_freq`: integer tracking current minimum frequency across the cache.
+4. On `get(key)`:
+   - If key not in cache, return -1.
+   - Retrieve frequency `f`. Remove key from `freq_to_keys[f]`.
+   - If `freq_to_keys[f]` is empty and `min_freq == f`, increment `min_freq += 1`.
+   - Increment key's frequency to `f + 1`, add to `freq_to_keys[f + 1]`.
+5. On `put(key, value)`:
+   - If key exists, update value and call `get(key)` to increment frequency.
+   - If key is new and size == capacity:
+     - Pop the first (least recently used) key from `freq_to_keys[min_freq]`.
+     - Delete key from all mappings.
+   - Insert new key with frequency 1, add to `freq_to_keys[1]`, and set `min_freq = 1`.
+
+#### Python 3 Implementation:
+```python
+from collections import defaultdict, OrderedDict
+
+class LFUCache:
+    def __init__(self, capacity: int):
+        self.capacity = capacity
+        self.key_to_val = {}
+        self.key_to_freq = {}
+        # Maps frequency -> OrderedDict of keys (maintains LRU for ties)
+        self.freq_to_keys = defaultdict(OrderedDict)
+        self.min_freq = 0
+
+    def _update_freq(self, key: int) -> None:
+        freq = self.key_to_freq[key]
+        self.key_to_freq[key] = freq + 1
+        
+        # Remove from old frequency bucket
+        del self.freq_to_keys[freq][key]
+        if not self.freq_to_keys[freq]:
+            del self.freq_to_keys[freq]
+            if self.min_freq == freq:
+                self.min_freq += 1
+
+        # Add to new frequency bucket
+        self.freq_to_keys[freq + 1][key] = True
+
+    def get(self, key: int) -> int:
+        if key not in self.key_to_val:
+            return -1
+        self._update_freq(key)
+        return self.key_to_val[key]
+
+    def put(self, key: int, value: int) -> None:
+        if self.capacity <= 0:
+            return
+
+        if key in self.key_to_val:
+            self.key_to_val[key] = value
+            self._update_freq(key)
+            return
+
+        # Evict least frequently used item if capacity reached
+        if len(self.key_to_val) >= self.capacity:
+            # Pop oldest item from the min_freq bucket
+            evicted_key, _ = self.freq_to_keys[self.min_freq].popitem(last=False)
+            del self.key_to_val[evicted_key]
+            del self.key_to_freq[evicted_key]
+
+        # Insert new key with frequency 1
+        self.key_to_val[key] = value
+        self.key_to_freq[key] = 1
+        self.freq_to_keys[1][key] = True
+        self.min_freq = 1
+```
+
+#### Complexity Analysis:
+- **Time Complexity:** O(1) strictly constant time for both get() and put()
+- **Space Complexity:** O(capacity) memory to store up to capacity elements
+
+---
+
