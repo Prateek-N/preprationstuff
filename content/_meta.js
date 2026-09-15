@@ -1,5 +1,6 @@
 export default {
   index: 'Docs Home',
+  'pavan-fal-senior-data-engineer-prep': 'Pavan Chandramouleswara fal.ai Data Engineer Prep',
   'lawrence-cybersecurity-analyst-prep': 'Lawrence Doh Cybersecurity Analyst Prep',
   'ashish-fedex-data-scientist-prep': 'Sai Ashish Chavali FedEx Data Scientist Prep',
   'charan-amazon-sysde-prep': 'Charan Kumar Amazon SysDE Prep',
