@@ -6,7 +6,7 @@
 **Company:** Gartner, Inc. (Sales & Service Delivery Enablement Tools)  
 **Location & Status:** Delhi, India / Gurgaon / Remote Hybrid  
 **Core Specialization:** Multi-Agent Systems, LangGraph / LangChain, Advanced RAG, FastAPI, AWS Cloud Architecture, Vector Databases, Evaluation & Guardrails  
-**Access Passcode:** `RG`  
+**Access Passcode:** `Gartner`  
 
 ---
 
@@ -144,14 +144,14 @@ He formulated a 3-phase cloud modernization roadmap:
 3. **Phase 3 (Semantic Modeling & Visualization):** Architect enterprise **Power BI** semantic models with scheduled cloud refreshes, deprecating local spreadsheets entirely.
 
 #### Sample Project: *Cloud Migration & Enterprise Data Warehouse Architecture*
-- **Architecture:** Designed an end-to-end pipeline: Azure Blob Storage (Landing Zone) $	o$ Azure Data Factory (ETL Transformation) $	o$ Azure SQL Database (Star Schema Data Mart) $	o$ Power BI Service (DirectQuery / Import Hybrid).
+- **Architecture:** Designed an end-to-end pipeline: Azure Blob Storage (Landing Zone) $\to$ Azure Data Factory (ETL Transformation) $\to$ Azure SQL Database (Star Schema Data Mart) $\to$ Power BI Service (DirectQuery / Import Hybrid).
 - **Impact:** Slashed manual reporting effort by **70%**, enabling stakeholders to access refreshed operational metrics at 8:00 AM daily without human intervention.
 
 ---
 
 ### Bullet 2: *Partnered with recruitment and sales teams to define outreach, interview success, and placement KPIs; automated initial calculations with Excel formulas and macros, decreasing manual updates by >50%.*
 #### In-Depth Technical & Operational Breakdown:
-Before jumping straight into complex cloud pipelines, Rujuwal embedded with frontline recruitment and sales specialists to map their operational workflows. He defined core conversion milestones: Initial Outreach $	o$ Screen Complete $	o$ Client Interview Round 1 $	o$ Client Final Round $	o$ Offer Extended $	o$ Placement Confirmed.
+Before jumping straight into complex cloud pipelines, Rujuwal embedded with frontline recruitment and sales specialists to map their operational workflows. He defined core conversion milestones: Initial Outreach $\to$ Screen Complete $\to$ Client Interview Round 1 $\to$ Client Final Round $\to$ Offer Extended $\to$ Placement Confirmed.
 
 He authored dynamic Excel automation workbooks utilizing advanced array formulas (`XLOOKUP`, `INDEX/MATCH`, `LAMBDA`, `LET`), dynamic pivot caches, and VBA automation modules that validated input data formats upon entry, slashing manual data entry errors.
 
