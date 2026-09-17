@@ -45,7 +45,7 @@ md_lines.append("**Target Role:** Software Engineer / Team Lead — Agentic AI A
 md_lines.append("**Company:** Gartner, Inc. (Sales & Service Delivery Enablement Tools)  ")
 md_lines.append("**Location & Status:** Delhi, India / Gurgaon / Remote Hybrid  ")
 md_lines.append("**Core Specialization:** Multi-Agent Systems, LangGraph / LangChain, Advanced RAG, FastAPI, AWS Cloud Architecture, Vector Databases, Evaluation & Guardrails  ")
-md_lines.append("**Access Passcode:** `Gartner`  ")
+md_lines.append("**Access Passcode:** `RG`  ")
 md_lines.append("")
 md_lines.append("---")
 md_lines.append("")
@@ -86,7 +86,7 @@ mdx_lines.append("title: Rujuwal Garg — Gartner Agentic AI Applications Prep G
 mdx_lines.append("description: Comprehensive interview preparation guide for Gartner Agentic AI Applications — Resume deep dive, sample projects, and 30 master technical questions with architectural depth.")
 mdx_lines.append("---")
 mdx_lines.append("")
-mdx_lines.append('<PasswordGate password="Gartner">')
+mdx_lines.append('<PasswordGate password="RG">')
 mdx_lines.append("")
 mdx_lines.append("# Rujuwal Garg — Gartner Agentic AI Applications: Master Interview Preparation Suite")
 mdx_lines.append("## End-to-End Resume Deconstruction, Technical Architecture, and 30 Enterprise Interview Deep Dives")
@@ -95,7 +95,7 @@ mdx_lines.append("**Candidate:** Rujuwal Garg  ")
 mdx_lines.append("**Target Role:** Software Engineer / Team Lead — Agentic AI Applications  ")
 mdx_lines.append("**Company:** Gartner, Inc. (Sales & Service Delivery Enablement Tools)  ")
 mdx_lines.append("**Core Specialization:** Multi-Agent Systems, LangGraph / LangChain, Advanced RAG, FastAPI, AWS Cloud Architecture, Vector Databases, Evaluation & Guardrails  ")
-mdx_lines.append("**Access Passcode:** `Gartner`  ")
+mdx_lines.append("**Access Passcode:** `RG`  ")
 mdx_lines.append("")
 mdx_lines.append("---")
 mdx_lines.append("")
@@ -502,7 +502,7 @@ html_content = f"""<!DOCTYPE html>
           <span>Unlock Interview Suite</span> ➔
         </button>
       </form>
-      <div id="lockError" class="lock-err">Invalid Passcode. Hint: Company Name (Gartner)</div>
+      <div id="lockError" class="lock-err">Invalid Passcode. Hint: Candidate Initials (RG)</div>
     </div>
   </div>
 
@@ -591,7 +591,7 @@ html_content = f"""<!DOCTYPE html>
 
   <script>
     const questionsData = {json_questions_data};
-    const PASSCODE = "Gartner";
+    const PASSCODE = "RG";
     const STORAGE_KEY = "auth_rujuwal_gartner_prep";
 
     function checkAuth() {{
