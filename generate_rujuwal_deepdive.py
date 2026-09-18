@@ -176,8 +176,7 @@ def generate_markdown():
             words = len(re.findall(r'\b\w+\b', b["explanation"]))
             md.append(f"#### Bullet Point #{b['bullet_num']}\n")
             md.append(f"> **Resume Bullet:** *\"{b['bullet_text']}\"*\n\n")
-            md.append(f"**Word Count Verification:** `{words} words` (Strictly verified $\\ge 250$ words)  \n\n")
-            md.append(f"**Enterprise Implementation & Deep-Dive Explanation:**\n\n")
+            md.append(f"**Explanation (1st-Person POV · Simple & Concise):**\n\n")
             md.append(f"{b['explanation']}\n\n")
             md.append("---\n\n")
 
@@ -858,7 +857,7 @@ def generate_html():
                   <div class="b-body">
                     <div class="b-explanation">${{formatText(b.explanation)}}</div>
                     <div class="b-footer">
-                      <span>Verified: ${{b.words}} words (&ge; 250 words requirement satisfied)</span>
+                      <span>First-Person POV · Simple & Layman Explanation (${{b.words}} words)</span>
                       <button class="copy-btn" onclick="copyExplanation(${{b.num}}, this)">📋 Copy Explanation</button>
                     </div>
                   </div>
