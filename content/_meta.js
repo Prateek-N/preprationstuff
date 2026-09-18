@@ -1,5 +1,6 @@
 export default {
   index: 'Docs Home',
+  'rujuwal-garg-resume-deepdive': 'Rujuwal Garg Resume Deep-Dive',
   'janaki-qa-automation-14day-prep': 'Janaki Ashok Kumar QA Automation Prep',
   'ashutosh-mercor-applied-ai-prep': 'Ashutosh Rudraksh Mercor Applied AI Prep',
   'pavan-fal-senior-data-engineer-prep': 'Pavan Chandramouleswara fal.ai Data Engineer Prep',
