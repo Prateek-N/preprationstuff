@@ -1,5 +1,6 @@
 export default {
   index: 'Docs Home',
+  'lakshmi-pranitha-wise-prep': 'Lakshmi Pranitha Wise Commercial Analyst Prep',
   'rujuwal-garg-resume-deepdive': 'Rujuwal Garg Resume Deep-Dive',
   'janaki-qa-automation-14day-prep': 'Janaki Ashok Kumar QA Automation Prep',
   'ashutosh-mercor-applied-ai-prep': 'Ashutosh Rudraksh Mercor Applied AI Prep',
