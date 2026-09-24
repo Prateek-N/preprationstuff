@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Karthik Kalyan Kakumanu — Full Stack Software Engineer 14-Day Prep Suite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #07090e;
+      --bg-surface: #0e131f;
+      --bg-card: #141c2e;
+      --bg-card-hover: #1c2740;
+      --border: #233352;
+      --border-accent: #3b82f6;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --uber-white: #ffffff;
+      --accent-blue: #38bdf8;
+      --accent-green: #34d399;
+      --accent-purple: #a78bfa;
+      --accent-amber: #fbbf24;
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.65;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* LOCK SCREEN */
+    #lockScreen {
+      position: fixed; inset: 0;
+      background: radial-gradient(circle at center, #172554 0%, #030712 100%);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 99999; padding: 1.5rem;
+    }
+    .lock-box {
+      background: rgba(14, 19, 31, 0.96);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 22px;
+      padding: 2.75rem 2.5rem;
+      max-width: 490px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9), 0 0 50px rgba(56, 189, 248, 0.2);
+    }
+    .lock-logo-mark {
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-bottom: 1.25rem; font-size: 2.3rem; font-weight: 900; letter-spacing: -0.04em;
+    }
+    .lock-txt-1 { color: #ffffff; }
+    .lock-txt-2 { color: #38bdf8; }
+    .lock-badge-pill {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(167, 139, 250, 0.2));
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; color: #7dd3fc;
+      font-family: var(--font-mono); margin-left: 8px; font-weight: 700;
+    }
+    .lock-box h2 { font-size: 1.45rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+    .lock-box p { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.75rem; }
+    .input-group { position: relative; margin-bottom: 1.25rem; }
+    .input-group input {
+      width: 100%;
+      background: rgba(7, 9, 14, 0.92);
+      border: 1px solid var(--border);
+      padding: 0.95rem 1.2rem;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 1.05rem;
+      outline: none;
+      transition: all 0.2s;
+      text-align: center;
+      letter-spacing: 0.12em;
+    }
+    .input-group input:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+    }
+    .unlock-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #ffffff;
+      border: none;
+      padding: 0.95rem;
+      border-radius: 12px;
+      font-size: 0.98rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.04em;
+    }
+    .unlock-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.5);
+      background: linear-gradient(135deg, #38bdf8, #0284c7);
+    }
+    .lock-error { color: #f87171; font-size: 0.85rem; margin-top: 0.85rem; display: none; font-weight: 500; }
+
+    /* APP LAYOUT */
+    #appContent { display: none; opacity: 0; transition: opacity 0.4s ease; }
+    .app-header {
+      background: rgba(14, 19, 31, 0.95);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 1000;
+      padding: 1rem 2rem;
+    }
+    .header-inner {
+      max-width: 1440px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1.5rem; flex-wrap: wrap;
+    }
+    .brand-title { display: flex; align-items: center; gap: 14px; }
+    .brand-badge {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(167, 139, 250, 0.2));
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      color: #ffffff;
+      font-size: 0.82rem; font-weight: 800;
+      padding: 6px 12px; border-radius: 8px; letter-spacing: 0.05em;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .brand-badge span.accent { color: #38bdf8; font-weight: 900; }
+    .brand-title h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.01em; }
+    .brand-sub { font-size: 0.8rem; color: var(--text-muted); }
+
+    .header-right { display: flex; align-items: center; gap: 1.25rem; }
+    .progress-wrap { display: flex; align-items: center; gap: 10px; min-width: 220px; }
+    .progress-bar-bg {
+      flex: 1; height: 8px; background: rgba(255,255,255,0.1); border-radius: 99px; overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, #38bdf8, #34d399);
+      transition: width 0.3s ease;
+    }
+    .progress-text { font-size: 0.78rem; font-family: var(--font-mono); color: var(--text-muted); white-space: nowrap; }
+
+    /* HERO PROFILE */
+    .hero-wrap {
+      max-width: 1440px; margin: 2rem auto 0; padding: 0 2rem;
+    }
+    .hero-card {
+      background: linear-gradient(135deg, rgba(20, 28, 46, 0.95), rgba(14, 19, 31, 0.95));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 2rem 2.25rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    .hero-meta {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.25rem;
+    }
+    .hero-name { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; color: #fff; }
+    .hero-role { font-size: 1.15rem; color: #38bdf8; font-weight: 600; margin-top: 4px; }
+    .hero-contact {
+      display: flex; gap: 1rem; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap; margin-top: 8px;
+    }
+    .hero-contact span { display: inline-flex; align-items: center; gap: 4px; }
+    .hero-summary {
+      font-size: 0.95rem; color: #cbd5e1; line-height: 1.7; max-width: 1100px;
+      padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .hero-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 1rem; }
+    .hero-tag {
+      background: rgba(7, 9, 14, 0.8); border: 1px solid var(--border);
+      padding: 4px 10px; border-radius: 6px; font-family: var(--font-mono);
+      font-size: 0.75rem; color: #7dd3fc;
+    }
+
+    /* CONTROLS */
+    .controls-wrap {
+      max-width: 1440px; margin: 1.5rem auto 0; padding: 0 2rem;
+      display: flex; flex-direction: column; gap: 1rem;
+    }
+    .search-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .search-input-box {
+      flex: 1; min-width: 280px; position: relative;
+    }
+    .search-input-box input {
+      width: 100%; background: var(--bg-surface);
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 0.85rem 1.15rem 0.85rem 2.75rem; color: #fff;
+      font-size: 0.92rem; outline: none; transition: border-color 0.2s;
+    }
+    .search-input-box input:focus { border-color: var(--accent-blue); }
+    .search-icon {
+      position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+      color: var(--text-dim); pointer-events: none; font-size: 1rem;
+    }
+
+    .action-btn {
+      background: var(--bg-surface); border: 1px solid var(--border);
+      color: var(--text-main); padding: 0.75rem 1.25rem; border-radius: 12px;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .action-btn:hover {
+      background: var(--bg-card-hover); border-color: var(--border-accent);
+    }
+
+    .filter-pills {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .filter-pill {
+      background: rgba(14, 19, 31, 0.8); border: 1px solid var(--border);
+      color: var(--text-muted); padding: 6px 14px; border-radius: 99px;
+      font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .filter-pill:hover, .filter-pill.active {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(167, 139, 250, 0.2));
+      border-color: var(--accent-blue); color: #fff;
+    }
+
+    /* MAIN CONTAINER */
+    .main-wrap {
+      max-width: 1440px; margin: 1.5rem auto 3rem; padding: 0 2rem;
+    }
+
+    /* DAY CARDS */
+    .card-list { display: flex; flex-direction: column; gap: 1.25rem; margin-bottom: 2.5rem; }
+    .d-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.25s ease;
+    }
+    .d-card:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+    .d-card.completed {
+      border-color: rgba(52, 211, 153, 0.45);
+      background: rgba(52, 211, 153, 0.03);
+    }
+
+    .d-header {
+      padding: 1.25rem 1.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1.25rem;
+      user-select: none;
+    }
+    .d-header-left { display: flex; align-items: flex-start; gap: 14px; flex: 1; }
+    .d-num-badge {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #7dd3fc;
+      font-family: var(--font-mono);
+      font-size: 0.82rem; font-weight: 700;
+      padding: 6px 12px; border-radius: 10px;
+      white-space: nowrap; margin-top: 2px;
+    }
+    .d-card.completed .d-num-badge {
+      background: rgba(52, 211, 153, 0.25);
+      border-color: #34d399;
+      color: #ffffff;
+    }
+
+    .d-meta-group { display: flex; flex-direction: column; gap: 4px; }
+    .d-cat-tag {
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em;
+      color: #a78bfa; font-weight: 700;
+    }
+    .d-title-text {
+      font-size: 1.08rem; font-weight: 700; color: #f1f5f9; line-height: 1.45;
+    }
+    .d-anchor-sub {
+      font-size: 0.85rem; color: var(--text-muted); font-style: italic; margin-top: 3px;
+    }
+
+    .d-header-right {
+      display: flex; align-items: center; gap: 12px; margin-top: 4px;
+    }
+    .d-checkbox {
+      width: 18px; height: 18px; cursor: pointer; accent-color: #34d399;
+    }
+    .chevron {
+      color: var(--text-dim); font-size: 0.75rem; transition: transform 0.25s ease;
+    }
+    .d-card.open .chevron { transform: rotate(180deg); color: #38bdf8; }
+
+    .d-body {
+      display: none;
+      padding: 0 1.5rem 1.5rem 1.5rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      background: rgba(7, 9, 14, 0.5);
+    }
+    .d-card.open .d-body { display: block; }
+
+    .section-title {
+      font-size: 0.95rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;
+      color: #38bdf8; margin: 1.25rem 0 0.5rem; display: flex; align-items: center; gap: 8px;
+    }
+    .section-title span.badge-num {
+      background: rgba(56, 189, 248, 0.2); padding: 2px 7px; border-radius: 4px; font-size: 0.75rem;
+    }
+
+    .d-content-block {
+      font-size: 0.93rem; color: #cbd5e1; line-height: 1.75;
+    }
+    .d-content-block strong {
+      color: #ffffff; font-weight: 700;
+    }
+    .d-content-block ul, .d-content-block ol {
+      margin: 0.75rem 0 0.75rem 1.5rem;
+    }
+    .d-content-block li { margin-bottom: 0.4rem; }
+
+    pre {
+      background: #080d18; border: 1px solid var(--border); border-radius: 10px;
+      padding: 1rem; overflow-x: auto; font-family: var(--font-mono); font-size: 0.85rem;
+      margin: 0.75rem 0; color: #e2e8f0;
+    }
+
+    .script-box {
+      background: rgba(56, 189, 248, 0.05); border-left: 4px solid #38bdf8;
+      border-radius: 0 10px 10px 0; padding: 1rem 1.25rem; font-style: italic;
+      color: #e2e8f0; margin: 0.75rem 0;
+    }
+
+    .trap-item {
+      background: rgba(251, 191, 36, 0.05); border: 1px solid rgba(251, 191, 36, 0.2);
+      border-radius: 10px; padding: 1rem; margin-top: 0.75rem;
+    }
+    .trap-q { font-weight: 700; color: #fbbf24; margin-bottom: 0.35rem; }
+    .trap-a { font-size: 0.9rem; color: #cbd5e1; }
+
+    .d-footer {
+      margin-top: 1.25rem; padding-top: 1rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.8rem; color: var(--text-dim); flex-wrap: wrap; gap: 10px;
+    }
+    .copy-btn {
+      background: var(--bg-surface); border: 1px solid var(--border);
+      color: var(--text-muted); padding: 5px 12px; border-radius: 8px;
+      font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .copy-btn:hover {
+      color: #fff; border-color: var(--accent-blue);
+    }
+
+    /* TOAST */
+    #toast {
+      position: fixed; bottom: 2rem; right: 2rem;
+      background: #0284c7; color: #fff; padding: 0.75rem 1.5rem;
+      border-radius: 10px; font-weight: 700; font-size: 0.88rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 100000;
+      display: none; animation: slideIn 0.2s ease;
+    }
+    @keyframes slideIn {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PASSCODE LOCK SCREEN -->
+  <div id="lockScreen">
+    <div class="lock-box">
+      <div class="lock-logo-mark">
+        <span class="lock-txt-1">Karthik</span><span class="lock-txt-2">Prep</span>
+        <span class="lock-badge-pill">SDE-II</span>
+      </div>
+      <h2>Karthik Kalyan Kakumanu — Full Stack Prep</h2>
+      <p>Uber & Robosoft Technologies · 14-Day Zero-to-Hero Mastery Dossier<br>Enter passcode (<strong>Karthik</strong>) to unlock the full preparation guide.</p>
+      <div class="input-group">
+        <input type="password" id="passInput" placeholder="Enter Passcode (Karthik)" autofocus>
+      </div>
+      <button class="unlock-btn" onclick="checkAuth()">Access Full Stack Dossier</button>
+      <div class="lock-error" id="lockError">Invalid passcode. Please enter "Karthik" to unlock.</div>
+    </div>
+  </div>
+
+  <!-- MAIN APP CONTENT -->
+  <div id="appContent">
+    <header class="app-header">
+      <div class="header-inner">
+        <div class="brand-title">
+          <div class="brand-badge">
+            <span>FULLSTACK</span><span class="accent">SDE</span>
+          </div>
+          <div>
+            <h1>Karthik Kalyan Kakumanu — 14-Day Interview Prep Suite</h1>
+            <div class="brand-sub">Uber & Robosoft Technologies · Java/Spring, Kafka, Redis, GenAI/RAG, Angular, AWS</div>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="progress-wrap">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="topProgress"></div>
+            </div>
+            <span class="progress-text" id="readCounter">0 / 14 Days Mastered</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- HERO PROFILE -->
+    <div class="hero-wrap">
+      <div class="hero-card">
+        <div class="hero-meta">
+          <div>
+            <div class="hero-name">Karthik Kalyan Kakumanu</div>
+            <div class="hero-role">Full Stack Software Engineer (Uber USA & Robosoft Technologies)</div>
+            <div class="hero-contact">
+              <span>📍 USA</span>
+              <span>📞 +1 940-344-2322</span>
+              <span>✉️ kakumanu.karthikk@gmail.com</span>
+              <span>🎓 M.S. Computer Science, Texas Tech University</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-summary">
+          <strong>14-Day Zero-to-Hero Mastery Plan:</strong> Complete conceptual grounding, architectural blueprints, production code patterns, 1st-person interview scripts, and technical trap defenses covering <strong>Java Spring Boot</strong> microservices, <strong>Kafka</strong> streaming with DLQ, <strong>Redis</strong> p99 latency optimization (320ms to 80ms), <strong>LangChain</strong> + <strong>FAISS</strong> RAG assistants, <strong>OpenAI Function Calling</strong>, <strong>Angular/RxJS</strong> reactive state management, <strong>PostgreSQL</strong> execution plan tuning, and <strong>Docker/Kubernetes</strong> CI/CD deployment.
+        </div>
+        <div class="hero-tags">
+          <span class="hero-tag">Java Spring Boot 3</span>
+          <span class="hero-tag">Apache Kafka & DLQ</span>
+          <span class="hero-tag">Redis p99 Latency</span>
+          <span class="hero-tag">LangChain & FAISS RAG</span>
+          <span class="hero-tag">OpenAI Function Calling</span>
+          <span class="hero-tag">Angular & RxJS State</span>
+          <span class="hero-tag">FastAPI & Python</span>
+          <span class="hero-tag">PostgreSQL & EXPLAIN</span>
+          <span class="hero-tag">Docker & Kubernetes</span>
+          <span class="hero-tag">CloudWatch MTTD &lt; 8m</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="controls-wrap">
+      <div class="search-row">
+        <div class="search-input-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="globalSearch" placeholder="Search topics, Spring Boot, Kafka DLQ, Redis latency, FAISS, Angular, Kubernetes..." oninput="handleSearch()">
+        </div>
+        <button class="action-btn" onclick="expandAll()">📂 Expand All</button>
+        <button class="action-btn" onclick="collapseAll()">📁 Collapse All</button>
+        <button class="action-btn" onclick="resetFilters()">↺ Reset</button>
+      </div>
+      <div class="filter-pills" id="categoryPills">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+
+    <!-- MAIN CARDS CONTAINER -->
+    <main class="main-wrap">
+      <div class="card-list" id="daysContainer">
+        <!-- Injected via JS -->
+      </div>
+    </main>
+  </div>
+
+  <div id="toast">Copied to clipboard!</div>
+
+  <script>
+    const VALID_PASSCODES = ["Karthik", "karthik", "KARTHIK"];
+    const itemsData = [{"day": 1, "category": "Backend Security & Networking", "title": "Day 1: Web Fundamentals, REST APIs, OAuth 2.0 & JWT Security Architecture", "resume_anchor": "Designed OAuth 2.0 and JWT-secured API layer across 6 microservices on AWS EC2, containerized with Docker and orchestrated via Kubernetes...", "concept": "If you've never built web security from scratch, think of **HTTP** as the postal service of the internet. The frontend (Angular) sends an envelope (HTTP Request) to the backend server with an action verb (**GET**, **POST**, **PUT**, **DELETE**), headers (metadata), and a body (JSON payload).\n\nIn enterprise microservices, you never leave APIs unprotected. We distinguish between two core concepts:\n1. **Authentication (AuthN) — Who are you?** The user presents credentials (email + password, or SSO) to prove their identity.\n2. **Authorization (AuthZ) — What are you allowed to do?** Once identified, what endpoints can you call? Can you delete a trip, or only view your own receipts?\n\n### Why JWT (JSON Web Tokens)?\nIn legacy architectures, after logging in, the server created a session ID, saved it in a database table, and sent a cookie to the browser. On *every single subsequent API call*, the server had to query the session database. In a system with 6 or 20 microservices, this created a massive database bottleneck.\n\n**JWT is stateless.** It is a cryptographically signed string containing three base64-encoded segments: `Header.Payload.Signature`.\n- **Header:** Algorithm used (e.g., `{\"alg\": \"RS256\", \"typ\": \"JWT\"}`).\n- **Payload (Claims):** Information about the user (e.g., `{\"user_id\": \"u_9876\", \"roles\": [\"RIDER\"], \"exp\": 1727184000}`).\n- **Signature:** A cryptographic hash computed using a private key: `HMACSHA256(base64UrlEncode(header) + \".\" + base64UrlEncode(payload), secretKey)` or RSA public/private key pairs.\n\nWhen any microservice receives this token in the `Authorization: Bearer <token>` HTTP header, it doesn't need to query any database! It mathematically verifies the signature using the public key. If the signature matches and `exp` (expiration timestamp) hasn't passed, the server trusts the user payload instantly in under **0.5 milliseconds**.", "architecture": "\n```\n[Angular Client Application]\n         │ \n         │ 1. POST /oauth/v2/token (username, password, client_id)\n         ▼\n[Identity Provider / Auth0 / Spring Authorization Server]\n         │ (Validates credentials, signs JWT using RSA Private Key)\n         ▼ Returns: { access_token: \"eyJhbG...\", refresh_token: \"dGhpcy...\", expires_in: 900 }\n[Angular Client Stores Access Token in Memory]\n         │\n         │ 2. API Request: GET /api/v1/rides/history\n         │    Header: \"Authorization: Bearer eyJhbG...\"\n         ▼\n[API Gateway (Spring Cloud Gateway / Envoy on AWS EC2)]\n         │ 3. Verifies JWT signature using cached RSA Public Key (Zero DB calls)\n         │ 4. Extracts Claims (user_id = u_9876, role = RIDER)\n         │ 5. Injects trusted internal headers: X-User-Id: u_9876, X-User-Role: RIDER\n         ▼\n[Microservice Mesh (Rides Service, Billing Service, Fleet Service)]\n```", "script": "**Interviewer: \"How did you design the OAuth 2.0 and JWT security layer across your 6 microservices at Uber?\"**\n\n*\"In our microservices architecture, we had 6 independently deployable Spring Boot services running on AWS EC2. Rather than having each microservice independently validate credentials against a database—which would have created high latency and redundant database connections—we implemented an API Gateway pattern combined with OAuth 2.0 and asymmetric JWTs (RS256).\n\nClients authenticated against our central identity service using the OAuth 2.0 authorization code flow with PKCE for mobile and web clients. Upon successful authentication, the client received a short-lived access token (15-minute TTL) and a long-lived refresh token stored in an HTTP-only secure cookie. \n\nAt the edge, our API Gateway intercepted all incoming traffic, verified the JWT signature using the identity provider's public key (retrieved from JWKS and cached in memory), and checked token expiration. Once validated, the gateway stripped the raw JWT and injected trusted internal downstream headers—specifically `X-User-Id` and `X-User-Roles`—before routing to internal microservices over our private VPC. This allowed downstream services to execute role-based access control (RBAC) in $O(1)$ time with zero authentication database dependencies.\"*", "traps": [{"q": "What happens if a user's account is suspended or permissions are revoked, but their JWT access token is still valid for 14 minutes?", "a": "Because JWTs are stateless, you cannot 'delete' an issued token on the client. To solve this, we implemented two controls: First, we kept access token lifetimes short (15 minutes). Second, for critical events like account revocation or password reset, we published an invalidation event to a Redis distributed blacklist (`SET blacklist:<token_jti> true EX 900`). The API Gateway checked Redis on incoming requests; if the token ID existed in the blacklist, it was immediately rejected with HTTP 401 Unauthorized."}], "words": 480}, {"day": 2, "category": "Core Backend Engineering", "title": "Day 2: Java & Spring Boot Core Microservices (IoC, DI, DTOs & Layering)", "resume_anchor": "Decomposed a monolithic onboarding service into 6 independently releasable Spring Boot modules...", "concept": "**Java** is a strongly-typed, object-oriented compiled language running on the **Java Virtual Machine (JVM)**. **Spring Boot** is the enterprise standard framework that eliminates boilerplate configuration, providing an embedded web server (Tomcat) and automated dependency management.\n\n### Key Concepts from Ground Zero:\n1. **Inversion of Control (IoC) & Dependency Injection (DI):**\n   - *Without Spring:* If class `RideService` needs to talk to the database via `RideRepository`, you would write: `RideRepository repo = new PostgresRideRepository();`. This hardcodes the dependency and makes unit testing impossible.\n   - *With Spring IoC:* Spring manages an application container (the ApplicationContext) where it instantiates, configures, and assembles objects (called **Beans**). You simply annotate your class with `@Service` and declare the repository in the constructor. Spring automatically injects the bean at runtime!\n2. **The 3-Tier Layered Architecture:**\n   - **Controller Layer (`@RestController`):** Listens to incoming HTTP requests, validates input using `@Valid`, and delegates to the service layer. Controllers contain *zero* business logic.\n   - **Service Layer (`@Service`):** Contains the business rules (e.g., calculate distance, verify driver status, deduct credit balance, trigger Kafka events).\n   - **Repository Layer (`@Repository`):** Interfaces extending `JpaRepository<Entity, ID>` that execute database queries using Spring Data JPA / Hibernate under the hood.\n3. **DTO (Data Transfer Object) Pattern:**\n   - Never expose your database `@Entity` directly to the API response. An entity might contain sensitive fields like hashed passwords, internal foreign keys, or audit timestamps.\n   - We map incoming request JSON to a `DriverRequestDTO`, process it, and return a clean `DriverResponseDTO`.", "architecture": "\n```java\n// 1. Controller Layer: Handles HTTP and validation\n@RestController\n@RequestMapping(\"/api/v1/drivers\")\npublic class DriverController {\n    private final DriverService driverService;\n\n    // Constructor Injection (Best Practice over @Autowired field injection)\n    public DriverController(DriverService driverService) {\n        this.driverService = driverService;\n    }\n\n    @PostMapping(\"/onboard\")\n    public ResponseEntity<DriverResponseDTO> onboardDriver(@Valid @RequestBody DriverRequestDTO request) {\n        DriverResponseDTO response = driverService.onboardNewDriver(request);\n        return ResponseEntity.status(HttpStatus.CREATED).body(response);\n    }\n}\n\n// 2. Service Layer: Contains business logic and transactional boundary\n@Service\npublic class DriverService {\n    private final DriverRepository driverRepository;\n    private final KafkaTemplate<String, Object> kafkaTemplate;\n\n    public DriverService(DriverRepository driverRepository, KafkaTemplate<String, Object> kafkaTemplate) {\n        this.driverRepository = driverRepository;\n        this.kafkaTemplate = kafkaTemplate;\n    }\n\n    @Transactional\n    public DriverResponseDTO onboardNewDriver(DriverRequestDTO dto) {\n        // Business logic validation\n        if (driverRepository.existsByEmail(dto.getEmail())) {\n            throw new DuplicateResourceException(\"Driver email already registered\");\n        }\n        Driver driver = new Driver(dto.getName(), dto.getEmail(), DriverStatus.PENDING_REVIEW);\n        Driver savedDriver = driverRepository.save(driver);\n        \n        // Publish event to Kafka\n        kafkaTemplate.send(\"driver-onboarding-topic\", savedDriver.getId().toString(), new DriverCreatedEvent(savedDriver));\n        \n        return new DriverResponseDTO(savedDriver.getId(), savedDriver.getStatus());\n    }\n}\n```", "script": "**Interviewer: \"How do you structure your Spring Boot microservices and handle dependency injection?\"**\n\n*\"We adhere strictly to a clean, layered architectural pattern in Spring Boot. We maintain distinct Controller, Service, Repository, and DTO layers. For dependency injection, we avoid field injection with `@Autowired` because it hinders unit testing and can mask circular dependencies; instead, we enforce constructor injection. \n\nWe mark our service methods with `@Transactional` to establish clear transactional boundaries across JPA database operations. We enforce strict DTO separation using MapStruct or custom mappers so that internal database entities and sensitive fields are never leaked to external clients. Furthermore, we implement a centralized `@RestControllerAdvice` global exception handler that translates domain exceptions like `EntityNotFoundException` or validation errors into standardized RFC 7807 problem detail JSON responses.\"*", "traps": [{"q": "Why is Constructor Injection preferred over Field Injection (@Autowired on private fields)?", "a": "Constructor injection makes dependencies explicit, enforces immutability (fields can be declared `final`), prevents NullPointerExceptions in unit tests because you can easily pass mock objects without needing reflection or Spring test runners, and causes the application to fail-fast at startup if circular dependencies exist."}], "words": 358}, {"day": 3, "category": "Distributed Systems & Reliability", "title": "Day 3: Monolith Decomposition & Circuit Breakers (Resilience4j & Fallbacks)", "resume_anchor": "Decomposed a monolithic onboarding service into 6 independently releasable Spring Boot modules with Spring Cloud circuit breakers, enabling parallel deployments and cutting cross-team merge conflicts by 4 per sprint.", "concept": "### The Monolith Problem:\nImagine an e-commerce or onboarding monolith: Driver registration, vehicle inspection, background checks, and bank payouts all live in one single codebase.\n1. **Merge Hell:** 15 engineers working on the same git repo cause constant merge conflicts (cutting velocity by days).\n2. **Blast Radius:** If the third-party background check API hangs, the monolith's HTTP worker threads become blocked waiting for a response. Soon, the thread pool is exhausted (Thread Starvation), and people can't even register cars or view their profile!\n\n### The Solution: Microservices + Circuit Breakers\nWe split the monolith along **Domain-Driven Design (DDD)** bounded contexts into 6 services:\n- `driver-core-service`\n- `vehicle-inspection-service`\n- `background-check-service`\n- `banking-payout-service`\n- `document-ocr-service`\n- `notification-service`\n\n### How the Circuit Breaker Pattern Works (Resilience4j):\nAnalogous to the electrical breaker box in your house that trips when power surges to prevent fire.\n- **State 1: CLOSED (Normal):** All calls flow through to the downstream service. The circuit breaker monitors success/failure rates over a sliding window (e.g., last 50 calls).\n- **State 2: OPEN (Tripped):** If the failure rate exceeds the threshold (e.g., >50% timeouts/5xx errors), the breaker trips OPEN. All subsequent requests fail-fast immediately *without even making a network call*. It executes a predefined **Fallback Method** instantly (e.g., return cached data or queue the request asynchronously).\n- **State 3: HALF-OPEN (Trial):** After a configurable sleep window (e.g., 15 seconds), the breaker lets a limited number of test calls through. If they succeed, it transitions back to CLOSED. If they fail, it re-opens.", "architecture": "\n```\n   [Incoming Request]\n          │\n          ▼\n   [Circuit Breaker (Resilience4j)]\n   ├── State = CLOSED ────► Call Downstream API (Success -> Record Metric)\n   │\n   ├── Failure Rate > 50%? ──► State transitions to OPEN\n   │\n   ├── State = OPEN ──────► Instant Fail-Fast / Trigger Fallback Method\n   │                        (Queue to Kafka / Return Cached Response)\n   │\n   └── After 15s Sleep ───► State = HALF-OPEN (Test 5 trial calls)\n                            ├── All Success? ──► Return to CLOSED\n                            └── Any Failure? ──► Re-open for 15s\n```", "script": "**Interviewer: \"Walk me through how you decomposed the onboarding monolith and implemented circuit breakers.\"**\n\n*\"Our driver onboarding service was originally a monolithic deployment where document verification, vehicle inspection, and third-party background checks shared the same application lifecycle. Whenever our external background check vendor experienced latency spikes or outages, incoming HTTP threads in our monolith were tied up waiting for socket reads, exhausting our connection pools and bringing down the entire onboarding pipeline.\n\nWe decomposed the monolith into 6 domain-aligned Spring Boot microservices, each with its own database schema, communicating asynchronously via Kafka for events and REST for synchronous queries. \n\nTo eliminate cascading failures, we integrated **Resilience4j Circuit Breakers** via Spring Cloud. We configured a sliding window of 50 requests with a 50% failure rate threshold and a 3-second timeout. If the downstream background check service began timing out, the breaker tripped OPEN. Instead of blocking the driver's flow, our fallback method queued the pending check into an asynchronous Kafka retry topic and returned a status of 'Verification in Progress' to the mobile client. This isolated downstream vendor instability and kept our core onboarding funnel 99.9% available.\"*", "traps": [{"q": "What is the difference between a Circuit Breaker and a Retry pattern?", "a": "Retry is useful for transient network blips (e.g., retry 3 times with exponential backoff). However, if the downstream service is dead or overloaded, blind retries create a 'retry storm' that completely crushes the downstream service. A Circuit Breaker detects that the service is unhealthy, halts all traffic immediately, and protects both caller and callee."}], "words": 453}, {"day": 4, "category": "Performance Tuning & Caching", "title": "Day 4: Redis Caching & The p99 Latency 320ms -> 80ms Deep-Dive (Stampede, TTL, Invalidation)", "resume_anchor": "Diagnosed a high-frequency cache miss pattern in marketplace APIs, applied Redis TTL-based invalidation, and eliminated redundant PostgreSQL round-trips, dropping p99 latency from 320ms to 80ms under peak load.", "concept": "### The Crucial Metric: Latency Percentiles (p50, p95, p99)\n- **Average/Mean:** Misleading! If 99 people experience 10ms and 1 person experiences 10,000ms, the average is 110ms.\n- **p99 (99th Percentile):** 99% of user requests are faster than this number. At Uber's scale (millions of concurrent rides), the worst 1% represents tens of thousands of frustrated riders stuck watching a loading spinner!\n\n### What is Redis?\n**Redis** (Remote Dictionary Server) is an in-memory key-value data store.\n- Reading from disk / relational database (PostgreSQL): **5ms - 50ms**.\n- Reading from Redis RAM: **0.1ms - 1ms** (100x to 500x faster!).\n\n### The War Story: The Cache Stampede (Thundering Herd)\n1. In the marketplace service, we cached hot driver availability and pricing surge multipliers in Redis with a static TTL (Time-To-Live) of 5 minutes: `SET surge:zone_98 1.4 EX 300`.\n2. During 5:00 PM rush hour, thousands of riders in zone 98 opened the app simultaneously.\n3. At exactly minute 5, the Redis key expired.\n4. **The Disaster:** 500 concurrent requests checked Redis at that exact millisecond $\to$ Cache Miss for all 500 requests!\n5. All 500 threads hit PostgreSQL simultaneously with complex geospatial join queries.\n6. The PostgreSQL connection pool was exhausted, queries queued up, CPU spiked to 100%, and p99 latency ballooned to **320ms**.\n\n### The Engineering Solution:\n1. **TTL Jitter (Staggered Invalidation):** Never let hot keys expire at the same instant. Add randomized jitter: `TTL = Base_TTL (300s) + random(0, 45s)`.\n2. **Distributed Mutex (Locking on Cache Miss):** When a cache miss occurs, the first thread acquires a Redis distributed lock (`SET lock:zone_98 my_token NX EX 5`). Only *that one thread* queries PostgreSQL and updates Redis. The other 499 threads either wait a few milliseconds or receive the previous stale value.", "architecture": "\n```\n   [500 Concurrent User Requests]\n                 │\n                 ▼\n         [Check Redis Cache]\n                 │\n        ┌────────┴────────┐\n   (Cache Hit)       (Cache Miss)\n        │                 │\n        ▼                 ▼\n   Return <1ms     [Acquire Distributed Mutex: SET lock:key NX]\n                   ├── Acquired? ──► Query Postgres once (15ms) ──► Write Redis ──► Release Lock\n                   └── Failed?   ──► Wait 20ms & re-read cache (or return stale cached value)\n```", "script": "**Interviewer: \"Tell me about how you dropped p99 latency from 320ms to 80ms using Redis.\"**\n\n*\"In our marketplace pricing and driver discovery API, we monitored our CloudWatch p99 latency metrics and noticed sharp spikes reaching 320ms during peak rush hour. Profiling our database showed connection pool saturation caused by a classic 'Cache Stampede' or thundering herd problem. We were caching zone surge and driver location data with a static 5-minute TTL. When a high-traffic key expired, hundreds of concurrent rider requests experienced a cache miss at the exact same millisecond, bypassing the cache and firing complex geospatial queries directly against PostgreSQL.\n\nTo fix this, I implemented a two-fold solution in our Spring Boot data layer:\nFirst, I introduced TTL Jitter, adding a randomized offset between 30 to 60 seconds onto our base TTL so keys in adjacent zones expired at staggered intervals.\nSecond, I implemented a distributed lock using Redis `SET resource_name my_random_value NX PX 3000`. When a miss occurred, only the single thread holding the mutex queried PostgreSQL to regenerate the cache entry, while concurrent threads either served stale-while-revalidate data or waited on a short backoff. This eradicated database connection starvation and dropped our p99 latency from 320ms down to 80ms under peak load.\"*", "traps": [{"q": "What happens if the thread holding the Redis lock crashes before releasing it?", "a": "We always set an automatic expiration on the lock key (e.g., `PX 3000` = 3000ms TTL) using Redis's atomic `NX PX` command. Even if the process dies or network partitions occur, Redis automatically expires and releases the lock after 3 seconds, preventing deadlocks."}], "words": 500}, {"day": 5, "category": "Event-Driven Systems & Streaming", "title": "Day 5: Apache Kafka, Event Streams & Dead Letter Queues (DLQ)", "resume_anchor": "...streaming 50,000+ daily ride events through Kafka consumers with dead-letter queues for fault tolerance into Redis-cached KPI aggregations.", "concept": "### Why Kafka instead of REST APIs?\nIf the Ride Service needs to notify Billing, Driver Payouts, Notifications, Analytics, and Fraud services when a ride ends:\n- *With REST:* Ride Service must make 5 synchronous HTTP calls. If Billing is slow, Ride Service hangs. If Fraud is down, the call fails.\n- *With Kafka:* Ride Service publishes one message (`RideCompletedEvent`) to a Kafka topic and moves on in 2 milliseconds. All 5 services consume that event independently at their own pace!\n\n### Core Kafka Architecture:\n- **Topic:** The event stream (e.g., `ride-events`).\n- **Partition:** Topics are divided into partitions distributed across cluster brokers. Order is strictly guaranteed *within* a single partition based on the message **Key** (e.g., hashing `ride_id` or `driver_id` routes all events for that ride to the exact same partition).\n- **Offset:** A sequentially increasing integer assigned to each record in a partition. Consumers track where they left off by committing their offset.\n\n### The Problem: The Poison Pill Message\nWhat happens if someone sends a malformed message (e.g., corrupted JSON or a negative dollar amount that triggers a `NullPointerException` in your Java code)?\n1. Consumer reads message at offset 42 $\to$ Throws Exception $\to$ Fails.\n2. Consumer restarts $\to$ Re-reads offset 42 $\to$ Fails again!\n3. **The Disaster:** The consumer partition is stuck forever in an infinite retry loop, falling hours behind real-time traffic.\n\n### The Solution: Dead Letter Queue (DLQ)\n1. Configure an error handler with an exponential backoff retry policy (e.g., retry 3 times with 1-second delay).\n2. If all 3 retries fail, catch the error, write the payload along with stack trace headers to a dead-letter topic (`ride-events-dlq`), and **commit the offset** on the primary topic.\n3. The main consumer advances to offset 43 immediately.\n4. Engineers inspect the DLQ topic and reprocess messages once bugs are resolved.", "architecture": "\n```\n   [Ride Service] ──(Publishes 50,000+ daily events)──► [Kafka Topic: ride-events]\n                                                               │\n                                                               ▼\n                                                     [Kafka Consumer Group]\n                                                     ┌─────────┴─────────┐\n                                               (Success)             (Failure)\n                                                    │                     │\n                                                    ▼               (Retry 3 times)\n                                          [Update Redis KPIs]             │\n                                          (Active rides, GMV)        (Still Fails?)\n                                                                          │\n                                                                          ▼\n                                                             [Publish to ride-events-dlq]\n                                                             (Trigger CloudWatch Alert)\n```", "script": "**Interviewer: \"How did you design your Kafka consumers and handle message failures with Dead Letter Queues?\"**\n\n*\"We processed over 50,000 daily ride events—such as ride requests, pickups, and completions—using an event-driven architecture with Apache Kafka. Our Spring Boot consumers read from the `ride-events` topic to compute real-time operational KPIs cached in Redis for our Angular dashboard.\n\nTo ensure high availability and prevent consumer thread stalls caused by poison-pill messages (like schema mismatches or unparseable payloads), we implemented Spring Kafka’s `DefaultErrorHandler` paired with a `DeadLetterPublishingRecoverer`. \n\nWhen a consumer encounters an exception, it attempts 3 retries with exponential backoff (1s, 2s, 4s). If all retries fail, the message is automatically published to a designated Dead-Letter Queue topic (`ride-events.DLQ`) with original exception details and timestamp preserved in Kafka record headers. The consumer then commits the offset on the primary topic and continues processing subsequent events without lag. We attached CloudWatch alarms to DLQ topic volume so on-call engineers were alerted immediately when abnormal failure spikes occurred.\"*", "traps": [{"q": "How do you guarantee ordering in Kafka?", "a": "Kafka only guarantees ordering within a single partition, not across an entire topic. To ensure sequential ordering for a specific ride or driver (e.g., Requested -> Accepted -> PickedUp -> Completed), we assign the `ride_id` as the Kafka message key. Kafka's default murmur2 partitioner hashes the key, guaranteeing that all events for that specific `ride_id` land on the exact same partition and are consumed in strict chronological order."}], "words": 481}, {"day": 6, "category": "Databases & SQL Performance", "title": "Day 6: Database Optimization, SQL Profiling (EXPLAIN ANALYZE), Composite Indexes & Cursor Pagination", "resume_anchor": "Profiled 35 underperforming SQL queries using execution plans, introduced composite indexes and query restructuring, and reduced average report generation time from 9 seconds to under 2 seconds...", "concept": "### How Relational Databases Work Under the Hood:\nWhen you execute `SELECT * FROM trips WHERE client_id = 45 AND status = 'COMPLETED';`:\n- **Sequential Scan (Seq Scan):** The database reads *every single page of data on disk* from row 1 to row 5,000,000 ($O(N)$). If table size is 10GB, it reads 10GB of disk. That's why queries take 9+ seconds!\n- **B-Tree Index Scan:** A B-Tree (Balanced Tree) index keeps sorted pointers to table rows in memory ($O(\\log N)$). Looking up an index entry takes a few microseconds.\n\n### How to Profile a Query: `EXPLAIN ANALYZE`\nPrefix your SQL query with `EXPLAIN (ANALYZE, BUFFERS)` in PostgreSQL. It executes the query and shows:\n1. Actual time spent in each node.\n2. Loops and row count estimates vs actual rows.\n3. Whether it performed a `Seq Scan` or an `Index Scan`.\n\n### Composite Indexes & The Leftmost Prefix Rule:\nA composite index covers multiple columns:\n`CREATE INDEX idx_trips_client_status_date ON trips(client_id, status, created_at);`\n- **Rule:** The query *must* filter on `client_id` for the index to be used. If you query only `WHERE status = 'COMPLETED'`, the database cannot use this index because it's sorted by `client_id` first!\n\n### Offset Pagination vs. Cursor Pagination:\n- **Offset Pagination (Slow):** `SELECT * FROM trips ORDER BY id LIMIT 20 OFFSET 500000;`  \n  PostgreSQL must read 500,020 rows, discard the first 500,000, and return 20. As users paginate deeper, query time increases linearly ($O(N)$)!\n- **Cursor-Based Pagination (Fast):** `SELECT * FROM trips WHERE id > 500000 ORDER BY id ASC LIMIT 20;`  \n  PostgreSQL traverses the B-Tree index on `id` directly to record 500,001 in $O(\\log N)$ and reads exactly 20 rows! Latency remains constant at page 1 or page 10,000.", "architecture": "\n```sql\n-- BEFORE: 9 seconds execution time (Seq Scan over 4M rows)\nEXPLAIN ANALYZE \nSELECT * FROM trips \nWHERE client_id = 1042 AND status = 'COMPLETED' \nORDER BY created_at DESC LIMIT 50;\n\n-- OPTIMIZATION: Composite B-Tree Index\nCREATE INDEX CONCURRENTLY idx_trips_client_status_created \nON trips(client_id, status, created_at DESC);\n\n-- AFTER: 18 milliseconds (Index Scan directly into B-Tree leaf nodes)\n```", "script": "**Interviewer: \"How did you profile underperforming SQL queries and optimize them from 9s to under 2s at Robosoft?\"**\n\n*\"At Robosoft, our executive reporting dashboard suffered from report generation times averaging 9 seconds. I enabled PostgreSQL slow-query logging with `log_min_duration_statement = 2000` to isolate the 35 slowest queries and inspected their execution plans using `EXPLAIN (ANALYZE, BUFFERS)`.\n\nThe execution plans revealed two primary bottlenecks:\nFirst, queries were performing expensive sequential scans over multi-million row tables because developers had indexed individual columns independently rather than creating composite indexes. I created composite B-Tree indexes covering `(client_id, status, created_at DESC)` aligned with our query filter and sort orders, allowing PostgreSQL to satisfy both the WHERE clause and ORDER BY in a single Index Scan.\nSecond, deep reporting pagination was written using legacy `LIMIT / OFFSET`. I refactored the backend to use cursor-based keyset pagination using the last seen record ID and timestamp, eliminating redundant disk block reads. These optimizations dropped average report generation time from 9 seconds to under 2 seconds across 1,200 daily active users.\"*", "traps": [{"q": "Why shouldn't you just put an index on every single column in your database tables?", "a": "Indexes are not free. While they accelerate `SELECT` queries, every `INSERT`, `UPDATE`, and `DELETE` operation requires the database engine to rewrite the B-Tree index structures on disk. Excessive indexes degrade write throughput significantly and consume excessive RAM in the buffer pool."}], "words": 458}, {"day": 7, "category": "System Design Synthesis", "title": "Day 7: Week 1 Integration & System Design Synthesis Drill", "resume_anchor": "Shipped a full-stack operational dashboard in Angular backed by Spring Boot REST APIs, streaming 50,000+ daily ride events through Kafka consumers...", "concept": "Today is about putting all Week 1 components into a single coherent **System Architecture Diagram** and practicing explaining the end-to-end flow.\n\n### The Complete End-to-End Uber Operational System Flow:\n1. **Rider / Driver Action:** Mobile app requests a ride.\n2. **API Gateway:** Ingress route validates OAuth 2.0 JWT token, verifies rate limit via Redis token bucket, and forwards to `RideService`.\n3. **Ride Service:** Writes ride to PostgreSQL database within `@Transactional` boundary, publishes `RideCreatedEvent` to Kafka topic `ride-events`.\n4. **Kafka Event Stream:** Partitions message by `ride_id` across Kafka brokers.\n5. **Dashboard Aggregator Service:** Consumes event. If failure occurs, retries 3 times before routing to `ride-events-dlq`. On success, updates rolling KPI metrics in Redis (`INCR ride_count:hourly`, `HSET active_rides`).\n6. **Marketplace Cache:** Redis stores cached driver locations and pricing multipliers with randomized TTL jitter to prevent cache stampedes.\n7. **Frontend Angular Client:** Subscribes to backend REST/SSE streams via RxJS observables, rendering live operational KPIs on the screen reactively.", "architecture": "\n```\n[Angular Client (RxJS)] ──► [API Gateway (JWT Auth + Rate Limiting)]\n                                      │\n                                      ▼\n                             [Spring Boot RideService]\n                             ├── Writes to: [PostgreSQL DB]\n                             └── Publishes: [Kafka Topic: ride-events]\n                                                  │\n                                                  ▼\n                                       [Kafka Consumer Service]\n                                       ├── Failures ──► [Kafka DLQ Topic]\n                                       └── Success  ──► [Redis KPI Aggregations]\n```", "script": "**Interviewer: \"Can you whiteboard the overall architecture of your full-stack operational platform at Uber?\"**\n\n*\"Our platform is structured into three decoupled tiers: client presentation, distributed microservice ingestion, and event-driven aggregation. \n\nOn the client side, operations managers use an Angular single-page application leveraging RxJS reactive observables to stream live metrics without polling. Requests hit our API Gateway hosted on AWS EC2 behind an Application Load Balancer. The gateway validates OAuth 2.0 JWTs and handles edge rate limiting.\n\nCore business operations run on Spring Boot microservices backed by PostgreSQL with connection pooling. When trip milestones occur, services emit asynchronous events to Apache Kafka. Our streaming aggregation workers consume 50,000+ daily ride events, utilizing Dead Letter Queues for fault isolation. Aggregated metrics are written directly to an in-memory Redis layer with TTL invalidation, allowing our Angular frontend to query real-time dashboard KPIs with sub-80ms p99 latency.\"*", "traps": [{"q": "What happens if Redis crashes completely? Does the entire platform go down?", "a": "No. We implement Redis in high-availability cluster mode with primary-replica nodes and Sentinel/Multi-AZ failover on AWS ElastiCache. In application code, we write our cache access with graceful degradation: if Redis times out or is unreachable, the service falls back to querying the primary PostgreSQL database directly while alerting on-call via CloudWatch."}], "words": 314}, {"day": 8, "category": "GenAI & Vector Search", "title": "Day 8: GenAI Fundamentals, Embeddings, Vector Search & FAISS", "resume_anchor": "Architected a GPT-4 knowledge assistant using LangChain, OpenAI Embeddings, and FAISS vector search, enabling semantic retrieval across 10,000+ policy documents and eliminating 85 in 100 Tier-1 support tickets from the manual queue.", "concept": "### The Fundamental Problem with LLMs (GPT-4):\n1. **Hallucination:** If an LLM doesn't know an answer, it makes up convincing-sounding nonsense.\n2. **Stale / Private Data:** GPT-4 was trained on public internet data. It knows nothing about Uber's internal confidential 2026 driver compensation policies or Texas cancellation fee schedules.\n3. **Context Window Limits:** You cannot paste 10,000 policy documents (millions of words) into a single prompt. It's too expensive and exceeds token limits.\n\n### The Solution: RAG (Retrieval-Augmented Generation)\nInstead of asking GPT-4 directly, you:\n1. Search your private document database for the 3 most relevant paragraphs.\n2. Stuff those 3 paragraphs into the prompt as reference text.\n3. Instruct GPT-4: *\"Answer the user's question using ONLY the provided reference text. If not found, say I don't know.\"*\n\n### What are Embeddings & FAISS?\n- **Embedding:** We pass a chunk of text (e.g., 500 tokens) through OpenAI's `text-embedding-ada-002` or `text-embedding-3-small`. It returns a vector of 1,536 floating-point numbers.\n- **Semantic Similarity:** Words with similar meanings cluster together. The cosine angle between *\"How do I get a refund for a missed pickup?\"* and *\"Policy regarding rider compensation on driver no-shows\"* is near $1.0$.\n- **FAISS (Facebook AI Similarity Search):**\n  - Storing 10,000 document embeddings and calculating cosine similarity brute-force ($O(N)$) against every user query takes hundreds of milliseconds.\n  - FAISS builds an index in RAM using algorithms like **IndexIVFFlat** (Inverted File with clustering) or **IndexHNSW** (Hierarchical Navigable Small World graphs), returning the top-k nearest document chunks in under **15 milliseconds**!", "architecture": "\n```\n[Ingestion Pipeline (Offline)]:\n10,000 Policy PDFs ──► LangChain RecursiveCharacterTextSplitter (chunk_size=500, overlap=50)\n                   ──► OpenAI text-embedding-ada-002 (1536-dim vector)\n                   ──► Stored in FAISS Index on disk/memory\n\n[Runtime Query (Online)]:\nUser Query: \"What happens if driver cancels after 6 minutes?\"\n       │\n       ▼\nOpenAI Embeddings API (Embed query into 1536-dim vector)\n       │\n       ▼\nFAISS Vector Search (Top-3 nearest document chunks retrieved in 12ms)\n       │\n       ▼\nPrompt Template:\n\"You are Uber's policy assistant. Answer the user question using ONLY this context:\n{retrieved_chunks}\nQuestion: {user_query}\"\n       │\n       ▼\nGPT-4 API ──► \"According to section 4.2, rider is credited $5 if driver cancels after 5 mins.\"\n```", "script": "**Interviewer: \"How did you build the GPT-4 policy knowledge assistant with FAISS and LangChain?\"**\n\n*\"We had over 10,000 internal policy documents, SOPs, and market regulations. Support agents spent hours manually searching knowledge bases, causing massive ticket backlog. I architected a Retrieval-Augmented Generation (RAG) assistant.\n\nIn our ingestion pipeline, we parsed documents and split them using LangChain's `RecursiveCharacterTextSplitter` with a chunk size of 500 tokens and 50-token overlap to maintain contextual continuity across chunk boundaries. We embedded these chunks using OpenAI's `text-embedding-ada-002` and indexed them into an in-memory FAISS index using cosine similarity.\n\nAt runtime, incoming support queries were embedded and matched against the FAISS index to retrieve the top-3 most relevant policy chunks in under 20ms. We fed these chunks into a strict system prompt instructing GPT-4 to ground its answers exclusively in the retrieved context with citation metadata. This achieved 91% accuracy across our evaluation set and deflected 85 out of 100 Tier-1 support tickets from reaching human queues.\"*", "traps": [{"q": "Why did you use 50-token overlap when chunking documents?", "a": "If a critical sentence spans across the boundary of two chunks (e.g., condition on chunk 1, result on chunk 2), splitting without overlap cuts the thought in half, and vector similarity search will fail to retrieve the complete context. A 10% overlap ensures semantic continuity across chunk transitions."}], "words": 440}, {"day": 9, "category": "GenAI & Automation", "title": "Day 9: LangChain & OpenAI API Function Calling (Structured Outputs)", "resume_anchor": "Replaced a 120-engineer-hour-per-week manual review queue by building an async classification service using OpenAI API function calling to auto-categorize trip exceptions with structured JSON output.", "concept": "### The Enterprise Problem with Raw LLMs:\nCustomer support tickets arrive with messy, emotional human text:\n*\"Hey your driver took the wrong highway, made me late for my flight, and then charged me $80, I want my money back right now!\"*\nHuman agents spent 120 hours every week manually reading these tickets, picking tags in Jira/Zendesk:\n- Category: `ROUTE_DEVIATION_DISPUTE`\n- Sub-category: `REFUND_REQUESTED`\n- Severity: `HIGH`\n\n### Why Regex or Simple Keywords Fail:\nKeywords miss context: *\"I didn't take the highway\"* vs *\"Driver took the wrong highway\"*.\n\n### Why Function Calling (Structured Output) Solves It:\nInstead of asking GPT-4 to chat, you tell OpenAI: *\"You are an automated classification worker. I am giving you a tool called `categorize_trip_exception`. You MUST call this function and pass arguments matching this exact JSON schema.\"*\n\nOpenAI uses constrained decoding to guarantee that the output is 100% syntactically valid JSON matching your schema every single time!", "architecture": "\n```python\n# Pydantic Model defining the exact JSON Schema\nclass TripExceptionClassification(BaseModel):\n    category: Literal[\"FARE_DISPUTE\", \"ROUTE_DEVIATION\", \"DRIVER_NO_SHOW\", \"VEHICLE_CONDITION\"]\n    urgency_level: Literal[\"LOW\", \"MEDIUM\", \"CRITICAL\"]\n    estimated_refund_eligible: bool\n    summary_reason: str\n\n# OpenAI Function Calling Invocation\nresponse = client.chat.completions.create(\n    model=\"gpt-4o-mini\",\n    messages=[\n        {\"role\": \"system\", \"content\": \"Classify incoming rider trip exception reports.\"},\n        {\"role\": \"user\", \"content\": ticket_text}\n    ],\n    tools=[{\n        \"type\": \"function\",\n        \"function\": {\n            \"name\": \"categorize_trip_exception\",\n            \"description\": \"Categorizes rider trip dispute into structured schema\",\n            \"parameters\": TripExceptionClassification.model_json_schema()\n        }\n    }],\n    tool_choice={\"type\": \"function\", \"function\": {\"name\": \"categorize_trip_exception\"}}\n)\n```", "script": "**Interviewer: \"How did you use OpenAI Function Calling to eliminate 120 hours of manual ticket reviews?\"**\n\n*\"We had an operational bottleneck where support teams expended 120 hours each week manually reading and categorizing unstructured trip dispute tickets. I built an asynchronous worker service in Python that consumed incoming dispute tickets from Kafka.\n\nRather than relying on brittle regex or prompt engineering that returned unpredictable free-form text, we utilized OpenAI Function Calling with strict schema enforcement via Pydantic. We defined an explicit function schema specifying trip exception category, urgency level, refund eligibility boolean, and reason summary. By forcing `tool_choice`, the model guaranteed output matching our exact JSON schema with zero parsing errors.\n\nOur service parsed this structured payload, validated it with Pydantic, and executed automated routing actions: straightforward disputes were auto-refunded and closed immediately, while high-severity claims were routed to tier-2 human specialists with pre-filled context. This completely eliminated manual triage and reclaimed 120 engineering hours per week.\"*", "traps": [{"q": "What happens if OpenAI API has downtime or latency spikes?", "a": "Because ticket classification is asynchronous, we decoupled ingestion using Kafka. If OpenAI experienced latency or 503 errors, our worker backed off exponentially and retried without losing messages. We also maintained a fallback deterministic rule-based classifier for high-priority safety tickets to ensure critical complaints were never blocked."}], "words": 310}, {"day": 10, "category": "Frontend Architecture", "title": "Day 10: Angular 12+ & RxJS Reactive State Management", "resume_anchor": "Delivered a reusable Angular component library of 12 modules with RxJS reactive state management, shared across 3 client products, compressing frontend sprint delivery cycles by 6 weeks per release.", "concept": "### Angular vs. React:\n- **React:** A minimal library. You have to pick your own router, state management, HTTP client, and build tools.\n- **Angular:** A complete, enterprise-grade opinionated framework written in **TypeScript**. Includes built-in Routing, Forms, HTTP Client, and Dependency Injection out of the box.\n\n### RxJS & Reactive Programming:\nThink of an array as data sitting in memory: `[1, 2, 3]`.\nThink of an **Observable** as data arriving over time like a conveyor belt: item 1 arrives at 10:00, item 2 at 10:02, item 3 at 10:05.\n- **Subject:** Can emit values and be listened to.\n- **BehaviorSubject:** A Subject that remembers its *current value*. When a new component subscribes, it immediately receives the latest state!\n\n### How RxJS Prevents Memory Leaks:\nIf a component subscribes to an observable (`myService.getData().subscribe(...)`) and the user navigates away, the subscription stays open in RAM forever (a memory leak!).\n- **Best Practice:** Use Angular's `async` pipe in HTML: `*ngIf=\"kpis$ | async as kpis\"`. The `async` pipe automatically subscribes when the component renders and automatically unsubscribes when the component is destroyed!", "architecture": "\n```typescript\n// Shared Reactive State Service\n@Injectable({ providedIn: 'root' })\nexport class RideStateService {\n  private activeRidesSubject = new BehaviorSubject<number>(0);\n  public activeRides$ = this.activeRidesSubject.asObservable();\n\n  constructor(private http: HttpClient) {}\n\n  updateActiveRides(count: number): void {\n    this.activeRidesSubject.next(count);\n  }\n\n  // switchMap cancels in-flight search request if user types new character\n  searchTrips(query$: Observable<string>): Observable<Trip[]> {\n    return query$.pipe(\n      debounceTime(300),\n      distinctUntilChanged(),\n      switchMap(query => this.http.get<Trip[]>(`/api/v1/trips?search=${query}`))\n    );\n  }\n}\n```", "script": "**Interviewer: \"How did you design your reusable Angular component library and handle state management with RxJS?\"**\n\n*\"At Robosoft, we had 3 client applications reinventing similar UI widgets and data grids. I led the development of a reusable Angular library consisting of 12 shared modules—including data tables with server-side pagination, KPI cards, and modal dialogs.\n\nFor state management, rather than introducing heavy third-party state libraries like NgRx for moderate-complexity dashboards, we engineered a reactive service-with-a-subject architecture using RxJS `BehaviorSubject`. Services maintained encapsulated state streams exposed as read-only observables. Components consumed data using Angular's `async` pipe, which eliminated manual `.subscribe()` boilerplate and safeguarded our applications against subscription memory leaks upon component teardown. \n\nWe also heavily utilized operators like `switchMap` and `debounceTime` for search autocomplete to automatically cancel stale HTTP requests, saving client network bandwidth. This shared library compressed frontend delivery cycles by 6 weeks per release.\"*", "traps": [{"q": "What is the difference between switchMap, mergeMap, and concatMap?", "a": "`switchMap` cancels the previous inner observable when a new value arrives (perfect for search/autocomplete). `mergeMap` runs all inner observables concurrently in parallel (good for independent downloads). `concatMap` queues requests sequentially, waiting for one to finish before starting the next (vital for ordered saves/updates)."}], "words": 330}, {"day": 11, "category": "Python Backend Architecture", "title": "Day 11: Python & FastAPI Microservice Architecture", "resume_anchor": "Built a FastAPI service layer with PostgreSQL and MySQL backends, enforcing JWT token validation, role-based access, request throttling, and cursor-based pagination across endpoints receiving 500,000+ monthly requests.", "concept": "### Why FastAPI is Dominating Modern Python Services:\n1. **Asynchronous (`async` / `await`):** Built on ASGI (Asynchronous Server Gateway Interface) using Starlette. Can handle thousands of concurrent idle socket connections without spawning heavy OS threads.\n2. **Pydantic Data Validation:** Automatically validates request body types. If an endpoint expects an `int` and gets `\"abc\"`, FastAPI automatically returns HTTP 422 with exact field errors.\n3. **Automated OpenAPI / Swagger:** Interactive documentation is generated automatically at `/docs`.\n\n### Request Throttling (Rate Limiting) with Redis:\nIf a rogue client scripts an infinite loop hitting your API, it will crash your database.\nWe enforce rate limiting using the **Token Bucket Algorithm** in Redis:\n- Every user has a bucket in Redis that holds up to 100 tokens.\n- Every API call consumes 1 token.\n- Every second, 2 new tokens are added to the bucket.\n- If tokens reach 0, FastAPI immediately returns `HTTP 429 Too Many Requests`!", "architecture": "\n```python\nfrom fastapi import FastAPI, Depends, HTTPException, status\nfrom pydantic import BaseModel, Field\n\napp = FastAPI(title=\"Uber Trip Classification Service\")\n\n# Pydantic Schema\nclass DisputeRequest(BaseModel):\n    trip_id: str\n    rider_id: str\n    complaint_text: str = Field(..., min_length=10, max_length=2000)\n\n# Dependency Injection for Authentication & Throttling\nasync def rate_limiter(rider_id: str):\n    allowed = await redis_client.check_rate_limit(rider_id, limit=60, window_sec=60)\n    if not allowed:\n        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=\"Rate limit exceeded\")\n\n@app.post(\"/api/v1/disputes/classify\")\nasync def classify_dispute(\n    payload: DisputeRequest,\n    user: dict = Depends(verify_jwt_token),\n    _: None = Depends(rate_limiter)\n):\n    result = await classification_service.process(payload)\n    return {\"status\": \"success\", \"data\": result}\n```", "script": "**Interviewer: \"Why did you use FastAPI over Spring Boot or Flask for your Python services?\"**\n\n*\"We utilized FastAPI specifically for our AI, ML, and data transformation microservices because of the rich Python data science ecosystem (Scikit-Learn, LangChain, FAISS, Pandas) paired with FastAPI's high-performance asynchronous event loop. \n\nFastAPI leverages Pydantic for automated request schema validation and serialization, which eradicated manual payload parsing bugs. We implemented clean dependency injection using FastAPI's `Depends` system for our JWT authentication and request throttling. For rate limiting across 500,000+ monthly requests, we integrated a sliding-window counter in Redis to throttle abusive consumers at the gateway layer before traffic could touch PostgreSQL connection pools.\"*", "traps": [{"q": "What happens if you run blocking synchronous code (like `time.sleep` or synchronous database calls) inside an `async def` route in FastAPI?", "a": "Because `async def` runs directly on the main event loop, running blocking synchronous operations halts the entire event loop, blocking all other concurrent requests from being processed! If you have blocking I/O, you should either declare the endpoint as standard `def` (which FastAPI runs in an external threadpool) or use `anyio.to_thread.run_sync`."}], "words": 258}, {"day": 12, "category": "Cloud & DevOps", "title": "Day 12: Docker, Kubernetes & CI/CD with GitHub Actions (45m -> 8m Deployment)", "resume_anchor": "...containerized with Docker and orchestrated via Kubernetes, reducing mean deployment cycle from 45 minutes to 8 minutes via GitHub Actions.", "concept": "### Docker from Scratch:\n- **Image:** A blueprint (like a class in OOP). Contains OS libraries, runtime (Java/Python), and application code.\n- **Container:** A running instance of an image (like an object in OOP). Isolated from other containers using Linux namespaces and cgroups.\n\n### Kubernetes (K8s) from Scratch:\nManaging 50 Docker containers across 10 EC2 servers manually is impossible. Kubernetes automates this:\n- **Pod:** The smallest unit; wraps one or more containers.\n- **Deployment:** Declares your desired state: *\"Run 3 replicas of RideService. If Pod 2 crashes, restart it immediately. During deployment, replace pods one by one (Rolling Update) so users experience zero downtime.\"*\n- **Service:** An internal load balancer that gives a stable virtual IP address to a group of dynamic pods.\n\n### The CI/CD Optimization (45m $\to$ 8m):\n- **Why it took 45 minutes before:**\n  1. Developers ran builds sequentially on a single shared build agent.\n  2. Dependencies (Maven/pip/npm) were downloaded fresh on every commit.\n  3. All 2,000 integration tests ran sequentially.\n  4. Manual SSH deployment scripts.\n- **How we got it down to 8 minutes:**\n  1. **Docker Multi-Stage Builds & Layer Caching:** Cache Maven `.m2` and node modules; only rebuild layers when `pom.xml` or `package.json` change.\n  2. **Parallel Test Matrix in GitHub Actions:** Split tests into 4 parallel runners.\n  3. **Automated Helm / K8s Deployment:** Automatically update deployment image tag in EKS/Kubernetes with zero manual steps.", "architecture": "\n```\n[Developer git push to 'main']\n         │\n         ▼\n[GitHub Actions Runner]\n├── Job 1: Linting & Static Code Analysis (Parallel - 2 mins)\n├── Job 2: Unit & Integration Tests (Matrix Execution - 3 mins)\n├── Job 3: Docker Build with Layer Caching ──► Push to Amazon ECR (2 mins)\n         │\n         ▼\n[Kubernetes Deployment Trigger]\n├── Rolling Update: Pod 1 (New) starts -> Passes Readiness Probe\n├── Old Pod 1 terminates -> Pod 2 updates -> Zero Downtime! (1 min)\nTotal Time: 8 Minutes!\n```", "script": "**Interviewer: \"How did you optimize your CI/CD deployment cycle from 45 minutes to 8 minutes?\"**\n\n*\"Our deployment cycle originally took 45 minutes because our legacy pipeline was running on a single Jenkins server that executed monolithic builds, re-downloaded external dependencies from scratch, and ran our test suite sequentially before triggering manual shell deployment scripts.\n\nI re-architected our CI/CD pipeline using **GitHub Actions** and **Docker**:\nFirst, I implemented multi-stage Docker builds and enabled GitHub Actions dependency caching for our Maven `.m2` and npm modules. If application source code changed but dependencies didn't, the Docker build reused cached layers in under 90 seconds.\nSecond, I parallelized our test execution into matrix runners, executing unit tests and integration tests concurrently.\nThird, we automated deployment to our Kubernetes cluster via Helm charts configured with rolling update strategies and readiness probes. The pipeline builds, tests, pushes the image to Amazon ECR, and executes a zero-downtime rolling deployment in just 8 minutes.\"*", "traps": [{"q": "What is the difference between a Liveness Probe and a Readiness Probe in Kubernetes?", "a": "A **Liveness Probe** checks if the container is alive; if it fails (e.g., deadlocked thread), K8s kills and restarts the container. A **Readiness Probe** checks if the container is ready to accept user traffic (e.g., finished warming up caches and connecting to DB); if it fails, K8s stops sending traffic to that pod without killing it."}], "words": 389}, {"day": 13, "category": "Observability & SRE", "title": "Day 13: AWS Cloud Infrastructure & Amazon CloudWatch Observability (MTTD 40m -> <8m)", "resume_anchor": "Instrumented all services with Amazon CloudWatch custom metrics and log-based alarms, establishing SLA dashboards that cut mean time to detect production incidents from 40 minutes to under 8 minutes.", "concept": "### The SRE Golden Signals:\n1. **Latency:** How long do requests take?\n2. **Traffic:** How many requests per second (RPS)?\n3. **Errors:** What percentage of requests return 5xx errors?\n4. **Saturation:** How full are your resources (CPU, Memory, DB connection pool)?\n\n### What is MTTD (Mean Time to Detect)?\nThe average time between when a catastrophic bug begins in production and when engineers actually know about it!\n- *Without Observability (MTTD 40 mins):* A bug causes payment failures. Nobody notices until frustrated riders tweet or file 50 support tickets.\n- *With CloudWatch Observability (MTTD <8 mins):* Automated metric alarms detect anomalous 5xx error spikes or Kafka consumer lag, firing a PagerDuty alert to the on-call engineer's phone immediately.\n\n### Custom Metrics vs Log-Based Alarms:\n- **Custom Metric:** Your Java code explicitly publishes numbers via AWS SDK: `cloudWatch.putMetricData(\"RideFailureRate\", value)`.\n- **Metric Filter (Log-Based):** CloudWatch scans incoming log streams for patterns like `[ERROR] [PaymentService] GATEWAY_TIMEOUT` and automatically turns log count into a graphical metric!", "architecture": "\n```\n[Microservices on EC2 / K8s]\n       │ (Emits structured JSON logs & Custom Metrics via AWS SDK)\n       ▼\n[Amazon CloudWatch Logs & Metrics]\n       ├── Metric Filter: Error Pattern \"[ERROR]\" > 20 in 1 min\n       ├── Threshold Alarm: p99 Latency > 200ms for 2 consecutive periods\n       ├── Health Alarm: Kafka Consumer Lag > 2,000 messages\n       │\n       ▼ (Alarm State: ALARM)\n[Amazon SNS (Simple Notification Service)]\n       │\n       ├──► PagerDuty (Wakes up on-call engineer)\n       └──► Slack Incident Channel (#war-room-alerts)\n```", "script": "**Interviewer: \"How did you instrument CloudWatch to cut Mean Time to Detect (MTTD) from 40m to under 8m?\"**\n\n*\"Prior to our observability initiative, our Mean Time to Detect incidents averaged 40 minutes because we lacked centralized alerting; we were reacting to support ticket surges and user complaints.\n\nI established structured JSON logging across all 6 microservices and integrated the AWS CloudWatch SDK to publish custom application metrics, specifically tracking API error rates, Kafka consumer lag, and database connection pool saturation. I created CloudWatch Metric Filters that scanned application logs in real time for critical exception patterns. \n\nWe established multi-tiered alarms: warning alarms notifying our Slack engineering channels, and critical threshold alarms (such as 5xx error rates exceeding 2% or consumer lag surpassing 2,000 messages) that triggered Amazon SNS topics routed directly to PagerDuty. We coupled this with CloudWatch executive SLA dashboards. This proactive alerting gave us instant visibility into degradation, dropping our mean time to detect incidents from 40 minutes down to under 8 minutes.\"*", "traps": [{"q": "How do you avoid alarm fatigue when setting up CloudWatch alarms?", "a": "Alarm fatigue occurs when too many noisy, non-actionable alerts fire. We solved this by using anomaly detection bands, requiring conditions to be breached for 2 out of 3 consecutive evaluation periods (e.g., 3 minutes) to filter out transient blips, and strictly separating informational Slack notifications from actionable, wake-up PagerDuty pages."}], "words": 328}, {"day": 14, "category": "Interview Mastery", "title": "Day 14: Comprehensive Behavioral, System Design & Resume Walkthrough Masterclass", "resume_anchor": "Summary & End-to-End Interview Readiness", "concept": "Today is about mastering the soft skills, behavioral questions, and seamless technical defense.\n\n### The 4 Non-Negotiable Questions You Must Ace:\n1. **\"Tell me about yourself\" (The 90-Second Hook):**\n   - Past: Started at Robosoft building high-throughput Angular/FastAPI systems and SQL tuning.\n   - Present: SDE at Uber building distributed Java Spring Boot systems, Kafka streaming, Redis caching, and applied GenAI/RAG assistants.\n   - Future: Eager to bring this end-to-end full-stack and systems engineering rigor to this team.\n2. **\"What was your most challenging technical bug?\"**\n   - The Day 4 Redis Cache Stampede story dropping p99 from 320ms to 80ms!\n3. **\"Tell me about a time you resolved cross-team conflict.\"**\n   - Monolith decomposition: Coordinating API contracts across 6 teams using OpenAPI/Swagger schemas before writing code, cutting merge conflicts by 4 per sprint.\n4. **\"What did you build vs. what did your team build?\"**\n   - Never say 'we did everything' or 'I did everything alone'. Say: *\"Our team was responsible for the overall mobility platform. My specific ownership was designing the Kafka consumer pipeline with DLQ fault tolerance, optimizing the Redis caching layer, and architecting the GenAI knowledge assistant.\"*", "architecture": "\n```\nTHE STAR FRAMEWORK FOR EVERY RESUME BULLET:\nS - Situation: \"At Uber, our support queue was inundated with trip exception disputes...\"\nT - Task:      \"I was tasked with automating this classification to eliminate manual triage...\"\nA - Action:    \"I built a Python worker utilizing OpenAI Function Calling with strict Pydantic schemas...\"\nR - Result:    \"Eliminated 120 manual hours per week and auto-categorized 85% of Tier-1 issues.\"\n```", "script": "**Interviewer: \"Tell me about yourself and your technical background.\"**\n\n*\"Hi, I'm Karthik. I'm a Full Stack Software Engineer with over 3 years of experience specializing in high-throughput backend systems, distributed architectures, and modern web applications. \n\nMost recently at Uber, I've worked across our core mobility platform. On the backend, I've engineered microservices using Java Spring Boot and Python, built event-driven streaming pipelines processing 50,000+ daily ride events with Apache Kafka and Dead Letter Queues, and optimized our Redis caching layer to slash p99 latency from 320ms down to 80ms. I've also had the opportunity to build applied GenAI products in production, including a RAG policy assistant using LangChain and FAISS that deflected 85% of tier-1 support tickets, and an automated classification worker using OpenAI Function Calling that saved 120 engineering hours a week.\n\nPrior to Uber, I worked at Robosoft Technologies, where I built reusable Angular component libraries with RxJS reactive state management and profiled underperforming SQL execution plans to accelerate report generation by 4x. \n\nI hold a Master's in Computer Science from Texas Tech University. I pride myself on owning systems end-to-end—from database query execution plans and cloud CI/CD pipelines all the way to frontend user experience.\"*", "traps": [{"q": "What is the biggest mistake you made in production and what did you learn?", "a": "Early on, I pushed a database migration with an index creation on a high-traffic table without using `CREATE INDEX CONCURRENTLY` in PostgreSQL. It locked the table for writes for 45 seconds, causing requests to queue up. I immediately caught it, learned how PostgreSQL table-level locks work, and established a team guideline to always use concurrent index builds and zero-downtime schema migrations."}], "words": 400}];
+    const categoriesData = ["Backend Security & Networking", "Core Backend Engineering", "Distributed Systems & Reliability", "Performance Tuning & Caching", "Event-Driven Systems & Streaming", "Databases & SQL Performance", "System Design Synthesis", "GenAI & Vector Search", "GenAI & Automation", "Frontend Architecture", "Python Backend Architecture", "Cloud & DevOps", "Observability & SRE", "Interview Mastery"];
+
+    function checkAuth() {
+      const entered = document.getElementById("passInput").value.trim();
+      if (VALID_PASSCODES.includes(entered) || localStorage.getItem("karthik_prep_auth") === "true") {
+        localStorage.setItem("karthik_prep_auth", "true");
+        revealContent();
+      } else {
+        document.getElementById("lockError").style.display = "block";
+      }
+    }
+
+    document.getElementById("passInput").addEventListener("keypress", function(e) {
+      if (e.key === "Enter") checkAuth();
+    });
+
+    function revealContent() {
+      document.getElementById("lockScreen").style.display = "none";
+      const app = document.getElementById("appContent");
+      app.style.display = "block";
+      setTimeout(() => app.style.opacity = "1", 20);
+      renderCategories();
+      renderItems();
+      updateProgress();
+    }
+
+    function renderCategories() {
+      const container = document.getElementById("categoryPills");
+      let html = `<button class="filter-pill active" onclick="filterCategory('all', this)">All 14 Days</button>`;
+      categoriesData.forEach(cat => {
+        const count = itemsData.filter(i => i.category === cat).length;
+        html += `<button class="filter-pill" onclick="filterCategory('${cat}', this)">${cat} (${count})</button>`;
+      });
+      container.innerHTML = html;
+    }
+
+    function formatText(raw) {
+      let res = raw;
+      res = res.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      res = res.replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);font-size:0.85em;color:#7dd3fc;">$1</code>');
+      res = res.replace(/\n\n/g, '<br><br>');
+      res = res.replace(/\n/g, '<br>');
+      return res;
+    }
+
+    function renderItems() {
+      const container = document.getElementById("daysContainer");
+      container.innerHTML = itemsData.map(item => `
+        <div class="d-card" id="card-${item.day}" data-cat="${item.category}" data-search="${(item.title + ' ' + item.category + ' ' + item.resume_anchor + ' ' + item.concept + ' ' + item.script).toLowerCase()}">
+          <div class="d-header" onclick="toggleCard(this)">
+            <div class="d-header-left">
+              <div class="d-num-badge">Day ${item.day}</div>
+              <div class="d-meta-group">
+                <span class="d-cat-tag">${item.category}</span>
+                <div class="d-title-text">${item.title}</div>
+                <div class="d-anchor-sub">"${item.resume_anchor}"</div>
+              </div>
+            </div>
+            <div class="d-header-right">
+              <input type="checkbox" class="d-checkbox" onclick="event.stopPropagation(); toggleComplete(${item.day})" title="Mark as mastered">
+              <span class="chevron">▼</span>
+            </div>
+          </div>
+          <div class="d-body">
+            
+            <div class="section-title"><span class="badge-num">1</span> Conceptual Foundation (From Ground Zero)</div>
+            <div class="d-content-block">${formatText(item.concept)}</div>
+
+            <div class="section-title"><span class="badge-num">2</span> System Architecture & Code Blueprint</div>
+            <pre><code>${item.architecture.replace(/```[a-z]*\n?/g, '').trim()}</code></pre>
+
+            <div class="section-title"><span class="badge-num">3</span> Exact 1st-Person Interview Defense Script</div>
+            <div class="script-box">${formatText(item.script)}</div>
+
+            <div class="section-title"><span class="badge-num">4</span> Technical Trap Questions & Defense</div>
+            ${item.traps.map(t => `
+              <div class="trap-item">
+                <div class="trap-q">Q: ${t.q}</div>
+                <div class="trap-a"><strong>Defense:</strong> ${t.a}</div>
+              </div>
+            `).join('')}
+
+            <div class="d-footer">
+              <span>Day ${item.day} Master Module</span>
+              <button class="copy-btn" onclick="copyDay(${item.day}, this)">📋 Copy Interview Script</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleCard(headerEl) {
+      headerEl.closest(".d-card").classList.toggle("open");
+    }
+
+    function expandAll() {
+      document.querySelectorAll(".d-card").forEach(c => c.classList.add("open"));
+    }
+
+    function collapseAll() {
+      document.querySelectorAll(".d-card").forEach(c => c.classList.remove("open"));
+    }
+
+    function toggleComplete(num) {
+      const card = document.getElementById(`card-${num}`);
+      const cb = card.querySelector(".d-checkbox");
+      if (cb.checked) {
+        card.classList.add("completed");
+      } else {
+        card.classList.remove("completed");
+      }
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const total = itemsData.length;
+      const checked = document.querySelectorAll(".d-checkbox:checked").length;
+      const pct = total > 0 ? (checked / total) * 100 : 0;
+      document.getElementById("topProgress").style.width = pct + "%";
+      document.getElementById("readCounter").innerText = `${checked} / ${total} Days Mastered`;
+    }
+
+    let activeCategory = 'all';
+
+    function filterCategory(cat, btnEl) {
+      activeCategory = cat;
+      document.querySelectorAll(".filter-pill").forEach(p => p.classList.remove("active"));
+      if (btnEl) btnEl.classList.add("active");
+      applyFilterAndSearch();
+    }
+
+    function handleSearch() {
+      applyFilterAndSearch();
+    }
+
+    function applyFilterAndSearch() {
+      const query = document.getElementById("globalSearch").value.toLowerCase().trim();
+      document.querySelectorAll(".d-card").forEach(card => {
+        const cardCat = card.getAttribute("data-cat");
+        const cardSearch = card.getAttribute("data-search");
+        const matchesCat = (activeCategory === 'all' || cardCat === activeCategory);
+        const matchesQuery = (!query || cardSearch.includes(query));
+
+        if (matchesCat && matchesQuery) {
+          card.style.display = "block";
+        } else {
+          card.style.display = "none";
+        }
+      });
+    }
+
+    function resetFilters() {
+      document.getElementById("globalSearch").value = "";
+      filterCategory('all', document.querySelector(".filter-pill"));
+    }
+
+    function copyDay(num, btn) {
+      const item = itemsData.find(i => i.day === num);
+      if (!item) return;
+      const text = `${item.title}\nResume Anchor: "${item.resume_anchor}"\n\nINTERVIEW SCRIPT:\n${item.script}`;
+      navigator.clipboard.writeText(text).then(() => showToast(btn));
+    }
+
+    function showToast(btn) {
+      const toast = document.getElementById("toast");
+      toast.style.display = "block";
+      if (btn) {
+        const orig = btn.innerText;
+        btn.innerText = "✓ Copied!";
+        setTimeout(() => btn.innerText = orig, 1800);
+      }
+      setTimeout(() => toast.style.display = "none", 2200);
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      if (localStorage.getItem("karthik_prep_auth") === "true") {
+        revealContent();
+      }
+    });
+  </script>
+</body>
+</html>

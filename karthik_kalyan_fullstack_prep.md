@@ -1,0 +1,858 @@
+# Karthik Kalyan Kakumanu — Full Stack Software Engineer Interview Preparation Suite
+## 14-Day Zero-to-Hero Master Roadmap & Technical Defense Dossier
+**Candidate:** Karthik Kalyan Kakumanu | USA | +1 940-344-2322 | kakumanu.karthikk@gmail.com | [LinkedIn](https://linkedin.com)  
+**Passcode Lock:** `Karthik`
+
+---
+
+## Executive Profile & Resume Overview
+> **Full Stack Software Engineer** with 3+ years of experience delivering production-grade applications across mobility technology (**Uber**) and enterprise software (**Robosoft Technologies**). Specializes in **Java (Spring Boot)** and **Python (FastAPI)** backend systems, **Angular (RxJS)** frontends, and **AWS**-hosted microservices, with hands-on experience integrating **LLMs**, **Embeddings**, and **RAG pipelines** into real-world products. Consistent track record of owning features end-to-end, improving system reliability, and shipping measurable business outcomes in Agile environments.
+
+## Core Technical Stack & Systems Matrix
+| Category | Core Technologies & Architecture Patterns |
+| :--- | :--- |
+| **Backend Engineering** | **Java 17**, **Spring Boot 3**, **Spring Cloud**, **FastAPI (Python)**, **RESTful APIs**, **Microservices Architecture**, **Circuit Breakers (Resilience4j)**, **Dependency Injection** |
+| **Event Streaming & Caching** | **Apache Kafka (Topics, Partitions, Consumer Groups, Dead-Letter Queues)**, **Redis (TTL, Caching Strategies, Cache Stampede Mitigation, Distributed Mutex)** |
+| **AI & Machine Learning** | **Retrieval-Augmented Generation (RAG)**, **LangChain**, **FAISS Vector Database**, **OpenAI Embeddings**, **OpenAI API Function Calling (Structured JSON)**, **XGBoost** |
+| **Frontend Development** | **Angular 12+**, **RxJS (Observables, BehaviorSubject, Reactive Operators)**, **TypeScript**, **Single-Page Applications (SPA)**, **Lazy Loading** |
+| **Databases & Performance** | **PostgreSQL**, **MySQL**, **B-Tree Indexes**, **Composite Indexes**, **EXPLAIN ANALYZE**, **Cursor-Based vs Offset Pagination** |
+| **Cloud, DevOps & Observability** | **AWS (EC2, S3, RDS, CloudWatch)**, **Docker**, **Kubernetes (Pods, Deployments, Services)**, **GitHub Actions CI/CD (Layer Caching)**, **OAuth 2.0 / JWT** |
+
+---
+
+# The 14-Day Day-by-Day Zero-to-Hero Mastery Roadmap
+
+## Day 1: Web Fundamentals, REST APIs, OAuth 2.0 & JWT Security Architecture
+> **Resume Anchor:** *"Designed OAuth 2.0 and JWT-secured API layer across 6 microservices on AWS EC2, containerized with Docker and orchestrated via Kubernetes..."*
+
+### 1. Conceptual Foundation (From Ground Zero)
+If you've never built web security from scratch, think of **HTTP** as the postal service of the internet. The frontend (Angular) sends an envelope (HTTP Request) to the backend server with an action verb (**GET**, **POST**, **PUT**, **DELETE**), headers (metadata), and a body (JSON payload).
+
+In enterprise microservices, you never leave APIs unprotected. We distinguish between two core concepts:
+1. **Authentication (AuthN) — Who are you?** The user presents credentials (email + password, or SSO) to prove their identity.
+2. **Authorization (AuthZ) — What are you allowed to do?** Once identified, what endpoints can you call? Can you delete a trip, or only view your own receipts?
+
+### Why JWT (JSON Web Tokens)?
+In legacy architectures, after logging in, the server created a session ID, saved it in a database table, and sent a cookie to the browser. On *every single subsequent API call*, the server had to query the session database. In a system with 6 or 20 microservices, this created a massive database bottleneck.
+
+**JWT is stateless.** It is a cryptographically signed string containing three base64-encoded segments: `Header.Payload.Signature`.
+- **Header:** Algorithm used (e.g., `{"alg": "RS256", "typ": "JWT"}`).
+- **Payload (Claims):** Information about the user (e.g., `{"user_id": "u_9876", "roles": ["RIDER"], "exp": 1727184000}`).
+- **Signature:** A cryptographic hash computed using a private key: `HMACSHA256(base64UrlEncode(header) + "." + base64UrlEncode(payload), secretKey)` or RSA public/private key pairs.
+
+When any microservice receives this token in the `Authorization: Bearer <token>` HTTP header, it doesn't need to query any database! It mathematically verifies the signature using the public key. If the signature matches and `exp` (expiration timestamp) hasn't passed, the server trusts the user payload instantly in under **0.5 milliseconds**.
+
+### 2. System Architecture & Code Blueprint
+
+```
+[Angular Client Application]
+         │ 
+         │ 1. POST /oauth/v2/token (username, password, client_id)
+         ▼
+[Identity Provider / Auth0 / Spring Authorization Server]
+         │ (Validates credentials, signs JWT using RSA Private Key)
+         ▼ Returns: { access_token: "eyJhbG...", refresh_token: "dGhpcy...", expires_in: 900 }
+[Angular Client Stores Access Token in Memory]
+         │
+         │ 2. API Request: GET /api/v1/rides/history
+         │    Header: "Authorization: Bearer eyJhbG..."
+         ▼
+[API Gateway (Spring Cloud Gateway / Envoy on AWS EC2)]
+         │ 3. Verifies JWT signature using cached RSA Public Key (Zero DB calls)
+         │ 4. Extracts Claims (user_id = u_9876, role = RIDER)
+         │ 5. Injects trusted internal headers: X-User-Id: u_9876, X-User-Role: RIDER
+         ▼
+[Microservice Mesh (Rides Service, Billing Service, Fleet Service)]
+```
+
+### 3. Exact Interview Script (How to Answer in 1st-Person POV)
+**Interviewer: "How did you design the OAuth 2.0 and JWT security layer across your 6 microservices at Uber?"**
+
+*"In our microservices architecture, we had 6 independently deployable Spring Boot services running on AWS EC2. Rather than having each microservice independently validate credentials against a database—which would have created high latency and redundant database connections—we implemented an API Gateway pattern combined with OAuth 2.0 and asymmetric JWTs (RS256).
+
+Clients authenticated against our central identity service using the OAuth 2.0 authorization code flow with PKCE for mobile and web clients. Upon successful authentication, the client received a short-lived access token (15-minute TTL) and a long-lived refresh token stored in an HTTP-only secure cookie. 
+
+At the edge, our API Gateway intercepted all incoming traffic, verified the JWT signature using the identity provider's public key (retrieved from JWKS and cached in memory), and checked token expiration. Once validated, the gateway stripped the raw JWT and injected trusted internal downstream headers—specifically `X-User-Id` and `X-User-Roles`—before routing to internal microservices over our private VPC. This allowed downstream services to execute role-based access control (RBAC) in $O(1)$ time with zero authentication database dependencies."*
+
+### 4. Technical Trap Questions & How to Defend
+**Q: What happens if a user's account is suspended or permissions are revoked, but their JWT access token is still valid for 14 minutes?**  
+**A:** Because JWTs are stateless, you cannot 'delete' an issued token on the client. To solve this, we implemented two controls: First, we kept access token lifetimes short (15 minutes). Second, for critical events like account revocation or password reset, we published an invalidation event to a Redis distributed blacklist (`SET blacklist:<token_jti> true EX 900`). The API Gateway checked Redis on incoming requests; if the token ID existed in the blacklist, it was immediately rejected with HTTP 401 Unauthorized.
+
+---
+
+## Day 2: Java & Spring Boot Core Microservices (IoC, DI, DTOs & Layering)
+> **Resume Anchor:** *"Decomposed a monolithic onboarding service into 6 independently releasable Spring Boot modules..."*
+
+### 1. Conceptual Foundation (From Ground Zero)
+**Java** is a strongly-typed, object-oriented compiled language running on the **Java Virtual Machine (JVM)**. **Spring Boot** is the enterprise standard framework that eliminates boilerplate configuration, providing an embedded web server (Tomcat) and automated dependency management.
+
+### Key Concepts from Ground Zero:
+1. **Inversion of Control (IoC) & Dependency Injection (DI):**
+   - *Without Spring:* If class `RideService` needs to talk to the database via `RideRepository`, you would write: `RideRepository repo = new PostgresRideRepository();`. This hardcodes the dependency and makes unit testing impossible.
+   - *With Spring IoC:* Spring manages an application container (the ApplicationContext) where it instantiates, configures, and assembles objects (called **Beans**). You simply annotate your class with `@Service` and declare the repository in the constructor. Spring automatically injects the bean at runtime!
+2. **The 3-Tier Layered Architecture:**
+   - **Controller Layer (`@RestController`):** Listens to incoming HTTP requests, validates input using `@Valid`, and delegates to the service layer. Controllers contain *zero* business logic.
+   - **Service Layer (`@Service`):** Contains the business rules (e.g., calculate distance, verify driver status, deduct credit balance, trigger Kafka events).
+   - **Repository Layer (`@Repository`):** Interfaces extending `JpaRepository<Entity, ID>` that execute database queries using Spring Data JPA / Hibernate under the hood.
+3. **DTO (Data Transfer Object) Pattern:**
+   - Never expose your database `@Entity` directly to the API response. An entity might contain sensitive fields like hashed passwords, internal foreign keys, or audit timestamps.
+   - We map incoming request JSON to a `DriverRequestDTO`, process it, and return a clean `DriverResponseDTO`.
+
+### 2. System Architecture & Code Blueprint
+
+```java
+// 1. Controller Layer: Handles HTTP and validation
+@RestController
+@RequestMapping("/api/v1/drivers")
+public class DriverController {
+    private final DriverService driverService;
+
+    // Constructor Injection (Best Practice over @Autowired field injection)
+    public DriverController(DriverService driverService) {
+        this.driverService = driverService;
+    }
+
+    @PostMapping("/onboard")
+    public ResponseEntity<DriverResponseDTO> onboardDriver(@Valid @RequestBody DriverRequestDTO request) {
+        DriverResponseDTO response = driverService.onboardNewDriver(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+}
+
+// 2. Service Layer: Contains business logic and transactional boundary
+@Service
+public class DriverService {
+    private final DriverRepository driverRepository;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+
+    public DriverService(DriverRepository driverRepository, KafkaTemplate<String, Object> kafkaTemplate) {
+        this.driverRepository = driverRepository;
+        this.kafkaTemplate = kafkaTemplate;
+    }
+
+    @Transactional
+    public DriverResponseDTO onboardNewDriver(DriverRequestDTO dto) {
+        // Business logic validation
+        if (driverRepository.existsByEmail(dto.getEmail())) {
+            throw new DuplicateResourceException("Driver email already registered");
+        }
+        Driver driver = new Driver(dto.getName(), dto.getEmail(), DriverStatus.PENDING_REVIEW);
+        Driver savedDriver = driverRepository.save(driver);
+        
+        // Publish event to Kafka
+        kafkaTemplate.send("driver-onboarding-topic", savedDriver.getId().toString(), new DriverCreatedEvent(savedDriver));
+        
+        return new DriverResponseDTO(savedDriver.getId(), savedDriver.getStatus());
+    }
+}
+```
+
+### 3. Exact Interview Script (How to Answer in 1st-Person POV)
+**Interviewer: "How do you structure your Spring Boot microservices and handle dependency injection?"**
+
+*"We adhere strictly to a clean, layered architectural pattern in Spring Boot. We maintain distinct Controller, Service, Repository, and DTO layers. For dependency injection, we avoid field injection with `@Autowired` because it hinders unit testing and can mask circular dependencies; instead, we enforce constructor injection. 
+
+We mark our service methods with `@Transactional` to establish clear transactional boundaries across JPA database operations. We enforce strict DTO separation using MapStruct or custom mappers so that internal database entities and sensitive fields are never leaked to external clients. Furthermore, we implement a centralized `@RestControllerAdvice` global exception handler that translates domain exceptions like `EntityNotFoundException` or validation errors into standardized RFC 7807 problem detail JSON responses."*
+
+### 4. Technical Trap Questions & How to Defend
+**Q: Why is Constructor Injection preferred over Field Injection (@Autowired on private fields)?**  
+**A:** Constructor injection makes dependencies explicit, enforces immutability (fields can be declared `final`), prevents NullPointerExceptions in unit tests because you can easily pass mock objects without needing reflection or Spring test runners, and causes the application to fail-fast at startup if circular dependencies exist.
+
+---
+
+## Day 3: Monolith Decomposition & Circuit Breakers (Resilience4j & Fallbacks)
+> **Resume Anchor:** *"Decomposed a monolithic onboarding service into 6 independently releasable Spring Boot modules with Spring Cloud circuit breakers, enabling parallel deployments and cutting cross-team merge conflicts by 4 per sprint."*
+
+### 1. Conceptual Foundation (From Ground Zero)
+### The Monolith Problem:
+Imagine an e-commerce or onboarding monolith: Driver registration, vehicle inspection, background checks, and bank payouts all live in one single codebase.
+1. **Merge Hell:** 15 engineers working on the same git repo cause constant merge conflicts (cutting velocity by days).
+2. **Blast Radius:** If the third-party background check API hangs, the monolith's HTTP worker threads become blocked waiting for a response. Soon, the thread pool is exhausted (Thread Starvation), and people can't even register cars or view their profile!
+
+### The Solution: Microservices + Circuit Breakers
+We split the monolith along **Domain-Driven Design (DDD)** bounded contexts into 6 services:
+- `driver-core-service`
+- `vehicle-inspection-service`
+- `background-check-service`
+- `banking-payout-service`
+- `document-ocr-service`
+- `notification-service`
+
+### How the Circuit Breaker Pattern Works (Resilience4j):
+Analogous to the electrical breaker box in your house that trips when power surges to prevent fire.
+- **State 1: CLOSED (Normal):** All calls flow through to the downstream service. The circuit breaker monitors success/failure rates over a sliding window (e.g., last 50 calls).
+- **State 2: OPEN (Tripped):** If the failure rate exceeds the threshold (e.g., >50% timeouts/5xx errors), the breaker trips OPEN. All subsequent requests fail-fast immediately *without even making a network call*. It executes a predefined **Fallback Method** instantly (e.g., return cached data or queue the request asynchronously).
+- **State 3: HALF-OPEN (Trial):** After a configurable sleep window (e.g., 15 seconds), the breaker lets a limited number of test calls through. If they succeed, it transitions back to CLOSED. If they fail, it re-opens.
+
+### 2. System Architecture & Code Blueprint
+
+```
+   [Incoming Request]
+          │
+          ▼
+   [Circuit Breaker (Resilience4j)]
+   ├── State = CLOSED ────► Call Downstream API (Success -> Record Metric)
+   │
+   ├── Failure Rate > 50%? ──► State transitions to OPEN
+   │
+   ├── State = OPEN ──────► Instant Fail-Fast / Trigger Fallback Method
+   │                        (Queue to Kafka / Return Cached Response)
+   │
+   └── After 15s Sleep ───► State = HALF-OPEN (Test 5 trial calls)
+                            ├── All Success? ──► Return to CLOSED
+                            └── Any Failure? ──► Re-open for 15s
+```
+
+### 3. Exact Interview Script (How to Answer in 1st-Person POV)
+**Interviewer: "Walk me through how you decomposed the onboarding monolith and implemented circuit breakers."**
+
+*"Our driver onboarding service was originally a monolithic deployment where document verification, vehicle inspection, and third-party background checks shared the same application lifecycle. Whenever our external background check vendor experienced latency spikes or outages, incoming HTTP threads in our monolith were tied up waiting for socket reads, exhausting our connection pools and bringing down the entire onboarding pipeline.
+
+We decomposed the monolith into 6 domain-aligned Spring Boot microservices, each with its own database schema, communicating asynchronously via Kafka for events and REST for synchronous queries. 
+
+To eliminate cascading failures, we integrated **Resilience4j Circuit Breakers** via Spring Cloud. We configured a sliding window of 50 requests with a 50% failure rate threshold and a 3-second timeout. If the downstream background check service began timing out, the breaker tripped OPEN. Instead of blocking the driver's flow, our fallback method queued the pending check into an asynchronous Kafka retry topic and returned a status of 'Verification in Progress' to the mobile client. This isolated downstream vendor instability and kept our core onboarding funnel 99.9% available."*
+
+### 4. Technical Trap Questions & How to Defend
+**Q: What is the difference between a Circuit Breaker and a Retry pattern?**  
+**A:** Retry is useful for transient network blips (e.g., retry 3 times with exponential backoff). However, if the downstream service is dead or overloaded, blind retries create a 'retry storm' that completely crushes the downstream service. A Circuit Breaker detects that the service is unhealthy, halts all traffic immediately, and protects both caller and callee.
+
+---
+
+## Day 4: Redis Caching & The p99 Latency 320ms -> 80ms Deep-Dive (Stampede, TTL, Invalidation)
+> **Resume Anchor:** *"Diagnosed a high-frequency cache miss pattern in marketplace APIs, applied Redis TTL-based invalidation, and eliminated redundant PostgreSQL round-trips, dropping p99 latency from 320ms to 80ms under peak load."*
+
+### 1. Conceptual Foundation (From Ground Zero)
+### The Crucial Metric: Latency Percentiles (p50, p95, p99)
+- **Average/Mean:** Misleading! If 99 people experience 10ms and 1 person experiences 10,000ms, the average is 110ms.
+- **p99 (99th Percentile):** 99% of user requests are faster than this number. At Uber's scale (millions of concurrent rides), the worst 1% represents tens of thousands of frustrated riders stuck watching a loading spinner!
+
+### What is Redis?
+**Redis** (Remote Dictionary Server) is an in-memory key-value data store.
+- Reading from disk / relational database (PostgreSQL): **5ms - 50ms**.
+- Reading from Redis RAM: **0.1ms - 1ms** (100x to 500x faster!).
+
+### The War Story: The Cache Stampede (Thundering Herd)
+1. In the marketplace service, we cached hot driver availability and pricing surge multipliers in Redis with a static TTL (Time-To-Live) of 5 minutes: `SET surge:zone_98 1.4 EX 300`.
+2. During 5:00 PM rush hour, thousands of riders in zone 98 opened the app simultaneously.
+3. At exactly minute 5, the Redis key expired.
+4. **The Disaster:** 500 concurrent requests checked Redis at that exact millisecond $	o$ Cache Miss for all 500 requests!
+5. All 500 threads hit PostgreSQL simultaneously with complex geospatial join queries.
+6. The PostgreSQL connection pool was exhausted, queries queued up, CPU spiked to 100%, and p99 latency ballooned to **320ms**.
+
+### The Engineering Solution:
+1. **TTL Jitter (Staggered Invalidation):** Never let hot keys expire at the same instant. Add randomized jitter: `TTL = Base_TTL (300s) + random(0, 45s)`.
+2. **Distributed Mutex (Locking on Cache Miss):** When a cache miss occurs, the first thread acquires a Redis distributed lock (`SET lock:zone_98 my_token NX EX 5`). Only *that one thread* queries PostgreSQL and updates Redis. The other 499 threads either wait a few milliseconds or receive the previous stale value.
+
+### 2. System Architecture & Code Blueprint
+
+```
+   [500 Concurrent User Requests]
+                 │
+                 ▼
+         [Check Redis Cache]
+                 │
+        ┌────────┴────────┐
+   (Cache Hit)       (Cache Miss)
+        │                 │
+        ▼                 ▼
+   Return <1ms     [Acquire Distributed Mutex: SET lock:key NX]
+                   ├── Acquired? ──► Query Postgres once (15ms) ──► Write Redis ──► Release Lock
+                   └── Failed?   ──► Wait 20ms & re-read cache (or return stale cached value)
+```
+
+### 3. Exact Interview Script (How to Answer in 1st-Person POV)
+**Interviewer: "Tell me about how you dropped p99 latency from 320ms to 80ms using Redis."**
+
+*"In our marketplace pricing and driver discovery API, we monitored our CloudWatch p99 latency metrics and noticed sharp spikes reaching 320ms during peak rush hour. Profiling our database showed connection pool saturation caused by a classic 'Cache Stampede' or thundering herd problem. We were caching zone surge and driver location data with a static 5-minute TTL. When a high-traffic key expired, hundreds of concurrent rider requests experienced a cache miss at the exact same millisecond, bypassing the cache and firing complex geospatial queries directly against PostgreSQL.
+
+To fix this, I implemented a two-fold solution in our Spring Boot data layer:
+First, I introduced TTL Jitter, adding a randomized offset between 30 to 60 seconds onto our base TTL so keys in adjacent zones expired at staggered intervals.
+Second, I implemented a distributed lock using Redis `SET resource_name my_random_value NX PX 3000`. When a miss occurred, only the single thread holding the mutex queried PostgreSQL to regenerate the cache entry, while concurrent threads either served stale-while-revalidate data or waited on a short backoff. This eradicated database connection starvation and dropped our p99 latency from 320ms down to 80ms under peak load."*
+
+### 4. Technical Trap Questions & How to Defend
+**Q: What happens if the thread holding the Redis lock crashes before releasing it?**  
+**A:** We always set an automatic expiration on the lock key (e.g., `PX 3000` = 3000ms TTL) using Redis's atomic `NX PX` command. Even if the process dies or network partitions occur, Redis automatically expires and releases the lock after 3 seconds, preventing deadlocks.
+
+---
+
+## Day 5: Apache Kafka, Event Streams & Dead Letter Queues (DLQ)
+> **Resume Anchor:** *"...streaming 50,000+ daily ride events through Kafka consumers with dead-letter queues for fault tolerance into Redis-cached KPI aggregations."*
+
+### 1. Conceptual Foundation (From Ground Zero)
+### Why Kafka instead of REST APIs?
+If the Ride Service needs to notify Billing, Driver Payouts, Notifications, Analytics, and Fraud services when a ride ends:
+- *With REST:* Ride Service must make 5 synchronous HTTP calls. If Billing is slow, Ride Service hangs. If Fraud is down, the call fails.
+- *With Kafka:* Ride Service publishes one message (`RideCompletedEvent`) to a Kafka topic and moves on in 2 milliseconds. All 5 services consume that event independently at their own pace!
+
+### Core Kafka Architecture:
+- **Topic:** The event stream (e.g., `ride-events`).
+- **Partition:** Topics are divided into partitions distributed across cluster brokers. Order is strictly guaranteed *within* a single partition based on the message **Key** (e.g., hashing `ride_id` or `driver_id` routes all events for that ride to the exact same partition).
+- **Offset:** A sequentially increasing integer assigned to each record in a partition. Consumers track where they left off by committing their offset.
+
+### The Problem: The Poison Pill Message
+What happens if someone sends a malformed message (e.g., corrupted JSON or a negative dollar amount that triggers a `NullPointerException` in your Java code)?
+1. Consumer reads message at offset 42 $	o$ Throws Exception $	o$ Fails.
+2. Consumer restarts $	o$ Re-reads offset 42 $	o$ Fails again!
+3. **The Disaster:** The consumer partition is stuck forever in an infinite retry loop, falling hours behind real-time traffic.
+
+### The Solution: Dead Letter Queue (DLQ)
+1. Configure an error handler with an exponential backoff retry policy (e.g., retry 3 times with 1-second delay).
+2. If all 3 retries fail, catch the error, write the payload along with stack trace headers to a dead-letter topic (`ride-events-dlq`), and **commit the offset** on the primary topic.
+3. The main consumer advances to offset 43 immediately.
+4. Engineers inspect the DLQ topic and reprocess messages once bugs are resolved.
+
+### 2. System Architecture & Code Blueprint
+
+```
+   [Ride Service] ──(Publishes 50,000+ daily events)──► [Kafka Topic: ride-events]
+                                                               │
+                                                               ▼
+                                                     [Kafka Consumer Group]
+                                                     ┌─────────┴─────────┐
+                                               (Success)             (Failure)
+                                                    │                     │
+                                                    ▼               (Retry 3 times)
+                                          [Update Redis KPIs]             │
+                                          (Active rides, GMV)        (Still Fails?)
+                                                                          │
+                                                                          ▼
+                                                             [Publish to ride-events-dlq]
+                                                             (Trigger CloudWatch Alert)
+```
+
+### 3. Exact Interview Script (How to Answer in 1st-Person POV)
+**Interviewer: "How did you design your Kafka consumers and handle message failures with Dead Letter Queues?"**
+
+*"We processed over 50,000 daily ride events—such as ride requests, pickups, and completions—using an event-driven architecture with Apache Kafka. Our Spring Boot consumers read from the `ride-events` topic to compute real-time operational KPIs cached in Redis for our Angular dashboard.
+
+To ensure high availability and prevent consumer thread stalls caused by poison-pill messages (like schema mismatches or unparseable payloads), we implemented Spring Kafka’s `DefaultErrorHandler` paired with a `DeadLetterPublishingRecoverer`. 
+
+When a consumer encounters an exception, it attempts 3 retries with exponential backoff (1s, 2s, 4s). If all retries fail, the message is automatically published to a designated Dead-Letter Queue topic (`ride-events.DLQ`) with original exception details and timestamp preserved in Kafka record headers. The consumer then commits the offset on the primary topic and continues processing subsequent events without lag. We attached CloudWatch alarms to DLQ topic volume so on-call engineers were alerted immediately when abnormal failure spikes occurred."*
+
+### 4. Technical Trap Questions & How to Defend
+**Q: How do you guarantee ordering in Kafka?**  
+**A:** Kafka only guarantees ordering within a single partition, not across an entire topic. To ensure sequential ordering for a specific ride or driver (e.g., Requested -> Accepted -> PickedUp -> Completed), we assign the `ride_id` as the Kafka message key. Kafka's default murmur2 partitioner hashes the key, guaranteeing that all events for that specific `ride_id` land on the exact same partition and are consumed in strict chronological order.
+
+---
+
+## Day 6: Database Optimization, SQL Profiling (EXPLAIN ANALYZE), Composite Indexes & Cursor Pagination
+> **Resume Anchor:** *"Profiled 35 underperforming SQL queries using execution plans, introduced composite indexes and query restructuring, and reduced average report generation time from 9 seconds to under 2 seconds..."*
+
+### 1. Conceptual Foundation (From Ground Zero)
+### How Relational Databases Work Under the Hood:
+When you execute `SELECT * FROM trips WHERE client_id = 45 AND status = 'COMPLETED';`:
+- **Sequential Scan (Seq Scan):** The database reads *every single page of data on disk* from row 1 to row 5,000,000 ($O(N)$). If table size is 10GB, it reads 10GB of disk. That's why queries take 9+ seconds!
+- **B-Tree Index Scan:** A B-Tree (Balanced Tree) index keeps sorted pointers to table rows in memory ($O(\log N)$). Looking up an index entry takes a few microseconds.
+
+### How to Profile a Query: `EXPLAIN ANALYZE`
+Prefix your SQL query with `EXPLAIN (ANALYZE, BUFFERS)` in PostgreSQL. It executes the query and shows:
+1. Actual time spent in each node.
+2. Loops and row count estimates vs actual rows.
+3. Whether it performed a `Seq Scan` or an `Index Scan`.
+
+### Composite Indexes & The Leftmost Prefix Rule:
+A composite index covers multiple columns:
+`CREATE INDEX idx_trips_client_status_date ON trips(client_id, status, created_at);`
+- **Rule:** The query *must* filter on `client_id` for the index to be used. If you query only `WHERE status = 'COMPLETED'`, the database cannot use this index because it's sorted by `client_id` first!
+
+### Offset Pagination vs. Cursor Pagination:
+- **Offset Pagination (Slow):** `SELECT * FROM trips ORDER BY id LIMIT 20 OFFSET 500000;`  
+  PostgreSQL must read 500,020 rows, discard the first 500,000, and return 20. As users paginate deeper, query time increases linearly ($O(N)$)!
+- **Cursor-Based Pagination (Fast):** `SELECT * FROM trips WHERE id > 500000 ORDER BY id ASC LIMIT 20;`  
+  PostgreSQL traverses the B-Tree index on `id` directly to record 500,001 in $O(\log N)$ and reads exactly 20 rows! Latency remains constant at page 1 or page 10,000.
+
+### 2. System Architecture & Code Blueprint
+
+```sql
+-- BEFORE: 9 seconds execution time (Seq Scan over 4M rows)
+EXPLAIN ANALYZE 
+SELECT * FROM trips 
+WHERE client_id = 1042 AND status = 'COMPLETED' 
+ORDER BY created_at DESC LIMIT 50;
+
+-- OPTIMIZATION: Composite B-Tree Index
+CREATE INDEX CONCURRENTLY idx_trips_client_status_created 
+ON trips(client_id, status, created_at DESC);
+
+-- AFTER: 18 milliseconds (Index Scan directly into B-Tree leaf nodes)
+```
+
+### 3. Exact Interview Script (How to Answer in 1st-Person POV)
+**Interviewer: "How did you profile underperforming SQL queries and optimize them from 9s to under 2s at Robosoft?"**
+
+*"At Robosoft, our executive reporting dashboard suffered from report generation times averaging 9 seconds. I enabled PostgreSQL slow-query logging with `log_min_duration_statement = 2000` to isolate the 35 slowest queries and inspected their execution plans using `EXPLAIN (ANALYZE, BUFFERS)`.
+
+The execution plans revealed two primary bottlenecks:
+First, queries were performing expensive sequential scans over multi-million row tables because developers had indexed individual columns independently rather than creating composite indexes. I created composite B-Tree indexes covering `(client_id, status, created_at DESC)` aligned with our query filter and sort orders, allowing PostgreSQL to satisfy both the WHERE clause and ORDER BY in a single Index Scan.
+Second, deep reporting pagination was written using legacy `LIMIT / OFFSET`. I refactored the backend to use cursor-based keyset pagination using the last seen record ID and timestamp, eliminating redundant disk block reads. These optimizations dropped average report generation time from 9 seconds to under 2 seconds across 1,200 daily active users."*
+
+### 4. Technical Trap Questions & How to Defend
+**Q: Why shouldn't you just put an index on every single column in your database tables?**  
+**A:** Indexes are not free. While they accelerate `SELECT` queries, every `INSERT`, `UPDATE`, and `DELETE` operation requires the database engine to rewrite the B-Tree index structures on disk. Excessive indexes degrade write throughput significantly and consume excessive RAM in the buffer pool.
+
+---
+
+## Day 7: Week 1 Integration & System Design Synthesis Drill
+> **Resume Anchor:** *"Shipped a full-stack operational dashboard in Angular backed by Spring Boot REST APIs, streaming 50,000+ daily ride events through Kafka consumers..."*
+
+### 1. Conceptual Foundation (From Ground Zero)
+Today is about putting all Week 1 components into a single coherent **System Architecture Diagram** and practicing explaining the end-to-end flow.
+
+### The Complete End-to-End Uber Operational System Flow:
+1. **Rider / Driver Action:** Mobile app requests a ride.
+2. **API Gateway:** Ingress route validates OAuth 2.0 JWT token, verifies rate limit via Redis token bucket, and forwards to `RideService`.
+3. **Ride Service:** Writes ride to PostgreSQL database within `@Transactional` boundary, publishes `RideCreatedEvent` to Kafka topic `ride-events`.
+4. **Kafka Event Stream:** Partitions message by `ride_id` across Kafka brokers.
+5. **Dashboard Aggregator Service:** Consumes event. If failure occurs, retries 3 times before routing to `ride-events-dlq`. On success, updates rolling KPI metrics in Redis (`INCR ride_count:hourly`, `HSET active_rides`).
+6. **Marketplace Cache:** Redis stores cached driver locations and pricing multipliers with randomized TTL jitter to prevent cache stampedes.
+7. **Frontend Angular Client:** Subscribes to backend REST/SSE streams via RxJS observables, rendering live operational KPIs on the screen reactively.
+
+### 2. System Architecture & Code Blueprint
+
+```
+[Angular Client (RxJS)] ──► [API Gateway (JWT Auth + Rate Limiting)]
+                                      │
+                                      ▼
+                             [Spring Boot RideService]
+                             ├── Writes to: [PostgreSQL DB]
+                             └── Publishes: [Kafka Topic: ride-events]
+                                                  │
+                                                  ▼
+                                       [Kafka Consumer Service]
+                                       ├── Failures ──► [Kafka DLQ Topic]
+                                       └── Success  ──► [Redis KPI Aggregations]
+```
+
+### 3. Exact Interview Script (How to Answer in 1st-Person POV)
+**Interviewer: "Can you whiteboard the overall architecture of your full-stack operational platform at Uber?"**
+
+*"Our platform is structured into three decoupled tiers: client presentation, distributed microservice ingestion, and event-driven aggregation. 
+
+On the client side, operations managers use an Angular single-page application leveraging RxJS reactive observables to stream live metrics without polling. Requests hit our API Gateway hosted on AWS EC2 behind an Application Load Balancer. The gateway validates OAuth 2.0 JWTs and handles edge rate limiting.
+
+Core business operations run on Spring Boot microservices backed by PostgreSQL with connection pooling. When trip milestones occur, services emit asynchronous events to Apache Kafka. Our streaming aggregation workers consume 50,000+ daily ride events, utilizing Dead Letter Queues for fault isolation. Aggregated metrics are written directly to an in-memory Redis layer with TTL invalidation, allowing our Angular frontend to query real-time dashboard KPIs with sub-80ms p99 latency."*
+
+### 4. Technical Trap Questions & How to Defend
+**Q: What happens if Redis crashes completely? Does the entire platform go down?**  
+**A:** No. We implement Redis in high-availability cluster mode with primary-replica nodes and Sentinel/Multi-AZ failover on AWS ElastiCache. In application code, we write our cache access with graceful degradation: if Redis times out or is unreachable, the service falls back to querying the primary PostgreSQL database directly while alerting on-call via CloudWatch.
+
+---
+
+## Day 8: GenAI Fundamentals, Embeddings, Vector Search & FAISS
+> **Resume Anchor:** *"Architected a GPT-4 knowledge assistant using LangChain, OpenAI Embeddings, and FAISS vector search, enabling semantic retrieval across 10,000+ policy documents and eliminating 85 in 100 Tier-1 support tickets from the manual queue."*
+
+### 1. Conceptual Foundation (From Ground Zero)
+### The Fundamental Problem with LLMs (GPT-4):
+1. **Hallucination:** If an LLM doesn't know an answer, it makes up convincing-sounding nonsense.
+2. **Stale / Private Data:** GPT-4 was trained on public internet data. It knows nothing about Uber's internal confidential 2026 driver compensation policies or Texas cancellation fee schedules.
+3. **Context Window Limits:** You cannot paste 10,000 policy documents (millions of words) into a single prompt. It's too expensive and exceeds token limits.
+
+### The Solution: RAG (Retrieval-Augmented Generation)
+Instead of asking GPT-4 directly, you:
+1. Search your private document database for the 3 most relevant paragraphs.
+2. Stuff those 3 paragraphs into the prompt as reference text.
+3. Instruct GPT-4: *"Answer the user's question using ONLY the provided reference text. If not found, say I don't know."*
+
+### What are Embeddings & FAISS?
+- **Embedding:** We pass a chunk of text (e.g., 500 tokens) through OpenAI's `text-embedding-ada-002` or `text-embedding-3-small`. It returns a vector of 1,536 floating-point numbers.
+- **Semantic Similarity:** Words with similar meanings cluster together. The cosine angle between *"How do I get a refund for a missed pickup?"* and *"Policy regarding rider compensation on driver no-shows"* is near $1.0$.
+- **FAISS (Facebook AI Similarity Search):**
+  - Storing 10,000 document embeddings and calculating cosine similarity brute-force ($O(N)$) against every user query takes hundreds of milliseconds.
+  - FAISS builds an index in RAM using algorithms like **IndexIVFFlat** (Inverted File with clustering) or **IndexHNSW** (Hierarchical Navigable Small World graphs), returning the top-k nearest document chunks in under **15 milliseconds**!
+
+### 2. System Architecture & Code Blueprint
+
+```
+[Ingestion Pipeline (Offline)]:
+10,000 Policy PDFs ──► LangChain RecursiveCharacterTextSplitter (chunk_size=500, overlap=50)
+                   ──► OpenAI text-embedding-ada-002 (1536-dim vector)
+                   ──► Stored in FAISS Index on disk/memory
+
+[Runtime Query (Online)]:
+User Query: "What happens if driver cancels after 6 minutes?"
+       │
+       ▼
+OpenAI Embeddings API (Embed query into 1536-dim vector)
+       │
+       ▼
+FAISS Vector Search (Top-3 nearest document chunks retrieved in 12ms)
+       │
+       ▼
+Prompt Template:
+"You are Uber's policy assistant. Answer the user question using ONLY this context:
+{retrieved_chunks}
+Question: {user_query}"
+       │
+       ▼
+GPT-4 API ──► "According to section 4.2, rider is credited $5 if driver cancels after 5 mins."
+```
+
+### 3. Exact Interview Script (How to Answer in 1st-Person POV)
+**Interviewer: "How did you build the GPT-4 policy knowledge assistant with FAISS and LangChain?"**
+
+*"We had over 10,000 internal policy documents, SOPs, and market regulations. Support agents spent hours manually searching knowledge bases, causing massive ticket backlog. I architected a Retrieval-Augmented Generation (RAG) assistant.
+
+In our ingestion pipeline, we parsed documents and split them using LangChain's `RecursiveCharacterTextSplitter` with a chunk size of 500 tokens and 50-token overlap to maintain contextual continuity across chunk boundaries. We embedded these chunks using OpenAI's `text-embedding-ada-002` and indexed them into an in-memory FAISS index using cosine similarity.
+
+At runtime, incoming support queries were embedded and matched against the FAISS index to retrieve the top-3 most relevant policy chunks in under 20ms. We fed these chunks into a strict system prompt instructing GPT-4 to ground its answers exclusively in the retrieved context with citation metadata. This achieved 91% accuracy across our evaluation set and deflected 85 out of 100 Tier-1 support tickets from reaching human queues."*
+
+### 4. Technical Trap Questions & How to Defend
+**Q: Why did you use 50-token overlap when chunking documents?**  
+**A:** If a critical sentence spans across the boundary of two chunks (e.g., condition on chunk 1, result on chunk 2), splitting without overlap cuts the thought in half, and vector similarity search will fail to retrieve the complete context. A 10% overlap ensures semantic continuity across chunk transitions.
+
+---
+
+## Day 9: LangChain & OpenAI API Function Calling (Structured Outputs)
+> **Resume Anchor:** *"Replaced a 120-engineer-hour-per-week manual review queue by building an async classification service using OpenAI API function calling to auto-categorize trip exceptions with structured JSON output."*
+
+### 1. Conceptual Foundation (From Ground Zero)
+### The Enterprise Problem with Raw LLMs:
+Customer support tickets arrive with messy, emotional human text:
+*"Hey your driver took the wrong highway, made me late for my flight, and then charged me $80, I want my money back right now!"*
+Human agents spent 120 hours every week manually reading these tickets, picking tags in Jira/Zendesk:
+- Category: `ROUTE_DEVIATION_DISPUTE`
+- Sub-category: `REFUND_REQUESTED`
+- Severity: `HIGH`
+
+### Why Regex or Simple Keywords Fail:
+Keywords miss context: *"I didn't take the highway"* vs *"Driver took the wrong highway"*.
+
+### Why Function Calling (Structured Output) Solves It:
+Instead of asking GPT-4 to chat, you tell OpenAI: *"You are an automated classification worker. I am giving you a tool called `categorize_trip_exception`. You MUST call this function and pass arguments matching this exact JSON schema."*
+
+OpenAI uses constrained decoding to guarantee that the output is 100% syntactically valid JSON matching your schema every single time!
+
+### 2. System Architecture & Code Blueprint
+
+```python
+# Pydantic Model defining the exact JSON Schema
+class TripExceptionClassification(BaseModel):
+    category: Literal["FARE_DISPUTE", "ROUTE_DEVIATION", "DRIVER_NO_SHOW", "VEHICLE_CONDITION"]
+    urgency_level: Literal["LOW", "MEDIUM", "CRITICAL"]
+    estimated_refund_eligible: bool
+    summary_reason: str
+
+# OpenAI Function Calling Invocation
+response = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[
+        {"role": "system", "content": "Classify incoming rider trip exception reports."},
+        {"role": "user", "content": ticket_text}
+    ],
+    tools=[{
+        "type": "function",
+        "function": {
+            "name": "categorize_trip_exception",
+            "description": "Categorizes rider trip dispute into structured schema",
+            "parameters": TripExceptionClassification.model_json_schema()
+        }
+    }],
+    tool_choice={"type": "function", "function": {"name": "categorize_trip_exception"}}
+)
+```
+
+### 3. Exact Interview Script (How to Answer in 1st-Person POV)
+**Interviewer: "How did you use OpenAI Function Calling to eliminate 120 hours of manual ticket reviews?"**
+
+*"We had an operational bottleneck where support teams expended 120 hours each week manually reading and categorizing unstructured trip dispute tickets. I built an asynchronous worker service in Python that consumed incoming dispute tickets from Kafka.
+
+Rather than relying on brittle regex or prompt engineering that returned unpredictable free-form text, we utilized OpenAI Function Calling with strict schema enforcement via Pydantic. We defined an explicit function schema specifying trip exception category, urgency level, refund eligibility boolean, and reason summary. By forcing `tool_choice`, the model guaranteed output matching our exact JSON schema with zero parsing errors.
+
+Our service parsed this structured payload, validated it with Pydantic, and executed automated routing actions: straightforward disputes were auto-refunded and closed immediately, while high-severity claims were routed to tier-2 human specialists with pre-filled context. This completely eliminated manual triage and reclaimed 120 engineering hours per week."*
+
+### 4. Technical Trap Questions & How to Defend
+**Q: What happens if OpenAI API has downtime or latency spikes?**  
+**A:** Because ticket classification is asynchronous, we decoupled ingestion using Kafka. If OpenAI experienced latency or 503 errors, our worker backed off exponentially and retried without losing messages. We also maintained a fallback deterministic rule-based classifier for high-priority safety tickets to ensure critical complaints were never blocked.
+
+---
+
+## Day 10: Angular 12+ & RxJS Reactive State Management
+> **Resume Anchor:** *"Delivered a reusable Angular component library of 12 modules with RxJS reactive state management, shared across 3 client products, compressing frontend sprint delivery cycles by 6 weeks per release."*
+
+### 1. Conceptual Foundation (From Ground Zero)
+### Angular vs. React:
+- **React:** A minimal library. You have to pick your own router, state management, HTTP client, and build tools.
+- **Angular:** A complete, enterprise-grade opinionated framework written in **TypeScript**. Includes built-in Routing, Forms, HTTP Client, and Dependency Injection out of the box.
+
+### RxJS & Reactive Programming:
+Think of an array as data sitting in memory: `[1, 2, 3]`.
+Think of an **Observable** as data arriving over time like a conveyor belt: item 1 arrives at 10:00, item 2 at 10:02, item 3 at 10:05.
+- **Subject:** Can emit values and be listened to.
+- **BehaviorSubject:** A Subject that remembers its *current value*. When a new component subscribes, it immediately receives the latest state!
+
+### How RxJS Prevents Memory Leaks:
+If a component subscribes to an observable (`myService.getData().subscribe(...)`) and the user navigates away, the subscription stays open in RAM forever (a memory leak!).
+- **Best Practice:** Use Angular's `async` pipe in HTML: `*ngIf="kpis$ | async as kpis"`. The `async` pipe automatically subscribes when the component renders and automatically unsubscribes when the component is destroyed!
+
+### 2. System Architecture & Code Blueprint
+
+```typescript
+// Shared Reactive State Service
+@Injectable({ providedIn: 'root' })
+export class RideStateService {
+  private activeRidesSubject = new BehaviorSubject<number>(0);
+  public activeRides$ = this.activeRidesSubject.asObservable();
+
+  constructor(private http: HttpClient) {}
+
+  updateActiveRides(count: number): void {
+    this.activeRidesSubject.next(count);
+  }
+
+  // switchMap cancels in-flight search request if user types new character
+  searchTrips(query$: Observable<string>): Observable<Trip[]> {
+    return query$.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(query => this.http.get<Trip[]>(`/api/v1/trips?search=${query}`))
+    );
+  }
+}
+```
+
+### 3. Exact Interview Script (How to Answer in 1st-Person POV)
+**Interviewer: "How did you design your reusable Angular component library and handle state management with RxJS?"**
+
+*"At Robosoft, we had 3 client applications reinventing similar UI widgets and data grids. I led the development of a reusable Angular library consisting of 12 shared modules—including data tables with server-side pagination, KPI cards, and modal dialogs.
+
+For state management, rather than introducing heavy third-party state libraries like NgRx for moderate-complexity dashboards, we engineered a reactive service-with-a-subject architecture using RxJS `BehaviorSubject`. Services maintained encapsulated state streams exposed as read-only observables. Components consumed data using Angular's `async` pipe, which eliminated manual `.subscribe()` boilerplate and safeguarded our applications against subscription memory leaks upon component teardown. 
+
+We also heavily utilized operators like `switchMap` and `debounceTime` for search autocomplete to automatically cancel stale HTTP requests, saving client network bandwidth. This shared library compressed frontend delivery cycles by 6 weeks per release."*
+
+### 4. Technical Trap Questions & How to Defend
+**Q: What is the difference between switchMap, mergeMap, and concatMap?**  
+**A:** `switchMap` cancels the previous inner observable when a new value arrives (perfect for search/autocomplete). `mergeMap` runs all inner observables concurrently in parallel (good for independent downloads). `concatMap` queues requests sequentially, waiting for one to finish before starting the next (vital for ordered saves/updates).
+
+---
+
+## Day 11: Python & FastAPI Microservice Architecture
+> **Resume Anchor:** *"Built a FastAPI service layer with PostgreSQL and MySQL backends, enforcing JWT token validation, role-based access, request throttling, and cursor-based pagination across endpoints receiving 500,000+ monthly requests."*
+
+### 1. Conceptual Foundation (From Ground Zero)
+### Why FastAPI is Dominating Modern Python Services:
+1. **Asynchronous (`async` / `await`):** Built on ASGI (Asynchronous Server Gateway Interface) using Starlette. Can handle thousands of concurrent idle socket connections without spawning heavy OS threads.
+2. **Pydantic Data Validation:** Automatically validates request body types. If an endpoint expects an `int` and gets `"abc"`, FastAPI automatically returns HTTP 422 with exact field errors.
+3. **Automated OpenAPI / Swagger:** Interactive documentation is generated automatically at `/docs`.
+
+### Request Throttling (Rate Limiting) with Redis:
+If a rogue client scripts an infinite loop hitting your API, it will crash your database.
+We enforce rate limiting using the **Token Bucket Algorithm** in Redis:
+- Every user has a bucket in Redis that holds up to 100 tokens.
+- Every API call consumes 1 token.
+- Every second, 2 new tokens are added to the bucket.
+- If tokens reach 0, FastAPI immediately returns `HTTP 429 Too Many Requests`!
+
+### 2. System Architecture & Code Blueprint
+
+```python
+from fastapi import FastAPI, Depends, HTTPException, status
+from pydantic import BaseModel, Field
+
+app = FastAPI(title="Uber Trip Classification Service")
+
+# Pydantic Schema
+class DisputeRequest(BaseModel):
+    trip_id: str
+    rider_id: str
+    complaint_text: str = Field(..., min_length=10, max_length=2000)
+
+# Dependency Injection for Authentication & Throttling
+async def rate_limiter(rider_id: str):
+    allowed = await redis_client.check_rate_limit(rider_id, limit=60, window_sec=60)
+    if not allowed:
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Rate limit exceeded")
+
+@app.post("/api/v1/disputes/classify")
+async def classify_dispute(
+    payload: DisputeRequest,
+    user: dict = Depends(verify_jwt_token),
+    _: None = Depends(rate_limiter)
+):
+    result = await classification_service.process(payload)
+    return {"status": "success", "data": result}
+```
+
+### 3. Exact Interview Script (How to Answer in 1st-Person POV)
+**Interviewer: "Why did you use FastAPI over Spring Boot or Flask for your Python services?"**
+
+*"We utilized FastAPI specifically for our AI, ML, and data transformation microservices because of the rich Python data science ecosystem (Scikit-Learn, LangChain, FAISS, Pandas) paired with FastAPI's high-performance asynchronous event loop. 
+
+FastAPI leverages Pydantic for automated request schema validation and serialization, which eradicated manual payload parsing bugs. We implemented clean dependency injection using FastAPI's `Depends` system for our JWT authentication and request throttling. For rate limiting across 500,000+ monthly requests, we integrated a sliding-window counter in Redis to throttle abusive consumers at the gateway layer before traffic could touch PostgreSQL connection pools."*
+
+### 4. Technical Trap Questions & How to Defend
+**Q: What happens if you run blocking synchronous code (like `time.sleep` or synchronous database calls) inside an `async def` route in FastAPI?**  
+**A:** Because `async def` runs directly on the main event loop, running blocking synchronous operations halts the entire event loop, blocking all other concurrent requests from being processed! If you have blocking I/O, you should either declare the endpoint as standard `def` (which FastAPI runs in an external threadpool) or use `anyio.to_thread.run_sync`.
+
+---
+
+## Day 12: Docker, Kubernetes & CI/CD with GitHub Actions (45m -> 8m Deployment)
+> **Resume Anchor:** *"...containerized with Docker and orchestrated via Kubernetes, reducing mean deployment cycle from 45 minutes to 8 minutes via GitHub Actions."*
+
+### 1. Conceptual Foundation (From Ground Zero)
+### Docker from Scratch:
+- **Image:** A blueprint (like a class in OOP). Contains OS libraries, runtime (Java/Python), and application code.
+- **Container:** A running instance of an image (like an object in OOP). Isolated from other containers using Linux namespaces and cgroups.
+
+### Kubernetes (K8s) from Scratch:
+Managing 50 Docker containers across 10 EC2 servers manually is impossible. Kubernetes automates this:
+- **Pod:** The smallest unit; wraps one or more containers.
+- **Deployment:** Declares your desired state: *"Run 3 replicas of RideService. If Pod 2 crashes, restart it immediately. During deployment, replace pods one by one (Rolling Update) so users experience zero downtime."*
+- **Service:** An internal load balancer that gives a stable virtual IP address to a group of dynamic pods.
+
+### The CI/CD Optimization (45m $	o$ 8m):
+- **Why it took 45 minutes before:**
+  1. Developers ran builds sequentially on a single shared build agent.
+  2. Dependencies (Maven/pip/npm) were downloaded fresh on every commit.
+  3. All 2,000 integration tests ran sequentially.
+  4. Manual SSH deployment scripts.
+- **How we got it down to 8 minutes:**
+  1. **Docker Multi-Stage Builds & Layer Caching:** Cache Maven `.m2` and node modules; only rebuild layers when `pom.xml` or `package.json` change.
+  2. **Parallel Test Matrix in GitHub Actions:** Split tests into 4 parallel runners.
+  3. **Automated Helm / K8s Deployment:** Automatically update deployment image tag in EKS/Kubernetes with zero manual steps.
+
+### 2. System Architecture & Code Blueprint
+
+```
+[Developer git push to 'main']
+         │
+         ▼
+[GitHub Actions Runner]
+├── Job 1: Linting & Static Code Analysis (Parallel - 2 mins)
+├── Job 2: Unit & Integration Tests (Matrix Execution - 3 mins)
+├── Job 3: Docker Build with Layer Caching ──► Push to Amazon ECR (2 mins)
+         │
+         ▼
+[Kubernetes Deployment Trigger]
+├── Rolling Update: Pod 1 (New) starts -> Passes Readiness Probe
+├── Old Pod 1 terminates -> Pod 2 updates -> Zero Downtime! (1 min)
+Total Time: 8 Minutes!
+```
+
+### 3. Exact Interview Script (How to Answer in 1st-Person POV)
+**Interviewer: "How did you optimize your CI/CD deployment cycle from 45 minutes to 8 minutes?"**
+
+*"Our deployment cycle originally took 45 minutes because our legacy pipeline was running on a single Jenkins server that executed monolithic builds, re-downloaded external dependencies from scratch, and ran our test suite sequentially before triggering manual shell deployment scripts.
+
+I re-architected our CI/CD pipeline using **GitHub Actions** and **Docker**:
+First, I implemented multi-stage Docker builds and enabled GitHub Actions dependency caching for our Maven `.m2` and npm modules. If application source code changed but dependencies didn't, the Docker build reused cached layers in under 90 seconds.
+Second, I parallelized our test execution into matrix runners, executing unit tests and integration tests concurrently.
+Third, we automated deployment to our Kubernetes cluster via Helm charts configured with rolling update strategies and readiness probes. The pipeline builds, tests, pushes the image to Amazon ECR, and executes a zero-downtime rolling deployment in just 8 minutes."*
+
+### 4. Technical Trap Questions & How to Defend
+**Q: What is the difference between a Liveness Probe and a Readiness Probe in Kubernetes?**  
+**A:** A **Liveness Probe** checks if the container is alive; if it fails (e.g., deadlocked thread), K8s kills and restarts the container. A **Readiness Probe** checks if the container is ready to accept user traffic (e.g., finished warming up caches and connecting to DB); if it fails, K8s stops sending traffic to that pod without killing it.
+
+---
+
+## Day 13: AWS Cloud Infrastructure & Amazon CloudWatch Observability (MTTD 40m -> <8m)
+> **Resume Anchor:** *"Instrumented all services with Amazon CloudWatch custom metrics and log-based alarms, establishing SLA dashboards that cut mean time to detect production incidents from 40 minutes to under 8 minutes."*
+
+### 1. Conceptual Foundation (From Ground Zero)
+### The SRE Golden Signals:
+1. **Latency:** How long do requests take?
+2. **Traffic:** How many requests per second (RPS)?
+3. **Errors:** What percentage of requests return 5xx errors?
+4. **Saturation:** How full are your resources (CPU, Memory, DB connection pool)?
+
+### What is MTTD (Mean Time to Detect)?
+The average time between when a catastrophic bug begins in production and when engineers actually know about it!
+- *Without Observability (MTTD 40 mins):* A bug causes payment failures. Nobody notices until frustrated riders tweet or file 50 support tickets.
+- *With CloudWatch Observability (MTTD <8 mins):* Automated metric alarms detect anomalous 5xx error spikes or Kafka consumer lag, firing a PagerDuty alert to the on-call engineer's phone immediately.
+
+### Custom Metrics vs Log-Based Alarms:
+- **Custom Metric:** Your Java code explicitly publishes numbers via AWS SDK: `cloudWatch.putMetricData("RideFailureRate", value)`.
+- **Metric Filter (Log-Based):** CloudWatch scans incoming log streams for patterns like `[ERROR] [PaymentService] GATEWAY_TIMEOUT` and automatically turns log count into a graphical metric!
+
+### 2. System Architecture & Code Blueprint
+
+```
+[Microservices on EC2 / K8s]
+       │ (Emits structured JSON logs & Custom Metrics via AWS SDK)
+       ▼
+[Amazon CloudWatch Logs & Metrics]
+       ├── Metric Filter: Error Pattern "[ERROR]" > 20 in 1 min
+       ├── Threshold Alarm: p99 Latency > 200ms for 2 consecutive periods
+       ├── Health Alarm: Kafka Consumer Lag > 2,000 messages
+       │
+       ▼ (Alarm State: ALARM)
+[Amazon SNS (Simple Notification Service)]
+       │
+       ├──► PagerDuty (Wakes up on-call engineer)
+       └──► Slack Incident Channel (#war-room-alerts)
+```
+
+### 3. Exact Interview Script (How to Answer in 1st-Person POV)
+**Interviewer: "How did you instrument CloudWatch to cut Mean Time to Detect (MTTD) from 40m to under 8m?"**
+
+*"Prior to our observability initiative, our Mean Time to Detect incidents averaged 40 minutes because we lacked centralized alerting; we were reacting to support ticket surges and user complaints.
+
+I established structured JSON logging across all 6 microservices and integrated the AWS CloudWatch SDK to publish custom application metrics, specifically tracking API error rates, Kafka consumer lag, and database connection pool saturation. I created CloudWatch Metric Filters that scanned application logs in real time for critical exception patterns. 
+
+We established multi-tiered alarms: warning alarms notifying our Slack engineering channels, and critical threshold alarms (such as 5xx error rates exceeding 2% or consumer lag surpassing 2,000 messages) that triggered Amazon SNS topics routed directly to PagerDuty. We coupled this with CloudWatch executive SLA dashboards. This proactive alerting gave us instant visibility into degradation, dropping our mean time to detect incidents from 40 minutes down to under 8 minutes."*
+
+### 4. Technical Trap Questions & How to Defend
+**Q: How do you avoid alarm fatigue when setting up CloudWatch alarms?**  
+**A:** Alarm fatigue occurs when too many noisy, non-actionable alerts fire. We solved this by using anomaly detection bands, requiring conditions to be breached for 2 out of 3 consecutive evaluation periods (e.g., 3 minutes) to filter out transient blips, and strictly separating informational Slack notifications from actionable, wake-up PagerDuty pages.
+
+---
+
+## Day 14: Comprehensive Behavioral, System Design & Resume Walkthrough Masterclass
+> **Resume Anchor:** *"Summary & End-to-End Interview Readiness"*
+
+### 1. Conceptual Foundation (From Ground Zero)
+Today is about mastering the soft skills, behavioral questions, and seamless technical defense.
+
+### The 4 Non-Negotiable Questions You Must Ace:
+1. **"Tell me about yourself" (The 90-Second Hook):**
+   - Past: Started at Robosoft building high-throughput Angular/FastAPI systems and SQL tuning.
+   - Present: SDE at Uber building distributed Java Spring Boot systems, Kafka streaming, Redis caching, and applied GenAI/RAG assistants.
+   - Future: Eager to bring this end-to-end full-stack and systems engineering rigor to this team.
+2. **"What was your most challenging technical bug?"**
+   - The Day 4 Redis Cache Stampede story dropping p99 from 320ms to 80ms!
+3. **"Tell me about a time you resolved cross-team conflict."**
+   - Monolith decomposition: Coordinating API contracts across 6 teams using OpenAPI/Swagger schemas before writing code, cutting merge conflicts by 4 per sprint.
+4. **"What did you build vs. what did your team build?"**
+   - Never say 'we did everything' or 'I did everything alone'. Say: *"Our team was responsible for the overall mobility platform. My specific ownership was designing the Kafka consumer pipeline with DLQ fault tolerance, optimizing the Redis caching layer, and architecting the GenAI knowledge assistant."*
+
+### 2. System Architecture & Code Blueprint
+
+```
+THE STAR FRAMEWORK FOR EVERY RESUME BULLET:
+S - Situation: "At Uber, our support queue was inundated with trip exception disputes..."
+T - Task:      "I was tasked with automating this classification to eliminate manual triage..."
+A - Action:    "I built a Python worker utilizing OpenAI Function Calling with strict Pydantic schemas..."
+R - Result:    "Eliminated 120 manual hours per week and auto-categorized 85% of Tier-1 issues."
+```
+
+### 3. Exact Interview Script (How to Answer in 1st-Person POV)
+**Interviewer: "Tell me about yourself and your technical background."**
+
+*"Hi, I'm Karthik. I'm a Full Stack Software Engineer with over 3 years of experience specializing in high-throughput backend systems, distributed architectures, and modern web applications. 
+
+Most recently at Uber, I've worked across our core mobility platform. On the backend, I've engineered microservices using Java Spring Boot and Python, built event-driven streaming pipelines processing 50,000+ daily ride events with Apache Kafka and Dead Letter Queues, and optimized our Redis caching layer to slash p99 latency from 320ms down to 80ms. I've also had the opportunity to build applied GenAI products in production, including a RAG policy assistant using LangChain and FAISS that deflected 85% of tier-1 support tickets, and an automated classification worker using OpenAI Function Calling that saved 120 engineering hours a week.
+
+Prior to Uber, I worked at Robosoft Technologies, where I built reusable Angular component libraries with RxJS reactive state management and profiled underperforming SQL execution plans to accelerate report generation by 4x. 
+
+I hold a Master's in Computer Science from Texas Tech University. I pride myself on owning systems end-to-end—from database query execution plans and cloud CI/CD pipelines all the way to frontend user experience."*
+
+### 4. Technical Trap Questions & How to Defend
+**Q: What is the biggest mistake you made in production and what did you learn?**  
+**A:** Early on, I pushed a database migration with an index creation on a high-traffic table without using `CREATE INDEX CONCURRENTLY` in PostgreSQL. It locked the table for writes for 45 seconds, causing requests to queue up. I immediately caught it, learned how PostgreSQL table-level locks work, and established a team guideline to always use concurrent index builds and zero-downtime schema migrations.
+
+---
+
+# Uber & Robosoft Resume Bullets Deep-Dive Cheat Sheet
+
+| Bullet Point Topic | What Actually Happened Under the Hood | Key Metrics & Numbers |
+| :--- | :--- | :--- |
+| **GPT-4 Policy Knowledge Assistant** | Built LangChain + FAISS semantic search pipeline over internal policy PDFs to feed relevant context into GPT-4 prompts. | 10,000+ docs; 85/100 Tier-1 tickets deflected; 91% accuracy |
+| **Streaming Ride Operational Dashboard** | Angular frontend subscribing to Spring Boot APIs streaming Kafka events with DLQ into Redis KPI caches. | 50,000+ daily ride events; zero partition stalls |
+| **OAuth 2.0 & JWT API Gateway** | Centralized auth gateway verifying RS256 JWTs and injecting downstream `X-User-Id` headers. | 6 microservices on EC2; sub-1ms auth checks |
+| **Redis Cache Miss & p99 Latency Tuning** | Diagnosed cache stampede; applied TTL jitter and distributed locking to eliminate DB connection exhaustion. | p99 latency dropped from 320ms to 80ms |
+| **Monolith Decomposition & Circuit Breakers** | Split driver onboarding monolith into 6 Spring Boot services with Resilience4j circuit breakers and fallbacks. | 6 microservices; cut merge conflicts by 4 per sprint |
+| **OpenAI Function Calling Ticket Classifier** | Replaced manual support triage with async Python worker enforcing Pydantic JSON schema via OpenAI tools. | Reclaimed 120 engineering hours per week |
+| **CloudWatch Observability & Alerting** | Implemented structured logging, custom metrics, and metric-filter alarms to PagerDuty/Slack. | MTTD dropped from 40 mins to under 8 mins |
+| **Robosoft Reusable Angular Library** | Built 12 modular Angular components with RxJS BehaviorSubject state management. | 12 modules; compressed sprint cycles by 6 weeks |
+| **Robosoft FastAPI Service Layer** | Built async FastAPI backend with JWT, RBAC, Redis token bucket rate limiting, and cursor pagination. | 500K+ monthly requests |
+| **Robosoft SQL Optimization** | Profiled slow queries using `EXPLAIN ANALYZE`; added composite B-Tree indexes and eliminated offset pagination. | Query runtime dropped from 9s to under 2s |
+
