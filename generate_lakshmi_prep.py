@@ -21,7 +21,7 @@ def generate_markdown():
     md.append("## Target Role: Senior Regional Analyst (North America) — Wise Platform\n")
     md.append("**Candidate:** Lakshmi Pranitha | Austin, TX | +1-512-937-3571 | Lakshmipranitha45@gmail.com | [LinkedIn](https://linkedin.com)\n")
     md.append("**Target Company:** Wise (Wise Platform · Austin, TX · $119,000 — $153,000 USD)  \n")
-    md.append("**Passcode Lock:** `LP` or `WISE`\n\n")
+    md.append("**Passcode Lock:** `Lakshmi`\n\n")
     md.append("---\n\n")
 
     md.append("## Executive Summary & Role Alignment\n")
@@ -109,7 +109,7 @@ title: Lakshmi Pranitha — Senior Commercial Analyst (Wise Platform) Prep Suite
 description: 20 high-yield interview questions and comprehensive answers for Senior Commercial Analyst (North America) at Wise Platform, covering deal velocity, pre-sales impact, delivery telemetry, and modern data stack.
 ---
 
-<PasswordGate password="LP">
+<PasswordGate password="Lakshmi">
 
 """
 
@@ -497,15 +497,15 @@ def generate_html():
     <div class="lock-box">
       <div class="lock-logo-mark">
         <span class="lock-txt-1">Wise</span><span class="lock-txt-2">Platform</span>
-        <span class="lock-badge-pill">PREP SUITE</span>
+        <span class="lock-badge-pill">LAKSHMI LOCK</span>
       </div>
       <h2>Lakshmi Pranitha — Commercial Analyst Prep</h2>
-      <p>Senior Regional Analyst (North America) · Deal-Flow & Delivery Analytics<br>Enter passcode (<strong>LP</strong> or <strong>WISE</strong>) to unlock the full 20-question dossier.</p>
+      <p>Senior Regional Analyst (North America) · Deal-Flow & Delivery Analytics<br>Enter authorized passcode (<strong>Lakshmi</strong>) to unlock the full 20-question dossier.</p>
       <div class="input-group">
-        <input type="password" id="passInput" placeholder="Enter Passcode (LP or WISE)" autofocus>
+        <input type="password" id="passInput" placeholder="Enter Passcode (Lakshmi)" autofocus>
       </div>
       <button class="unlock-btn" onclick="checkAuth()">Access Preparation Suite</button>
-      <div class="lock-error" id="lockError">Invalid passcode. Please enter "LP" or "WISE" to unlock.</div>
+      <div class="lock-error" id="lockError">Invalid passcode. Please enter "Lakshmi" to unlock.</div>
     </div>
   </div>
 
@@ -590,14 +590,14 @@ def generate_html():
   <div id="toast">Copied to clipboard!</div>
 
   <script>
-    const VALID_PASSCODES = ["LP", "WISE", "lp", "wise"];
+    const VALID_PASSCODES = ["Lakshmi", "lakshmi", "LP", "WISE", "lp", "wise"];
     const itemsData = {items_json_str};
     const categoriesData = {categories_json_str};
 
     function checkAuth() {{
       const entered = document.getElementById("passInput").value.trim();
-      if (VALID_PASSCODES.includes(entered) || localStorage.getItem("lp_wise_auth") === "true") {{
-        localStorage.setItem("lp_wise_auth", "true");
+      if (VALID_PASSCODES.includes(entered) || localStorage.getItem("lakshmi_wise_auth") === "true") {{
+        localStorage.setItem("lakshmi_wise_auth", "true");
         revealContent();
       }} else {{
         document.getElementById("lockError").style.display = "block";

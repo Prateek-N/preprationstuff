@@ -2,7 +2,7 @@
 ## Target Role: Senior Regional Analyst (North America) — Wise Platform
 **Candidate:** Lakshmi Pranitha | Austin, TX | +1-512-937-3571 | Lakshmipranitha45@gmail.com | [LinkedIn](https://linkedin.com)
 **Target Company:** Wise (Wise Platform · Austin, TX · $119,000 — $153,000 USD)  
-**Passcode Lock:** `LP` or `WISE`
+**Passcode Lock:** `Lakshmi`
 
 ---
 
