@@ -1,0 +1,1077 @@
+---
+title: Ashutosh Rudraksh — Oscar Health Senior Fullstack Engineer Prep Guide
+description: Comprehensive interview preparation guide for Senior Software Engineer (Fullstack) at Oscar Health, covering 20 behavioral & technical Q&As grounded in real experience, 15 fullstack DSA problems with Python implementations, and 10 end-to-end HLD/LLD healthcare system designs.
+---
+
+<PasswordGate password="Ashutosh">
+
+# Ashutosh Rudraksh — Oscar Health Senior Fullstack Engineer Interview Guide
+
+Welcome to your complete, role-tailored interview preparation guide for the **Senior Software Engineer, Fullstack** loop at **Oscar Health** (New York, Hudson Square). 
+
+Oscar is the pioneer in health insurance built from the ground up around a full-stack technology platform, treating every member with empathetic, modern digital infrastructure. As a Senior Fullstack Engineer, you will own consumer-facing member applications, provider tools, and scalable distributed services that handle complex clinical workflows, insurance claims, and real-time care navigation.
+
+This guide is structured into three comprehensive parts:
+1. **Part 1: Top 20 Technical & Behavioral Q&As** — Detailed ~300-word responses grounded directly in your work at **Uber**, **Meta Reality Labs**, **Tekainos**, and **Dell Technologies**, formatted in clear, cohesive paragraphs with key technologies in **bold**.
+2. **Part 2: Top 15 Fullstack & Backend DSA Problems** — High-frequency coding challenges with comprehensive algorithmic thought processes, production-grade **Python** solutions with first-person inline commentary, and exact time/space complexities.
+3. **Part 3: Master System Design Guide & Top 10 Healthcare Architectures** — Foundational HLD/LLD interview frameworks and 10 end-to-end healthcare system designs featuring inline architecture diagrams, data flows, API definitions, and deep dives into reliability, HIPAA security, and scale.
+
+---
+
+## Part 1: Top 20 Technical & Behavioral Q&As
+
+### 1. Why Oscar Health, and how does your fullstack and distributed systems experience position you to build consumer-grade healthcare products?
+
+My motivation to join **Oscar Health** stems from a strong desire to apply distributed systems engineering and modern fullstack technologies to solve high-stakes problems in consumer healthcare. The American healthcare experience is notoriously fragmented and opaque, and Oscar has set the benchmark by building an empathetic, technology-first platform that operates like a trusted doctor in the family. Throughout my career across **Uber**, **Meta Reality Labs**, **Tekainos**, and **Dell Technologies**, I have developed a deep appreciation for building resilient, user-centric software where latency, accuracy, and reliability directly impact real human lives. At **Uber**, I engineered fullstack query resolution applications using **FastAPI**, **React**, and **TypeScript**, handling thousands of requests daily while indexing complex corporate datasets with **PostgreSQL** and **pgvector**. At **Tekainos**, I designed decoupled event-driven architectures with **Kafka**, **Redis**, and **gRPC** that slashed multi-day batch processing latencies down to minutes. I recognize that healthcare systems at Oscar are inherently event-driven and data-intensive, spanning claims adjudication, real-time provider directories, eligibility verifications, and member care navigation. My academic background from **The Ohio State University** with a Master of Science in Computer Science, combined with 4 years of production experience in **Python**, **TypeScript**, **Java**, and **AWS**, equips me to hit the ground running. I understand how to balance modern consumer frontend experiences with bulletproof backend reliability, ensuring that Oscar members receive instantaneous, accurate, and HIPAA-compliant healthcare support whenever they interact with the platform.
+
+---
+
+### 2. Walk me through a complex fullstack project you owned from technical design through release with minimal oversight.
+
+At **Uber**, I independently spearheaded the technical design, implementation, and deployment of an internal employee query resolution platform that integrated fullstack web capabilities with high-performance semantic retrieval. The business goal was to streamline query triaging across cross-functional organizations, where thousands of employee tickets were languishing due to fragmented internal knowledge silos. Taking complete ownership, I initiated the architectural design by defining strict API contracts using **FastAPI** on the backend and **React** with **TypeScript** on the frontend, ensuring strong typing across our network boundaries. For the retrieval engine, I architected a semantic search pipeline using **PostgreSQL** with the **pgvector** extension, indexing over 180,000 corporate records to deliver contextual relevance. To ensure production resilience, I containerized the services using **Docker**, created infrastructure definitions for **AWS** deployment, and configured **Kubernetes** deployment manifests with automated health probes and horizontal pod autoscaling. Working cross-functionally, I collaborated with product managers, backend engineers, and data science teams through **Git** and **Jira** to troubleshoot data ingestion edge cases without requiring constant senior guidance. At rollout, the system processed over 3,500 employee requests with a 99.5% service uptime, while boosting response relevance by 45% and search accuracy by 38%. This experience demonstrated my ability to take ambiguous business requirements, construct end-to-end technical architectures, establish robust CI/CD deployment pipelines via **GitHub Actions**, and ship scalable consumer-grade fullstack tools that drive measurable business outcomes.
+
+---
+
+### 3. Oscar requires seamless coordination between member-facing interfaces and backend microservices. How did you design the employee query tool using FastAPI, React, and TypeScript?
+
+Designing a cohesive fullstack system requires establishing unambiguous contracts between the client and server layers to ensure predictable state management and high responsiveness. For the employee query resolution tool at **Uber**, I structured the frontend as a modular single-page application built with **React** and **TypeScript**, leveraging custom hooks, context providers, and **React Query** for declarative data fetching, caching, and optimistic UI updates. On the backend, I utilized **FastAPI** in **Python**, taking full advantage of asynchronous endpoints with **asyncio** and **Pydantic** data models to enforce runtime schema validation and automated **OpenAPI** documentation generation. By sharing type definitions between backend schemas and frontend TypeScript interfaces, we eliminated runtime serialization discrepancies and accelerated our feature delivery cycles. To handle high query volumes without degrading UI responsiveness, I designed debounced search inputs on the client that communicated with backend endpoints via compressed JSON payloads over HTTP/2. I also implemented server-sent event streams and **WebSockets** for long-running semantic search queries, allowing users to receive real-time status updates while background workers queried our **PostgreSQL** and **pgvector** indexes. On the cloud infrastructure side, I deployed the frontend through a content delivery network backed by **AWS CloudFront** and **S3**, while the FastAPI backend ran inside auto-scaling **Docker** containers on **Kubernetes (EKS)** behind an **AWS Application Load Balancer**. This decoupled fullstack architecture provided sub-150ms roundtrip latencies and ensured that the frontend remained responsive even during peak request spikes.
+
+---
+
+### 4. How do you design and optimize semantic search and vector retrieval pipelines for high accuracy and low latency, as you did with PostgreSQL and pgvector at Uber?
+
+Semantic search systems in production must balance mathematical retrieval quality with strict operational latency budgets and database index maintenance. When architecting the semantic search pipeline at **Uber**, I was tasked with making over 180,000 dense technical and policy documents searchable by natural language queries. Rather than introducing the operational overhead of a standalone vector database cluster, I chose **PostgreSQL** enhanced with the **pgvector** extension, which allowed us to maintain vector embeddings alongside relational metadata within a single ACID-compliant transactional boundary. I generated text embeddings using lightweight transformer models and indexed high-dimensional vector columns using Hierarchical Navigable Small World (**HNSW**) graphs with cosine distance metrics. To optimize search performance, I tuned the HNSW parameters, specifically adjusting `m` and `ef_search`, which reduced query evaluation latencies down to under 25 milliseconds for top-10 nearest neighbor lookups. Furthermore, pure semantic similarity frequently fails on exact keyword matches like policy codes or employee IDs; therefore, I engineered a hybrid retrieval strategy combining full-text search with **pg_trgm** inverted indexes and dense vector embeddings using Reciprocal Rank Fusion (**RRF**). I also established an asynchronous background pipeline that pre-warmed frequently accessed vector index segments in memory and cached popular query embeddings inside **Redis**. These architectural optimizations yielded a 45% increase in response relevance, a 38% improvement in search accuracy, and supported sustained daily loads of over 6,000 requests without CPU thrashing on our database read replicas.
+
+---
+
+### 5. Healthcare platforms handle Protected Health Information (PHI) under HIPAA. How have you enforced data isolation, encryption, and secure API boundaries in production?
+
+Handling sensitive user information requires an uncompromising defense-in-depth posture spanning transit, storage, application logic, and operational monitoring. Throughout my engineering tenures, particularly when designing financial ETL workflows at **Tekainos** and enterprise microservices at **Dell Technologies**, I enforced strict security baselines that mirror HIPAA compliance imperatives. At the network boundary, I ensured that all external and internal traffic was encrypted in transit using **TLS 1.3** and mutual TLS (**mTLS**) via **Envoy** sidecars across our **Kubernetes** clusters. For data at rest, I implemented envelope encryption using **AWS KMS**, encrypting databases like **PostgreSQL** and caches like **Redis** with customer-managed keys that were automatically rotated. In the application tier, I designed strict access control decorators in **FastAPI** and **Spring Boot** enforcing role-based access control (**RBAC**) and attribute-based access control (**ABAC**) validated against cryptographically signed **JWT** tokens. To prevent data leakage in logging pipelines, I built custom middleware interceptors that scanned payload bodies and redacted personally identifiable information (**PII**) or credentials before emitting structured JSON logs to our centralized observability systems. At **Dell**, I conducted security vulnerability reviews across 10+ core modules, resolving over 100 critical defects, remediating OWASP top 10 attack vectors, and ensuring database tables utilized row-level security (**RLS**) to guarantee strict multi-tenant tenant data isolation. At Oscar, I will apply these proven enterprise security principles to ensure all Protected Health Information (**PHI**) remains cryptographically sealed, audited, and strictly isolated.
+
+---
+
+### 6. Tell me about a time you led the technical migration or refactoring of an existing service into modern microservices with zero downtime.
+
+At **Dell Technologies**, I was responsible for refactoring a monolithic backend service into high-throughput, modular microservices to eliminate system bottlenecks and improve deployment velocity. The existing legacy system was a tightly coupled **Java** and **Spring Boot** application that processed over 10,000 daily enterprise transactions; however, database lock contention and massive monolithic release cycles were degrading system stability. To execute the migration without downtime, I utilized the **Strangler Fig pattern**. I began by introducing an **API Gateway** layer that routed incoming traffic between the legacy monolith and the newly scaffolded microservices based on URI path configurations and feature flags. Next, I decoupled the shared **PostgreSQL** database by establishing dedicated schemas for distinct bounded contexts, ensuring that each microservice had sole ownership over its data store. To keep data consistent across both old and new systems during the phased migration, I implemented dual-writing and asynchronous event replication using **Apache Kafka**, allowing the new services to consume historical event logs and validate state accuracy in shadow mode before taking production traffic. Furthermore, I optimized the underlying persistence layer using **Hibernate** tuning, connection pooling with **HikariCP**, and composite SQL indexing, which slashed database query latency by 55%. Across 8 planned production releases coordinated through **Maven**, **Git**, and automated CI/CD pipelines, we migrated all core traffic to the new microservice fleet. The migration resulted in a 42% improvement in system stability, reduced deployment time by 40%, maintained 99.9% service availability, and completely avoided customer-impacting outages.
+
+---
+
+### 7. Oscar relies on asynchronous, event-driven data flows like claim adjudications. How did you design event-driven messaging patterns using Kafka at Tekainos and Dell?
+
+Asynchronous event-driven architecture is critical for decoupling high-latency business workflows from the synchronous user request-response path, ensuring system resilience and elasticity. At **Tekainos**, our backend services processed financial data extraction and document scheduling workflows where synchronous processing caused severe cascading timeouts. I architected a distributed event pipeline using **Apache Kafka**, **FastAPI**, and **gRPC**, establishing explicit schema contracts using Protocol Buffers and Avro registries. I designed producer services to implement the **Transactional Outbox pattern**, writing business state updates and event messages atomically into a **PostgreSQL** outbox table before an asynchronous relay worker published them to Kafka, entirely preventing ghost events or data loss during network failures. To guarantee that events were processed in order without head-of-line blocking across the entire cluster, I partitioned Kafka topics by entity identifiers, such as customer account ID. On the consumer side, I engineered idempotent consumer worker pools utilizing **Redis** to record processed message unique keys, allowing consumers to safely discard duplicate events delivered under Kafka’s at-least-once semantics. At **Dell Technologies**, I built similar asynchronous Kafka pipelines in **Spring Boot** that eliminated inter-service communication bottlenecks by 35% during peak transactional loads. Additionally, I implemented dead-letter queues (**DLQ**) with exponential back-off retries and circuit breakers to isolate corrupt message payloads without stalling partition consumers. This rigorous messaging architecture lowered inter-service failures by 40% and transformed multi-hour processing batch windows into near-instantaneous streaming updates.
+
+---
+
+### 8. How do you approach building LLM tool-use orchestration and Model Context Protocol (MCP) servers in production, drawing from your work at Meta Reality Labs?
+
+Production AI agents must transition from simple prompt wrappers into deterministic, tool-augmented systems that safely interact with external APIs, databases, and microservices. During my tenure at **Meta Reality Labs**, I engineered **Vision-Language-Action (VLA)** models and architected production-grade **MCP servers** that enabled large language models to perceive environmental state and execute specialized tools across perception, evaluation, and automated testing pipelines. To achieve this, I built modular server architectures using **FastAPI** and **Node.js**, standardizing tool definitions according to the **Model Context Protocol (MCP)** specification. Each tool was exposed with strict JSON schema contracts, descriptive semantic docstrings, and comprehensive parameter validation to minimize LLM hallucination during tool selection. I built a resilient orchestration engine that managed multi-turn tool calling loops, allowing the agent to evaluate system state, select appropriate diagnostic tools, execute sandboxed routines, and ingest structured results back into the model context window. To prevent infinite loops or runaway execution costs, I implemented deterministic guardrails, including strict step execution limits, rate limiting, and token context budgeting using sliding window summarization. Furthermore, I integrated **Redis** to cache idempotent tool execution outputs, dramatically decreasing latency and API token consumption. This tool-use framework eliminated 70% of manual testing efforts across simulation pipelines and increased overall system reliability by 28%. At Oscar, this exact MCP and tool orchestration expertise can power clinical triage assistants, automated prior authorization evaluations, and intelligent provider directory lookups that interact securely with backend health APIs.
+
+---
+
+### 9. Fullstack engineers at Oscar frequently navigate ambiguous business requirements across clinical and operational domains. Describe a time you worked with cross-functional partners to clarify scope and deliver features.
+
+At **Tekainos**, a high-growth startup environment, our operational and accounting teams were overwhelmed by manual data entry and invoice reconciliation, leading to operational delays spanning 24 to 48 hours. The initial request from business stakeholders was simply to 'automate our accounting with AI,' which was highly ambiguous and technically unfocused. Recognizing the need to translate this broad goal into concrete technical milestones, I scheduled discovery sessions with the accounting managers and operational leads to map their step-by-step daily workflows. Through these shadowing sessions, I identified that the true operational bottleneck was the manual transcription of unstructured PDF receipts, scheduling rosters, and bank statements. I proposed a phased technical roadmap: first building an automated data extraction ETL pipeline using **Optical Character Recognition (OCR)**, **FastAPI**, and **AWS Lambda**, followed by an automated reconciliation service backed by **Redis** and **PostgreSQL**. Throughout the implementation, I maintained transparent communication by organizing bi-weekly demos, building lightweight **React** administrative dashboards so business users could inspect extracted confidence scores, and incorporating their feedback to tune our validation thresholds. By normalizing data across 5,000+ unstructured documents, we achieved a 38% improvement in data quality and slashed manual data entry by 85%. Furthermore, processing latency plunged from 24 hours to under three minutes for real-time operations. This project reinforced my belief that successful engineering requires proactive cross-functional empathy, active listening, and the ability to decompose ambiguous business problems into incrementally shippable, high-impact technical solutions.
+
+---
+
+### 10. Tell me about a time you diagnosed and resolved a severe performance bottleneck or latency spike in a production database.
+
+At **Dell Technologies**, our enterprise order management service experienced significant latency degradation, with database response times spiking from 120 milliseconds to over 3.5 seconds during peak daily transactional periods, risking our SLA commitments. To troubleshoot the issue methodically under pressure, I analyzed application metrics in **Datadog** and examined the **PostgreSQL** slow query logs alongside `pg_stat_statements` to pinpoint the specific queries driving high CPU utilization. I identified that several complex analytical queries executed by our **Hibernate** ORM layer were performing full sequential table scans across multi-million-row order and customer tables. The root causes were twofold: Hibernate was generating inefficient `N+1` query chains due to eager loading configurations on joined entity collections, and the database was missing composite indexes tailored to the query's compound filtering and sorting clauses. I immediately applied query optimizations by refactoring the data access layer to utilize explicit JPQL fetch joins, consolidating hundreds of disparate queries into single optimized batch statements. Next, using `EXPLAIN (ANALYZE, BUFFERS)`, I designed and applied composite B-tree indexes covering the critical join keys and timestamp filters, allowing the query planner to switch from expensive sequential table scans to ultra-fast index condition scans. Additionally, I tuned our **HikariCP** database connection pool settings and optimized Hibernate's second-level cache with **Redis** to intercept read-heavy static lookups. These targeted interventions reduced overall database query latency by 55%, brought peak CPU utilization down from 92% to under 40%, and permanently stabilized the application to maintain 99.9% service availability.
+
+---
+
+### 11. How do you balance rapid delivery and experimentation with code maintainability, testing, and long-term architectural stability?
+
+Balancing speed of execution with long-term engineering rigor requires adopting a disciplined, iterative approach where software is designed for change without accumulating uncontrolled technical debt. At **Tekainos**, our engineering team needed to onboard new partner data integrations rapidly; however, ad-hoc point-to-point scripts had made the codebase brittle, resulting in six-week onboarding cycles for each new customer. Rather than continually hacking one-off solutions, I advocated for dedicating a single sprint to build an extensible, reusable cross-service messaging framework using **Kafka**, **gRPC**, and **FastAPI**. I established clean interfaces and dependency inversion principles so that adding a new partner simply required implementing a standardized ingestion interface with validation schemas. To ensure code maintainability, I instituted strict CI/CD quality gates in **GitHub Actions**, requiring comprehensive unit test coverage with **PyTest**, linting checks, and integration tests running against ephemeral **Docker** containers. This upfront architectural investment slashed partner onboarding time from six weeks to just two days while reducing inter-service runtime failures by 40%. At **Uber** and **Dell**, I followed similar practices by leveraging feature flags and canary deployments, which allowed product teams to experiment rapidly with new user-facing features in production while retaining the ability to instantly roll back if anomalous error rates were detected. Writing modular, decoupled code with automated test harnesses ensures that you can ship features at startup speed without compromising the fault tolerance and stability demanded by enterprise healthcare systems.
+
+---
+
+### 12. Describe a situation where you had a strong technical disagreement with a teammate or senior engineer. How did you navigate the conversation and reach alignment?
+
+At **Uber**, during the initial architecture phase of the employee query resolution tool, a senior engineer strongly advocated for provisioning an independent, dedicated vector database cluster, such as Pinecone or Milvus, arguing that specialized vector databases represented the cutting edge of AI infrastructure. While I agreed with the theoretical merits of dedicated vector engines at massive scale, I had strong reservations about introducing an entirely new distributed stateful system to our operational stack. Our dataset was approximately 180,000 records—a scale where the network latency, operational overhead, synchronization complexity, and infrastructure costs of a separate vector cluster outweighed its benefits. Instead of escalating emotionally, I approached the disagreement with empirical data. I constructed a rapid, reproducible proof-of-concept comparing our existing **PostgreSQL** database running the **pgvector** extension against the standalone vector service. I benchmarked both options across query latency, memory consumption, ingestion throughput, and data consistency under concurrent read-write loads. The benchmark demonstrated that PostgreSQL with **HNSW** indexing delivered 25ms vector search latencies while allowing us to join vector similarity scores directly with employee relational data in a single ACID transaction, completely avoiding dual-write synchronization bugs. I presented the benchmark data alongside a total-cost-of-ownership analysis during our architectural review. The senior engineer appreciated the rigorous empirical evidence and agreed that pgvector was the superior, pragmatic choice for our scale. This experience reinforced that technical disagreements should always be resolved through data-driven experiments, mutual respect, and a focus on long-term operational simplicity.
+
+---
+
+### 13. Oscar's platform serves millions of members with high-availability expectations. How do you design fault-tolerant systems that handle upstream service failures and partial outages?
+
+Designing fault-tolerant distributed systems requires adopting a mindset where network failures, hardware crashes, and upstream service outages are treated as inevitable daily occurrences rather than rare anomalies. When architecting microservices at **Dell Technologies** and **Tekainos**, I implemented robust resilience patterns, including circuit breakers, rate limiters, retries with exponential back-off, and bulkhead isolation using **Resilience4j** and custom **FastAPI** middleware. If an upstream dependency experiences degraded latency or begins throwing HTTP 5xx errors, the circuit breaker trips, instantly short-circuiting downstream requests and returning cached or graceful fallback responses rather than allowing threads to block and exhaust system resources. To prevent retry storms from overwhelming a recovering downstream service, all retry mechanisms incorporate randomized exponential back-off jitter. At the data layer, I utilize the **Cache-Aside pattern** with **Redis**, ensuring that even if primary relational databases or external partner APIs experience transient downtime, read requests can still be served from warm cache replicas with appropriate staleness headers. For asynchronous operations like claims ingestion or financial settlements, I decouple processing through **Apache Kafka** and persistent message queues; if a downstream worker crashes, unacknowledged messages remain safely buffered in the message log until the worker restarts. In our cloud infrastructure on **AWS**, services run across multi-Availability Zone **Kubernetes** deployments configured with horizontal pod autoscalers and liveness/readiness health probes. This architectural discipline guarantees that a failure in one subsystem never cascades into a total application outage.
+
+---
+
+### 14. How do you implement robust caching strategies using Redis to reduce load on transactional databases while preventing stale data anomalies?
+
+Implementing an effective caching architecture requires carefully balancing read throughput gains against the risk of serving stale or inconsistent data to end users. In my work across **Uber**, **Tekainos**, and **Dell Technologies**, I have extensively utilized **Redis** as a high-speed distributed cache to protect primary **PostgreSQL** databases from read-heavy query spikes. I primarily implement the **Cache-Aside (Lazy Loading)** pattern combined with active cache invalidation. When a client requests data, the service first queries Redis; upon a cache miss, the data is fetched from the database, populated in Redis with an explicit Time-To-Live (**TTL**), and returned to the caller. To prevent stale data anomalies when mutations occur, our update and delete operations write to the primary database within an ACID transaction and subsequently execute an atomic cache eviction (`DEL key`) rather than updating the cache in-place, eliminating race conditions caused by concurrent writes. For critical read-heavy entities where database lookups are expensive, I implement **Cache Stampede protection** using probabilistic early expiration (such as the XFetch algorithm) or distributed mutex locks in Redis, ensuring that only one worker queries the database on a cache miss while other concurrent requests wait or consume slightly older cached data. Additionally, all keys are assigned randomized jitter on their TTLs to prevent massive simultaneous cache expirations. At Oscar, where insurance benefits, deductibles, and doctor rosters must be current, this strategy ensures millisecond read latencies while maintaining strict cache coherency with underlying transactional databases.
+
+---
+
+### 15. Fullstack engineering at Oscar spans both client-side React/TypeScript and backend Python/Go services. How do you design clean API contracts and schema boundaries between frontend and backend?
+
+Designing maintainable fullstack architectures requires establishing clean, type-safe API boundaries that decouple client development from backend implementation details while preventing runtime schema mismatches. In my fullstack projects at **Uber** and hackathon builds like **Travel Copilot**, I treat the API contract as the single source of truth between the client and server. On the backend, I leverage **FastAPI** with **Pydantic** in **Python** (or **TypeScript** with **Zod** in Node.js services) to define strict, validated request and response data models. These schemas automatically generate standardized **OpenAPI (Swagger)** JSON specifications upon every compilation or deployment. On the frontend, I utilize automated code-generation tooling, such as `openapi-typescript-codegen`, to parse the backend OpenAPI specification and automatically generate fully typed **TypeScript** interfaces, SDK client methods, and React Query hooks. This approach guarantees that any breaking change introduced in a backend endpoint—such as renaming a field or altering a type—is caught immediately at frontend compile time rather than manifesting as an unhandled runtime error in the browser. Furthermore, I structure API responses using consistent envelope schemas that include standardized payload, error, and metadata blocks. For complex domain operations like medical claims or appointment workflows, I design RESTful endpoints with idempotent request tokens (`Idempotency-Key` headers) to prevent duplicate processing on client retries. This contract-driven fullstack development model enables frontend and backend teams to build concurrently with total confidence in system interoperability.
+
+---
+
+### 16. Describe an instance where an unexpected production defect or outage occurred. How did you handle the incident, troubleshoot under pressure, and establish post-mortem safeguards?
+
+At **Dell Technologies**, shortly after a production release, our automated alerting system in **Datadog** triggered high-priority PagerDuty alerts indicating that transaction latency had spiked dramatically and API error rates on checkout services exceeded 5%. As the on-call engineer, my first priority was mitigating customer impact rather than trying to fix root causes in place. I immediately joined the incident bridge, assessed our monitoring telemetry, and identified that error rates coincided exactly with the deployment of a new order processing microservice version. Following our runbook, I initiated an immediate zero-downtime rollback to the previous stable release artifact via our **Git**-triggered CI/CD pipeline, which restored normal latencies and error rates within 8 minutes. Once the production environment was stabilized, I spearheaded the root cause investigation in a staging environment. By reviewing the application logs and thread dumps, I discovered that a recently merged pull request had introduced a synchronized database lock inside an asynchronous **Spring Boot** worker, causing massive connection pool exhaustion under concurrent thread contention. To fix the issue permanently, I refactored the routine to use non-blocking optimistic locking with database version columns. In our blameless post-mortem, I documented the incident timeline, root cause, and remediation steps. To ensure this failure could never recur, I introduced automated load-testing stages into our **GitHub Actions** CI pipeline that simulated peak production concurrency on staging environments before production deployments, and configured alerts on database connection pool saturation.
+
+---
+
+### 17. How do you build and maintain automated CI/CD pipelines and containerized infrastructure using Docker, Kubernetes, and AWS to achieve high deployment velocity and 99.5%+ uptime?
+
+Achieving both rapid deployment velocity and high service availability requires a fully automated, immutable infrastructure pipeline where every commit is deterministically built, tested, and rolled out. Across my roles at **Uber**, **Meta**, and **Tekainos**, I built and maintained cloud-native deployment pipelines using **Docker**, **Kubernetes**, and **AWS**. I containerized microservices using multi-stage Dockerfiles, which significantly reduced image sizes, eliminated unnecessary build tools from the final production images, and minimized attack surfaces. In our **GitHub Actions** CI workflows, every pull request triggered a rigorous suite of automated checks: static code analysis, linting, security vulnerability scanning with Trivy, unit tests, and integration tests running against containerized dependencies using Docker Compose. Once merged into the main branch, the pipeline automatically tagged a new semantic release, pushed the immutable image to **AWS Elastic Container Registry (ECR)**, and triggered a GitOps rollout via ArgoCD to our **Amazon EKS (Kubernetes)** clusters. In Kubernetes, I configured deployments with rolling update strategies, setting `maxSurge` and `maxUnavailable` parameters to guarantee zero downtime during version transitions. I also defined robust liveness and readiness probes, resource requests and limits to prevent noisy neighbor starvation, and horizontal pod autoscalers (**HPA**) driven by CPU and request throughput metrics. Paired with automated **CloudWatch** alerting and multi-Availability Zone redundancy, this cloud infrastructure consistently maintained 99.5%+ service uptime while enabling multiple seamless production deployments per week.
+
+---
+
+### 18. Oscar values engineers who propose, experiment, and iterate on both modern and legacy technologies. Tell me about a time you evaluated a novel technology and integrated it into production.
+
+At **Meta Reality Labs**, our team faced significant engineering overhead in testing and evaluating Vision-Language-Action (**VLA**) models across complex 3D virtual simulation environments. Our existing evaluation workflows relied on fragmented custom scripts that required engineers to manually set up scenario parameters, inspect logs, and execute tests, consuming dozens of engineering hours each sprint. I proposed experimenting with the newly introduced **Model Context Protocol (MCP)** combined with LLM tool-use orchestration to build an autonomous agentic testing framework. Because MCP was an emerging open standard, I took the initiative to build a prototype server in **FastAPI** and **Node.js** that wrapped our proprietary perception and simulation APIs into standardized MCP tools. I demonstrated to engineering leadership how an LLM agent, equipped with these tools, could autonomously inspect simulation scene trees, trigger environment actions, collect telemetry, and assert test conditions dynamically. The prototype was greenlit, and I hardened the MCP server for production by implementing schema validation, comprehensive error logging, and Redis caching. Integrating this novel protocol into our pipeline eliminated 70% of manual testing efforts and improved system reliability by 28%. Similarly, during the UC Berkeley AI Hackathon, I architected **Travel Copilot** using emerging technologies like Claude-Code, **Next.js**, and serverless **AWS Lambda** to orchestrate real-time travel APIs into personalized itineraries. I thrive on evaluating emerging technologies, separating practical value from hype, and pragmatically integrating them into production to solve real engineering bottlenecks.
+
+---
+
+### 19. How do you approach end-to-end testing, observability, and automated evaluation for complex distributed services and AI workflows?
+
+Ensuring the reliability of modern distributed applications and non-deterministic AI pipelines requires combining traditional testing pyramids with sophisticated runtime observability and automated evaluation frameworks. In my engineering work across **Uber**, **Meta**, and **Dell**, I implemented multi-tiered testing strategies. At the base, I write comprehensive unit tests with **PyTest** and **JUnit** to validate core business logic, domain models, and edge cases in complete isolation using mock objects. Above unit tests, I build integration tests that verify service interactions with live databases, message queues, and external APIs running inside lightweight **Docker** testcontainers. For fullstack applications, I utilize **Playwright** or **Cypress** to execute automated end-to-end browser journeys, validating critical user flows like query submissions, data filtering, and authentication. For AI and LLM workflows, where outputs are probabilistic, I establish automated evaluation pipelines that benchmark model responses against curated golden datasets, measuring precision, semantic retrieval recall, and tool-calling accuracy. On the observability front, I instrument all microservices with open-source telemetry standards (**OpenTelemetry**), propagating distributed trace IDs across HTTP headers and Kafka message metadata to track requests across service boundaries in **Jaeger** or **Datadog**. I also configure structured JSON logging and export Prometheus metrics for error rates, p95/p99 latencies, and queue depths. When an anomaly occurs, these unified traces, metrics, and logs allow us to pinpoint the exact failing component within minutes.
+
+---
+
+### 20. Where do you see the future of fullstack engineering and AI in consumer healthcare, and how do you plan to contribute as a Senior Engineer at Oscar?
+
+The future of fullstack engineering in healthcare lies in transforming healthcare platforms from passive administrative portals into proactive, intelligent care companions that remove friction for patients and providers alike. Historically, insurance software has been opaque and transactional, forcing members to navigate complex deductible terminology, out-of-network surprises, and delayed prior authorizations. As generative AI, intelligent tool orchestration, and modern reactive fullstack interfaces mature, we have the unprecedented opportunity to deliver real-time, personalized healthcare experiences. Intelligent triage assistants, powered by **MCP** servers and secure retrieval-augmented generation (**RAG**), can help members understand their benefits in plain English, locate top-tier in-network specialists within minutes, and automatically verify prescription coverage before they arrive at the pharmacy. As a Senior Fullstack Engineer at **Oscar Health**, I plan to contribute directly to this mission by applying my deep expertise in **TypeScript**, **Python**, distributed event-driven systems, and AI agent architectures. I will design resilient, consumer-facing interfaces that simplify complex clinical interactions, build high-throughput backend services that handle claims and eligibility data with sub-second latency, and mentor junior engineers in software craftsmanship and operational excellence. By combining rigorous distributed systems fundamentals with consumer-grade product empathy, I will help Oscar fulfill its vision of making health insurance intuitive, accessible, and human-centric for millions of members.
+
+---
+
+## Part 2: Top 15 Fullstack & Backend DSA Problems
+
+### Problem 1: Merge Overlapping Healthcare Coverage Intervals
+
+In health insurance platforms like Oscar, members frequently have multiple coverage periods, policies, or gap coverages that overlap in time. The task is to merge all overlapping or contiguous coverage date intervals so that the system can calculate uninterrupted active coverage windows without double-counting days. 
+
+To solve this problem cleanly, I first sort the input intervals based on their start dates in ascending order. Sorting ensures that any intervals that could potentially overlap are placed adjacent to one another in the sequence. Next, I iterate through the sorted intervals while maintaining a merged output list. For each interval, if the merged list is empty or if the start date of the current interval is strictly greater than the end date of the previous merged interval, there is no overlap, so I append the current interval directly to our list. However, if the current interval starts before or exactly when the previous interval ends, an overlap exists; I then merge them by updating the end date of the previous interval to be the maximum of its current end date and the current interval's end date. This single-pass greedy technique guarantees that all overlapping intervals are combined into optimal contiguous blocks.
+
+**Complexity:** The time complexity is O(N \log N) where N is the number of coverage intervals, dominated by the initial sorting step. The space complexity is O(N) to store the sorted array and return the merged intervals.
+
+```python
+from typing import List
+
+
+def merge_coverage_intervals(intervals: List[List[int]]) -> List[List[int]]:
+    # I first handle the base case where there are no intervals or only one interval
+    if not intervals or len(intervals) <= 1:
+        return intervals
+
+    # I sort the intervals based on their start date in ascending order
+    intervals.sort(key=lambda x: x[0])
+
+    merged_intervals: List[List[int]] = []
+
+    for current in intervals:
+        # If merged list is empty or current interval does not overlap with previous
+        if not merged_intervals or current[0] > merged_intervals[-1][1]:
+            # I append the new non-overlapping coverage interval directly
+            merged_intervals.append(current)
+        else:
+            # An overlap exists: I extend the end date of the previous interval
+            merged_intervals[-1][1] = max(merged_intervals[-1][1], current[1])
+
+    # I return the consolidated list of contiguous coverage windows
+    return merged_intervals
+
+
+# Verification example
+if __name__ == "__main__":
+    test_intervals = [[1, 4], [3, 6], [8, 10], [15, 18], [9, 12]]
+    print("Merged Intervals:", merge_coverage_intervals(test_intervals))
+    # Output: [[1, 6], [8, 12], [15, 18]]
+```
+
+---
+
+### Problem 2: Sliding Window Maximum Claims in a Time Window
+
+Insurance analytics services need to monitor the maximum claim payout requested within a rolling time window (e.g., maximum claim in any rolling k-day window) to detect fraudulent anomalies or abnormal billing spikes in real time.
+
+To find the maximum in every sliding window of size k in linear time, a naive scan of each window would take O(N \times k), which is too slow for high-throughput streaming claims. Instead, I use a monotonic decreasing deque (double-ended queue) to store the indices of the claims array. The deque maintains indices of elements such that the values corresponding to these indices are always in strictly descending order. For every new claim at index i, I first pop indices from the front of the deque that fall outside the current sliding window boundary (i - k). Next, I pop indices from the back of the deque whose corresponding claim amounts are less than or equal to the current claim amount, because they can never be the maximum in this or any future window that includes the current element. Then, I append the current index i to the back of the deque. Finally, once the index i is at least k - 1, the index at the front of the deque is guaranteed to be the maximum value in the current window, which I append to the result.
+
+**Complexity:** The time complexity is O(N) because each claim index is pushed and popped from the deque at most once. The space complexity is O(k) auxiliary space for the deque.
+
+```python
+from collections import deque
+from typing import List
+
+
+def max_sliding_claims(claims: List[int], k: int) -> List[int]:
+    # I check if the input array is valid and k is within bounds
+    if not claims or k <= 0:
+        return []
+    if k == 1:
+        return claims
+
+    # I maintain a deque storing indices of candidate maximums
+    dq = deque()
+    max_claims_result: List[int] = []
+
+    for i in range(len(claims)):
+        # I remove indices from the front that are outside the current window
+        if dq and dq[0] < i - k + 1:
+            dq.popleft()
+
+        # I remove indices from the back whose values are smaller than current claim
+        while dq and claims[dq[-1]] <= claims[i]:
+            dq.pop()
+
+        # I add current claim index to the deque
+        dq.append(i)
+
+        # Once our first window of size k is formed, the front index is our window maximum
+        if i >= k - 1:
+            max_claims_result.append(claims[dq[0]])
+
+    return max_claims_result
+
+
+# Verification example
+if __name__ == "__main__":
+    daily_claims = [120, 350, 200, 480, 420, 190, 600, 310]
+    print("Max claims per 3-day window:", max_sliding_claims(daily_claims, 3))
+    # Output: [350, 480, 480, 480, 600, 600]
+```
+
+---
+
+### Problem 3: LRU Cache for Member Eligibility Records
+
+In consumer healthcare platforms, member eligibility, deductible counters, and insurance benefit summaries are queried thousands of times per second. To protect downstream database services while maintaining predictable sub-millisecond read latencies, we need an in-memory Least Recently Used (LRU) Cache that supports O(1) lookups, insertions, and evictions.
+
+To achieve strict O(1) time complexity for both `get` and `put` operations, I combine a hash map with a custom doubly linked list. The hash map stores keys mapped to their corresponding doubly linked list nodes, enabling constant-time key lookups. The doubly linked list maintains the temporal access order of the member records: the most recently accessed node is placed at the head, and the least recently accessed node resides at the tail. I initialize the list with dummy head and tail sentinel nodes to eliminate null pointer checks during node additions and removals. When `get` is called, if the key exists, I find the node via the hash map, detach it from its current position in the linked list, and move it directly behind the dummy head before returning its value. When `put` is called, if the key already exists, I update the node's value and move it to the head. If the key is new and the cache has reached its maximum capacity, I evict the node immediately preceding the dummy tail, delete its key from the hash map, and insert the new node at the head.
+
+**Complexity:** The time complexity is O(1) for both `get` and `put` operations. The space complexity is O(C) where C is the maximum configured capacity of the cache.
+
+```python
+from typing import Dict, Optional
+
+
+class DoublyLinkedListNode:
+
+    def __init__(self, key: int = 0, val: int = 0):
+        self.key = key
+        self.val = val
+        self.prev: Optional["DoublyLinkedListNode"] = None
+        self.next: Optional["DoublyLinkedListNode"] = None
+
+
+class LRUMemberCache:
+
+    def __init__(self, capacity: int):
+        self.capacity = capacity
+        # I map member_id to its DoublyLinkedListNode for O(1) lookups
+        self.lookup: Dict[int, DoublyLinkedListNode] = {}
+        # I establish dummy head and tail sentinel nodes to simplify pointer operations
+        self.head = DoublyLinkedListNode()
+        self.tail = DoublyLinkedListNode()
+        self.head.next = self.tail
+        self.tail.prev = self.head
+
+    def _remove_node(self, node: DoublyLinkedListNode) -> None:
+        # I detach the node from its current position in the doubly linked list
+        prev_node = node.prev
+        next_node = node.next
+        if prev_node and next_node:
+            prev_node.next = next_node
+            next_node.prev = prev_node
+
+    def _add_to_front(self, node: DoublyLinkedListNode) -> None:
+        # I insert the node immediately following the dummy head
+        node.next = self.head.next
+        node.prev = self.head
+        if self.head.next:
+            self.head.next.prev = node
+        self.head.next = node
+
+    def get(self, member_id: int) -> int:
+        if member_id not in self.lookup:
+            return -1  # Cache miss
+        node = self.lookup[member_id]
+        # I mark the record as recently accessed by moving it to the front
+        self._remove_node(node)
+        self._add_to_front(node)
+        return node.val
+
+    def put(self, member_id: int, eligibility_code: int) -> None:
+        if member_id in self.lookup:
+            node = self.lookup[member_id]
+            node.val = eligibility_code
+            self._remove_node(node)
+            self._add_to_front(node)
+        else:
+            # If capacity is exceeded, I evict the least recently used record at the tail
+            if len(self.lookup) >= self.capacity:
+                lru_node = self.tail.prev
+                if lru_node and lru_node != self.head:
+                    self._remove_node(lru_node)
+                    del self.lookup[lru_node.key]
+
+            # I allocate and insert the new eligibility node at the head
+            new_node = DoublyLinkedListNode(member_id, eligibility_code)
+            self.lookup[member_id] = new_node
+            self._add_to_front(new_node)
+
+
+# Verification example
+if __name__ == "__main__":
+    cache = LRUMemberCache(2)
+    cache.put(101, 1)  # Member 101 has Plan 1
+    cache.put(102, 2)  # Member 102 has Plan 2
+    print("Get 101:", cache.get(101))  # Returns 1 (moves 101 to MRU)
+    cache.put(103, 3)  # Evicts member 102 (LRU)
+    print("Get 102:", cache.get(102))  # Returns -1 (evicted)
+    print("Get 103:", cache.get(103))  # Returns 3
+```
+
+---
+
+### Problem 4: Medical Provider Directory Trie with Prefix Autocomplete
+
+When Oscar members search for doctors, medical procedures, or specialties in the search bar, the client application must display instantaneous prefix autocomplete suggestions as they type.
+
+To implement high-speed prefix matching, I build a Trie (prefix tree) data structure. Each node in the Trie represents a character and contains a dictionary of child nodes, a boolean flag indicating if the node marks the end of a valid word, and a cached list of the top autocomplete suggestions sharing that prefix. By pre-caching the top suggestions (e.g., top 3 alphabetically or by popularity rank) directly on each Trie node during word insertion, I eliminate the need to run an expensive depth-first search (DFS) traversal over subtrees during real-time user keystrokes. When a user queries a prefix string, I traverse down the tree character by character. If at any point a character in the prefix does not exist in the current node's children, I immediately return an empty list. If the entire prefix matches, I directly return the pre-cached list of suggestions stored at the final node in O(L) time, where L is the length of the search prefix.
+
+**Complexity:** The search time complexity is O(L) where L is the prefix length. The insertion time complexity is O(M) where M is the word length. The space complexity is O(N \times M) where N is the number of terms and M is their average length.
+
+```python
+from typing import Dict, List
+
+
+class TrieNode:
+
+    def __init__(self):
+        self.children: Dict[str, "TrieNode"] = {}
+        self.is_end_of_word: bool = False
+        # I cache the top matching terms directly at each node for instant O(L) retrieval
+        self.top_suggestions: List[str] = []
+
+
+class ProviderDirectoryTrie:
+
+    def __init__(self):
+        self.root = TrieNode()
+
+    def insert(self, term: str) -> None:
+        curr = self.root
+        lower_term = term.lower()
+        for char in lower_term:
+            if char not in curr.children:
+                curr.children[char] = TrieNode()
+            curr = curr.children[char]
+            # I maintain up to 3 top suggestions sorted alphabetically at each prefix node
+            if lower_term not in curr.top_suggestions:
+                curr.top_suggestions.append(lower_term)
+                curr.top_suggestions.sort()
+                if len(curr.top_suggestions) > 3:
+                    curr.top_suggestions.pop()
+        curr.is_end_of_word = True
+
+    def autocomplete(self, prefix: str) -> List[str]:
+        curr = self.root
+        lower_prefix = prefix.lower()
+        # I walk the Trie matching each character of the user's input prefix
+        for char in lower_prefix:
+            if char not in curr.children:
+                return []  # Prefix not found in directory
+            curr = curr.children[char]
+        # I return the pre-cached suggestions instantaneously
+        return curr.top_suggestions
+
+
+# Verification example
+if __name__ == "__main__":
+    trie = ProviderDirectoryTrie()
+    for provider in [
+        "Cardiologist",
+        "Cardiology",
+        "Cardiovascular",
+        "Dermatologist",
+        "Dentist",
+    ]:
+        trie.insert(provider)
+
+    print("Autocomplete 'card':", trie.autocomplete("card"))
+    # Output: ['cardiologist', 'cardiology', 'cardiovascular']
+    print("Autocomplete 'den':", trie.autocomplete("den"))
+    # Output: ['dentist']
+```
+
+---
+
+### Problem 5: Clinical Pathway Dependency Validation (Cycle Detection)
+
+In complex clinical care management, patient care pathways consist of prerequisite diagnostic tests, doctor evaluations, and medication authorizations. A corrupted or circular dependency (e.g., Test A requires Test B, which requires Test C, which requires Test A) creates deadlocks where a patient can never receive care.
+
+To detect cycles in dependency graphs and determine if a valid ordering of clinical steps exists, I model the problem as a Directed Acyclic Graph (DAG) and use Kahn's Algorithm for Topological Sorting (Breadth-First Search). First, I calculate the in-degree (number of incoming dependency edges) for every clinical task, and build an adjacency list representing task prerequisites. Second, I initialize a queue and enqueue all tasks that have an in-degree of zero, meaning they have no prerequisites and can be performed immediately. Third, I pop tasks from the queue one by one, incrementing our processed task counter, and iterate over all dependent tasks in the adjacency list, decrementing their in-degree by one. If a dependent task's in-degree drops to zero, all its prerequisites are satisfied, and I enqueue it. Finally, if the count of processed tasks equals the total number of tasks, a valid topological order exists with no cycles; otherwise, a circular dependency cycle exists, and the pathway must be rejected.
+
+**Complexity:** The time complexity is O(V + E) where V is the number of clinical tasks and E is the number of dependency prerequisites. The space complexity is O(V + E) to store the graph adjacency list and in-degree counters.
+
+```python
+from collections import deque
+from typing import Dict, List
+
+
+def validate_clinical_pathway(
+    num_tasks: int, prerequisites: List[List[int]]
+) -> bool:
+    # I initialize in-degree counters and adjacency lists for all clinical tasks
+    in_degree = [0] * num_tasks
+    adjacency_list: Dict[int, List[int]] = {i: [] for i in range(num_tasks)}
+
+    # I populate the graph: prerequisite [u, v] means task v must be completed before u
+    for dest, src in prerequisites:
+        adjacency_list[src].append(dest)
+        in_degree[dest] += 1
+
+    # I enqueue all tasks that have zero dependencies
+    queue = deque([task for task in range(num_tasks) if in_degree[task] == 0])
+    processed_count = 0
+
+    while queue:
+        task = queue.popleft()
+        processed_count += 1
+
+        # I decrement in-degrees for dependent tasks whose prerequisite has been satisfied
+        for dependent_task in adjacency_list[task]:
+            in_degree[dependent_task] -= 1
+            if in_degree[dependent_task] == 0:
+                queue.append(dependent_task)
+
+    # If processed count equals total tasks, no cyclic dependencies exist
+    return processed_count == num_tasks
+
+
+# Verification example
+if __name__ == "__main__":
+    # 4 tasks: task 1 requires 0; task 2 requires 1; task 3 requires 2 (Valid DAG)
+    valid_prereqs = [[1, 0], [2, 1], [3, 2]]
+    print(
+        "Is pathway valid?", validate_clinical_pathway(4, valid_prereqs)
+    )  # True
+
+    # Cyclic dependency: 0 requires 1; 1 requires 0 (Invalid Deadlock)
+    cyclic_prereqs = [[0, 1], [1, 0]]
+    print(
+        "Is pathway valid?", validate_clinical_pathway(2, cyclic_prereqs)
+    )  # False
+```
+
+---
+
+### Problem 6: Doctor Appointment Available Slot Finder
+
+When an Oscar member books an appointment with a primary care physician, the booking engine must inspect the doctor's working hours and existing booked appointments to compute all available free time slots of a requested duration (e.g., 30 minutes).
+
+To solve this problem, I use an interval sweep approach. I am given the doctor's shift window (e.g., from `shift_start` to `shift_end`), a list of existing booked appointment intervals, and the desired appointment duration. First, I sort the booked appointments by their start times. I maintain a running timestamp pointer, initialized to `shift_start`. I iterate through each booked appointment interval: if the start time of the booked appointment is greater than my current pointer, a gap exists. I check if the duration of this gap (`appointment.start - pointer`) is greater than or equal to the requested slot duration; if so, I record an available slot starting at the pointer and ending at `pointer + duration`. I then advance my pointer to be the maximum of its current value and the end time of the booked appointment, effectively skipping over busy time. Finally, after inspecting all booked appointments, if the remaining time between the pointer and `shift_end` is at least the slot duration, I record the final available slot.
+
+**Complexity:** The time complexity is O(M \log M) where M is the number of booked appointments, driven by the sorting step. The space complexity is O(M) to store the output slots.
+
+```python
+from typing import List
+
+
+def find_available_slots(
+    booked_slots: List[List[int]],
+    shift_start: int,
+    shift_end: int,
+    duration: int,
+) -> List[List[int]]:
+    # I sort the existing bookings by their start time
+    booked_slots.sort(key=lambda x: x[0])
+
+    available_slots: List[List[int]] = []
+    current_time = shift_start
+
+    for start, end in booked_slots:
+        # I check if there is sufficient gap between current time and next booking
+        if start - current_time >= duration:
+            available_slots.append([current_time, current_time + duration])
+        # I advance current time to past the end of the booked appointment
+        current_time = max(current_time, end)
+
+    # I check if any available slot remains between last booking and end of shift
+    if shift_end - current_time >= duration:
+        available_slots.append([current_time, current_time + duration])
+
+    return available_slots
+
+
+# Verification example
+if __name__ == "__main__":
+    # Doctor shift: 540 (9:00 AM) to 1020 (5:00 PM), 30 min duration
+    existing_bookings = [[600, 660], [720, 780], [840, 900]]
+    slots = find_available_slots(existing_bookings, 540, 1020, 30)
+    print("Available 30-min slots:", slots)
+    # Output: [[540, 570], [660, 690], [780, 810], [900, 930]]
+```
+
+---
+
+### Problem 7: K Closest In-Network Doctors to a Member's Location
+
+When members need urgent care, the Oscar mobile app locates the K closest in-network healthcare providers based on Euclidean or Haversine distance from the member's current GPS coordinates.
+
+To efficiently identify the K nearest doctors without sorting the entire provider database of hundreds of thousands of entries, I use a Max-Heap of size K. For each provider, I calculate the squared Euclidean distance (x_1 - x_2)^2 + (y_1 - y_2)^2 from the member's location (omitting the square root since distance is monotonically increasing). I push tuples of `(-distance, provider_id, coordinates)` into the heap. Because Python's `heapq` module provides a Min-Heap, storing the negative distance effectively turns it into a Max-Heap, meaning the provider with the largest distance among the top K candidates stays at the root. When the heap size exceeds K, I pop the root element, discarding the farthest doctor. Once all candidate doctors have been evaluated, the heap contains the exact K closest doctors.
+
+**Complexity:** The time complexity is O(N \log K) where N is the total number of providers and K is the desired result count, which is substantially faster than O(N \log N) full sorting when K is much smaller than N. The space complexity is O(K) to maintain the heap elements.
+
+```python
+import heapq
+from typing import List, Tuple
+
+
+def find_k_closest_doctors(
+    doctors: List[Tuple[str, int, int]], member_loc: Tuple[int, int], k: int
+) -> List[str]:
+    # I maintain a max-heap of size k using negative distances
+    max_heap = []
+    mx, my = member_loc
+
+    for doc_id, x, y in doctors:
+        # I compute squared Euclidean distance to avoid floating-point sqrt overhead
+        dist_sq = (x - mx) ** 2 + (y - my) ** 2
+
+        # I push (-dist, doc_id) so the farthest doctor sits at the heap root
+        heapq.heappush(max_heap, (-dist_sq, doc_id))
+
+        # If heap exceeds k elements, I discard the farthest candidate
+        if len(max_heap) > k:
+            heapq.heappop(max_heap)
+
+    # I extract the k closest doctor IDs from the heap
+    return [doc_id for (_, doc_id) in max_heap]
+
+
+# Verification example
+if __name__ == "__main__":
+    provider_coords = [
+        ("Dr. Smith", 1, 2),
+        ("Dr. Taylor", 5, 8),
+        ("Dr. Patel", 2, 1),
+        ("Dr. Davis", 7, 9),
+    ]
+    member = (0, 0)
+    print("2 Closest Doctors:", find_k_closest_doctors(provider_coords, member, 2))
+    # Output: ['Dr. Patel', 'Dr. Smith']
+```
+
+---
+
+### Problem 8: Sliding Window Rate Limiter for FHIR Healthcare APIs
+
+Oscar's public-facing FHIR APIs receive bursts of requests from third-party healthcare systems. To protect backend microservices from denial-of-service degradation and enforce plan quotas, we must implement an in-memory sliding window rate limiter that allows at most M requests within a rolling window of W seconds per API key.
+
+To implement the sliding window log rate limiter, I maintain a hash map where each API key maps to a deque of millisecond timestamps representing previously accepted requests. When a new request arrives with a timestamp `current_time`, I retrieve the key's timestamp deque. I then pop all timestamps from the left of the deque that are older than `current_time - window_size`, as they have expired and no longer count toward the current rate limit window. After cleaning up expired records, I evaluate the size of the deque: if the number of remaining timestamps is strictly less than the maximum allowed limit, the request is permitted; I append `current_time` to the deque and return `True`. If the deque size has reached the limit, the rate limit has been exceeded, and I return `False` without appending the timestamp.
+
+**Complexity:** The amortized time complexity per request is O(1) because each timestamp is pushed and popped at most once. The space complexity is O(U \times M) where U is the number of active API keys and M is the max allowed requests per window.
+
+```python
+from collections import deque
+from typing import Dict
+
+
+class SlidingWindowRateLimiter:
+
+    def __init__(self, max_requests: int, window_seconds: int):
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        # I map each api_key to a deque of request timestamps
+        self.client_request_logs: Dict[str, deque] = {}
+
+    def allow_request(self, api_key: str, current_time: int) -> bool:
+        if api_key not in self.client_request_logs:
+            self.client_request_logs[api_key] = deque()
+
+        timestamps = self.client_request_logs[api_key]
+        expiry_threshold = current_time - self.window_seconds
+
+        # I evict timestamps that fall outside our sliding window
+        while timestamps and timestamps[0] <= expiry_threshold:
+            timestamps.popleft()
+
+        # I check if the client has available capacity within this window
+        if len(timestamps) < self.max_requests:
+            timestamps.append(current_time)
+            return True
+
+        # Capacity exhausted; reject request
+        return False
+
+
+# Verification example
+if __name__ == "__main__":
+    limiter = SlidingWindowRateLimiter(max_requests=3, window_seconds=10)
+    key = "oscar_partner_app"
+    print(limiter.allow_request(key, 1))  # True
+    print(limiter.allow_request(key, 3))  # True
+    print(limiter.allow_request(key, 5))  # True
+    print(limiter.allow_request(key, 7))  # False (Limit of 3 exceeded)
+    print(limiter.allow_request(key, 12))  # True (Timestamp 1 has expired)
+```
+
+---
+
+### Problem 9: Claims Adjudication Processing Sequence (Topological Sort)
+
+When insurance claims are submitted, they undergo multiple dependent adjudication stages (e.g., Member Eligibility Verification, Co-pay Deduction, Fraud Check, Clinical Policy Check, Payment Authorization). Certain steps cannot proceed until prior steps have completed successfully.
+
+To determine an executable sequence of processing steps, I implement Topological Sort using Depth-First Search (DFS) with three-state node coloring: `0 = Unvisited`, `1 = Visiting (currently in DFS call stack)`, and `2 = Visited (fully processed)`. For each step in the graph, if it is unvisited, I initiate a recursive DFS traversal. If I encounter a neighbor node that is currently in the `Visiting` state, a back-edge exists, indicating a circular dependency cycle, so I immediately return an empty list. Once all downstream neighbors of a step have been successfully visited, I mark the current node as `Visited` and append it to our execution order list. After completing the search across all components, I reverse the list to obtain the correct dependency execution order.
+
+**Complexity:** The time complexity is O(V + E) where V is the number of adjudication stages and E is the number of prerequisite edges. The space complexity is O(V + E) for the recursion stack and adjacency structures.
+
+```python
+from typing import Dict, List
+
+
+def find_claims_adjudication_order(
+    num_stages: int, prerequisites: List[List[int]]
+) -> List[int]:
+    adj_list: Dict[int, List[int]] = {i: [] for i in range(num_stages)}
+    for dest, src in prerequisites:
+        adj_list[src].append(dest)
+
+    # 0 = unvisited, 1 = visiting, 2 = visited
+    visited_state = [0] * num_stages
+    order: List[int] = []
+    has_cycle = False
+
+    def dfs(stage: int) -> bool:
+        nonlocal has_cycle
+        if has_cycle:
+            return False
+        visited_state[stage] = 1  # Mark as visiting
+
+        for neighbor in adj_list[stage]:
+            if visited_state[neighbor] == 1:
+                has_cycle = True
+                return False
+            elif visited_state[neighbor] == 0:
+                dfs(neighbor)
+
+        visited_state[stage] = 2  # Mark as fully processed
+        order.append(stage)
+        return True
+
+    for i in range(num_stages):
+        if visited_state[i] == 0:
+            dfs(i)
+            if has_cycle:
+                return []
+
+    # I reverse the post-order traversal to produce the correct execution order
+    return order[::-1]
+
+
+# Verification example
+if __name__ == "__main__":
+    # Stage 0 -> 1 -> 3; Stage 0 -> 2 -> 3
+    rules = [[1, 0], [2, 0], [3, 1], [3, 2]]
+    print(
+        "Adjudication Order:", find_claims_adjudication_order(4, rules)
+    )  # [0, 2, 1, 3] or [0, 1, 2, 3]
+```
+
+---
+
+### Problem 10: Decode Nested Clinical JSON / XML Tag Hierarchy
+
+Clinical documents like HL7 CDA, FHIR XML, and proprietary claim payloads contain heavily nested tags and brackets. To validate payload syntax before ingestion into downstream relational tables, we must verify that all opening tags match their closing tags in strict hierarchical order.
+
+To validate nested structural tags, I use a Stack. As I iterate through the string characters, when I encounter an opening bracket opening parenthesis, bracket, or brace, I push it onto the stack. When I encounter a closing bracket closing parenthesis, bracket, or brace, I first check whether the stack is empty; if it is, there is an unmatched closing tag, so the payload is invalid. Otherwise, I pop the top element from the stack and verify that it matches the corresponding opening symbol using a lookup dictionary. Finally, after scanning the entire text payload, if the stack is completely empty, all nested tags were opened and closed in correct balanced order.
+
+**Complexity:** The time complexity is O(N) where N is the character length of the payload. The space complexity is O(N) auxiliary space for the stack in the worst case.
+
+```python
+def is_valid_clinical_payload(payload: str) -> bool:
+    stack = []
+    matching_pairs = {")": "(", "]": "[", "}": "{"}
+
+    for char in payload:
+        # I push opening brackets onto the stack
+        if char in matching_pairs.values():
+            stack.append(char)
+        # When encountering a closing bracket, I assert the top of stack matches
+        elif char in matching_pairs:
+            if not stack or stack[-1] != matching_pairs[char]:
+                return False
+            stack.pop()
+
+    # The payload is valid only if every opened bracket was closed
+    return len(stack) == 0
+
+
+# Verification example
+if __name__ == "__main__":
+    print(is_valid_clinical_payload("{claims: [id: (837)]}"))  # True
+    print(is_valid_clinical_payload("{claims: [id: (837]}"))  # False (mismatch)
+```
+
+---
+
+### Problem 11: Longest Consecutive Clinical Treatment Sequence
+
+Given an unsorted array of treatment day numbers or appointment visit indices, we need to determine the length of the longest consecutive sequence of days a member received medical care.
+
+A brute-force sort would take O(N \log N) time, but we can solve this in linear O(N) time using a Hash Set. First, I insert all day numbers into a hash set for O(1) presence checks. Then, I iterate through each number in the set. To ensure we only start counting from the beginning of a streak, I check if `num - 1` is in the set; if it is, `num` cannot be the start of a sequence, so I skip it. If `num - 1` is not present, `num` is the first element of a potential sequence; I then increment a running counter and check for `num + 1`, `num + 2`, etc., until the sequence breaks. I record the maximum streak length encountered across all elements.
+
+**Complexity:** The time complexity is O(N) because each number is visited at most twice (once in the outer loop, and once during sequence extension). The space complexity is O(N) to store the hash set.
+
+```python
+from typing import List
+
+
+def longest_consecutive_treatment_days(days: List[int]) -> int:
+    if not days:
+        return 0
+
+    # I place all treatment day numbers into a set for O(1) membership checks
+    day_set = set(days)
+    longest_streak = 0
+
+    for day in day_set:
+        # I only begin counting if 'day' is the absolute beginning of a consecutive streak
+        if day - 1 not in day_set:
+            current_day = day
+            current_streak = 1
+
+            # I expand the sequence as long as subsequent consecutive days exist
+            while current_day + 1 in day_set:
+                current_day += 1
+                current_streak += 1
+
+            longest_streak = max(longest_streak, current_streak)
+
+    return longest_streak
+
+
+# Verification example
+if __name__ == "__main__":
+    visit_days = [100, 4, 200, 1, 3, 2]
+    print(
+        "Longest consecutive days:",
+        longest_consecutive_treatment_days(visit_days),
+    )
+    # Output: 4 (sequence: 1, 2, 3, 4)
+```
+
+---
+
+### Problem 12: Binary Search on Continuous Care Timeline
+
+Electronic Health Record (EHR) systems log member vitals (e.g., blood pressure, heart rate) ordered by timestamps. When a doctor requests a patient's vitals at a specific point in time, the system must perform a binary search to find the latest recorded vital on or before that exact timestamp.
+
+Because the vitals are stored in an array sorted chronologically by timestamp, I can locate the target entry using Binary Search in logarithmic time rather than scanning linearly. I maintain two pointers, `low` and `high`. In each iteration, I compute the midpoint index `mid`. If the timestamp at `mid` is less than or equal to the target timestamp, it is a valid candidate; I record it as my best match and move `low = mid + 1` to search for an even closer candidate further to the right. If the timestamp at `mid` is strictly greater than the target timestamp, it occurred after the query time, so I search the left half by moving `high = mid - 1`.
+
+**Complexity:** The time complexity is O(\log N) where N is the number of recorded vital entries. The space complexity is O(1) auxiliary space.
+
+```python
+from typing import List, Optional, Tuple
+
+
+def get_latest_vital_before_timestamp(
+    vitals: List[Tuple[int, float]], target_time: int
+) -> Optional[float]:
+    low = 0
+    high = len(vitals) - 1
+    best_match_val: Optional[float] = None
+
+    while low <= high:
+        mid = (low + high) // 2
+        timestamp, value = vitals[mid]
+
+        # If recorded vital occurred on or before target time, it is a candidate
+        if timestamp <= target_time:
+            best_match_val = value
+            # I continue searching right to see if a later valid timestamp exists
+            low = mid + 1
+        else:
+            # Vital occurred in the future relative to target time
+            high = mid - 1
+
+    return best_match_val
+
+
+# Verification example
+if __name__ == "__main__":
+    # Pairs of (timestamp_in_epoch, heart_rate)
+    patient_vitals = [(10, 72.0), (20, 75.5), (35, 80.0), (50, 78.2)]
+    print("Vital at t=25:", get_latest_vital_before_timestamp(patient_vitals, 25))
+    # Output: 75.5 (latest measurement before or at 25)
+```
+
+---
+
+### Problem 13: Minimum Cost Health Plan Deductible Coverage (Coin Change DP)
+
+When designing insurance plans, an optimization algorithm computes the minimum number of benefit package tiers or subsidies required to satisfy a specific out-of-pocket target.
+
+This problem maps directly to the Minimum Coin Change Dynamic Programming problem. I define a dynamic programming array `dp` of size `target + 1`, where `dp[i]` represents the minimum number of tiers needed to sum exactly to amount `i`. I initialize all entries to infinity, except `dp[0] = 0` (since zero cost requires zero tiers). I iterate from 1 up to `target`; for each amount `i`, I inspect every available tier value `t`. If `i - t >= 0`, I transition state via `dp[i] = min(dp[i], dp[i - t] + 1)`. If `dp[target]` remains infinity after evaluating all amounts, the target cannot be formed with the available tiers, and I return `-1`.
+
+**Complexity:** The time complexity is O(T \times C) where T is the target amount and C is the number of tier values. The space complexity is O(T) to store the DP table.
+
+```python
+from typing import List
+
+
+def min_benefit_tiers_for_target(tiers: List[int], target: int) -> int:
+    # I initialize the DP table with infinity
+    dp = [float("inf")] * (target + 1)
+    dp[0] = 0  # Base case: 0 amount requires 0 tiers
+
+    for i in range(1, target + 1):
+        for tier in tiers:
+            if i - tier >= 0:
+                dp[i] = min(dp[i], dp[i - tier] + 1)
+
+    return int(dp[target]) if dp[target] != float("inf") else -1
+
+
+# Verification example
+if __name__ == "__main__":
+    available_subsidies = [25, 50, 100]
+    print(
+        "Min tiers for 275:",
+        min_benefit_tiers_for_target(available_subsidies, 275),
+    )
+    # Output: 4 (100 + 100 + 50 + 25)
+```
+
+---
+
+### Problem 14: Trapping Rainwater / Medical Fluid Storage Capacity
+
+In biomedical sensor monitoring, wearable diagnostic devices measure fluid accumulation across cellular membrane chambers. Given an elevation map representing barrier heights, we must compute the total volume of fluid trapped between barriers.
+
+To compute trapped fluid volume in linear time and constant space, I use the Two-Pointer technique. I place a `left` pointer at index 0 and a `right` pointer at `len(height) - 1`, maintaining `left_max` and `right_max` variables. At each step, if `height[left] is less than height[right]`, the bottleneck is on the left side: if `height[left] is greater than or equal to left_max`, I update `left_max`; otherwise, the fluid trapped above index `left` is `left_max - height[left]`, which I add to our total volume, and advance `left += 1`. Conversely, if `height[right] is less than or equal to height[left]`, the bottleneck is on the right: if `height[right] is greater than or equal to right_max`, I update `right_max`; otherwise, the trapped fluid is `right_max - height[right]`, and I decrement `right -= 1`.
+
+**Complexity:** The time complexity is O(N) with a single pass over the elevation array. The space complexity is O(1) auxiliary memory.
+
+```python
+from typing import List
+
+
+def calculate_trapped_fluid(heights: List[int]) -> int:
+    if not heights:
+        return 0
+
+    left = 0
+    right = len(heights) - 1
+    left_max = 0
+    right_max = 0
+    total_fluid = 0
+
+    while left < right:
+        if heights[left] < heights[right]:
+            if heights[left] >= left_max:
+                left_max = heights[left]
+            else:
+                total_fluid += left_max - heights[left]
+            left += 1
+        else:
+            if heights[right] >= right_max:
+                right_max = heights[right]
+            else:
+                total_fluid += right_max - heights[right]
+            right -= 1
+
+    return total_fluid
+
+
+# Verification example
+if __name__ == "__main__":
+    chamber_barriers = [0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1]
+    print(
+        "Total trapped fluid units:", calculate_trapped_fluid(chamber_barriers)
+    )
+    # Output: 6
+```
+
+---
+
+### Problem 15: Subarray Sum Equals Target Healthcare Copay
+
+Financial reconciliation systems at Oscar need to find the total count of continuous billing line items whose sum equals a specified member co-pay target.
+
+To solve this in linear time without checking all O(N^2) subarrays, I use a Prefix Sum combined with a Hash Map. As I iterate through the billing amounts, I maintain a running `current_sum`. The sum of any subarray between indices j and i is equal to `prefix_sum[i] - prefix_sum[j]`. Therefore, if `current_sum - target` exists in our hash map, it means there are prefix subarrays ending earlier that, when removed from the current sum, yield exactly the target amount. I initialize the hash map with `initial zero count` to account for subarrays starting at index 0. For each element, I add the occurrences of `current_sum - target` found in our map to our answer, and increment the frequency of `current_sum` in the map.
+
+**Complexity:** The time complexity is O(N) because the array is traversed once with O(1) hash map operations. The space complexity is O(N) to store the prefix sum frequencies.
+
+```python
+from typing import Dict, List
+
+
+def count_subarrays_matching_copay(claims: List[int], target_copay: int) -> int:
+    # I map prefix_sum to the frequency of its occurrence
+    prefix_frequencies: Dict[int, int] = {0: 1}
+    current_sum = 0
+    match_count = 0
+
+    for amount in claims:
+        current_sum += amount
+        needed_prefix = current_sum - target_copay
+
+        # If needed_prefix was seen before, each occurrence forms a valid subarray
+        if needed_prefix in prefix_frequencies:
+            match_count += prefix_frequencies[needed_prefix]
+
+        # I record the current prefix sum frequency
+        prefix_frequencies[current_sum] = (
+            prefix_frequencies.get(current_sum, 0) + 1
+        )
+
+    return match_count
+
+
+# Verification example
+if __name__ == "__main__":
+    billing_items = [15, 20, 35, 10, 25, 20]
+    print(
+        "Subarrays matching 55:",
+        count_subarrays_matching_copay(billing_items, 55),
+    )
+    # Output: 2 (subarrays: [20, 35] and [35, 10, 25] or [10, 25, 20])
+```
+
+---
+
+## Part 3: System Design — Master Framework & Top 10 Healthcare Designs
+
+### Master System Design Interview Framework (HLD vs LLD)
+
+System design interviews for senior fullstack and backend roles at technology companies like Oscar assess your ability to make structured trade-offs under scale, ambiguity, and regulatory constraints. System design evaluates two distinct flavors: **High-Level Design (HLD)** and **Low-Level Design (LLD)**. HLD focuses on macro architecture across distributed clusters—evaluating load balancers, caching hierarchies, messaging queues, database partitioning, and CAP theorem trade-offs. LLD, by contrast, focuses on micro-level software craftsmanship—evaluating object-oriented domain modeling, SOLID principles, design patterns (Strategy, Factory, Observer, Decorator), thread-safety, and API extensibility within a single codebase.
+
+To excel in any HLD interview, you must follow a disciplined, repeatable 6-step framework:
+1. **Clarify Requirements (5 min):** Proactively identify functional requirements (3-4 core use cases) and non-functional requirements (throughput QPS, p99 latency SLAs, availability vs consistency, HIPAA security, data retention). Never jump straight to technology names without clarifying constraints.
+2. **Back-of-the-Envelope Estimation (5 min):** Calculate expected traffic (read vs write QPS), peak load multipliers, storage requirements over 5 years, and network bandwidth. These calculations justify every architectural decision you introduce later.
+3. **Define API Contracts (2-3 min):** Establish clean REST or gRPC endpoints for the core functional requirements, specifying parameters, headers (such as idempotency keys), and response envelopes.
+4. **High-Level Architecture (10-15 min):** Construct the end-to-end data flow: Client Application -> API Gateway -> Application Microservices -> Distributed Caching -> Primary Databases -> Asynchronous Event Queues. Walk through how each component fulfills the functional use cases.
+5. **Deep Dive (15-20 min):** Drill into specific technical challenges directed by the interviewer, such as distributed locking, cache stampede prevention, data partitioning strategies, idempotency, or fault tolerance during upstream partner outages.
+6. **Bottlenecks and Trade-offs (5 min):** Identify single points of failure, hot partition keys, trade-offs made between availability and consistency (CAP theorem), and monitoring safeguards.
+
+---
+
+### System Design 1: Member Care Navigation & Telehealth Platform (HLD)
+
+![Member Care Navigation and Telehealth Platform](/ashutosh_telehealth_platform.jpg)
+
+Let us examine how to architect a modern Member Care Navigation and Telehealth Consultation Platform for Oscar Health, enabling members to find primary care providers, schedule appointments, and conduct real-time secure video/audio consultations. For functional requirements, the system must allow members to search for available doctors, book video visits, establish low-latency WebRTC telehealth sessions, and exchange encrypted consultation notes with physicians. For non-functional requirements, the platform must guarantee 99.99% system availability, maintain end-to-end video roundtrip latency under 150 milliseconds, handle 10,000 concurrent video sessions during peak hours, and maintain strict HIPAA compliance with zero persistence of unencrypted Protected Health Information.
+
+The core entities comprise the Member profile, Provider profile, Appointment booking, Consultation Session, and Clinical Note record. For the public API design, we expose `POST /v1/appointments/book` with an idempotency key to prevent double-booking, `GET /v1/telehealth/session/:session_id/token` to issue secure WebRTC connection credentials, and `POST /v1/consultations/:session_id/notes` to persist doctor clinical summaries. The data flow begins when a member initiates a telehealth call from the **React** and **TypeScript** frontend application via the **API Gateway**. The gateway authenticates the request using OAuth2 tokens and invokes the Appointment Service to verify slot status. The Telehealth Consultation Service then coordinates with a dedicated **WebRTC Media Server** (such as Janus or LiveKit) to establish peer-to-peer audio/video signaling. Concurrently, session state updates are published to an **Apache Kafka** event stream to notify the provider and trigger automated appointment reminders.
+
+For the high-level design, client traffic is routed through an **AWS Application Load Balancer** to containerized microservices running on **Kubernetes (EKS)**. For the non-functional deep dive, we enforce strict zero-trust security by utilizing **AWS KMS** envelope encryption for all clinical consultation notes stored inside **PostgreSQL**, while active session credentials and ephemeral presence state are managed in an in-memory **Redis** cluster. To ensure fault tolerance during regional cloud outages, the WebRTC media gateways are deployed across multiple AWS Availability Zones with automated DNS failover managed by Amazon Route 53.
+
+---
+
+### System Design 2: Healthcare Claims Ingestion & Adjudication Pipeline (HLD)
+
+![Healthcare Claims Ingestion and Adjudication Pipeline](/ashutosh_claims_adjudication.jpg)
+
+Let us analyze the architecture of an enterprise Healthcare Claims Ingestion and Adjudication Pipeline designed to ingest high-volume Electronic Data Interchange (EDI 837) and modern JSON claim payloads from hospitals and clinics. For functional requirements, the pipeline must ingest claims via batch sFTP and real-time REST APIs, deduplicate submissions, validate clinical billing codes (ICD-10, CPT), evaluate member deductible accumulators, and adjudicate coverage approvals or denials. For non-functional requirements, the system must process over 10 million claims daily with a p99 adjudication turnaround time under 2 seconds for real-time claims, guarantee at-least-once message processing without data loss, and maintain an immutable 7-year audit trail for CMS and HIPAA regulatory compliance.
+
+The core entities include the Claim submission, Provider billing profile, Member coverage ledger, Adjudication Rule, and Explanation of Benefits (EOB) artifact. For the API design, we expose `POST /v1/claims/submit` accepting standard JSON claim models, and a batch sFTP ingestion connector monitored by an automated file watcher daemon. The data flow starts when incoming claims arrive at the **Kong API Gateway**, which verifies client mTLS certificates before writing raw submissions into an **Apache Kafka** ingestion topic. A pool of scalable **Validation Workers** built in Python and Go consume claims from Kafka, executing schema validation, patient eligibility verification, and duplicate checks against **Redis**. Validated claims are published to downstream Kafka topics where the **Deductible Accumulator Service** and **Medical Rules Engine** evaluate member co-pays, coverage limits, and clinical policies before writing final adjudication decisions into the primary **PostgreSQL** database.
+
+For the high-level design, processing is entirely decoupled using Kafka event streaming to prevent backpressure spikes from impacting ingestion endpoints. For the non-functional deep dive, idempotency is strictly enforced by generating a deterministic SHA-256 hash from the claim's national provider identifier, member ID, service date, and procedure code, caching this fingerprint in Redis with a 30-day TTL to reject duplicate submissions. Historical claims, adjudication logs, and generated EOB PDFs are asynchronously archived to **AWS S3 Glacier** with S3 Object Lock enabled in Compliance Mode, guaranteeing immutability against accidental deletion or tampering.
+
+---
+
+### System Design 3: Doctor & Provider Directory Search with Geospatial Indexing (HLD)
+
+![Doctor & Provider Directory Search with Geospatial Indexing](/ashutosh_provider_search.jpg)
+
+Let us review the high-level design of an intelligent Doctor & Provider Directory Search Engine with Geospatial Indexing, enabling Oscar members to locate nearby in-network doctors, clinics, and medical specialists. For functional requirements, the system must allow full-text search by doctor name or clinical condition, filter results by insurance network tier and accepting-new-patients status, and rank providers based on proximity to the member's GPS location. For non-functional requirements, search queries must return results in under 50 milliseconds at p95 under peak loads of 5,000 queries per second, support real-time provider schedule updates, and maintain high read availability with multi-region replication.
+
+The core entities comprise the Doctor profile, Clinic Location (with latitude/longitude coordinates), Medical Specialty taxonomy, Accepted Insurance Network, and Patient Review summary. For the public API design, we expose `GET /v1/providers/search?lat=:lat&lon=:lon&radius_miles=:r&specialty=:s&network_id=:n&page=:p`, which returns a paginated list of matching doctors with calculated distance metrics. The data flow begins when a member executes a search on the **React** or mobile client. The request passes through the **AWS API Gateway** to the **Provider Search Service** built with **FastAPI**. The search service queries a **PostGIS**-enabled **PostgreSQL** read replica or an **Elasticsearch** cluster containing pre-indexed geospatial points and physician attributes. Frequently accessed geographic coordinate clusters are cached in **Redis** to eliminate repetitive database queries.
+
+For the high-level design, we decouple read-heavy search queries from write-heavy provider administration workflows. Primary provider updates (such as office relocations or network status changes) are written to the primary **PostgreSQL** transactional database. A Change Data Capture (**CDC**) pipeline powered by **Debezium** and **Kafka** streams database binary log events to an asynchronous Search Index Sync Consumer, which updates the Elasticsearch and PostGIS indexes within 500 milliseconds. For the non-functional deep dive, geospatial queries utilize geohash indexing and B-tree bounding box filters to prune search candidate spaces rapidly before calculating precise Haversine distances, ensuring sub-50ms latency at massive scale.
+
+---
+
+### System Design 4: Real-Time Medical Appointment Booking Engine (LLD)
+
+![Real-Time Medical Appointment Booking Engine](/ashutosh_appointment_engine.jpg)
+
+Let us dive into the low-level object-oriented design and concurrency model of a Real-Time Medical Appointment Booking Engine, responsible for preventing race conditions and double-booking when multiple members attempt to reserve the same doctor appointment slot simultaneously. For functional requirements, the engine must allow doctors to publish availability slots, allow members to temporarily hold a slot for 10 minutes during checkout, confirm the reservation upon successful insurance copay authorization, and automatically release expired holds. For non-functional requirements, the system must guarantee strict serializability (zero double-bookings), achieve sub-100ms reservation latency, and gracefully resolve high-concurrency lock contention.
+
+The core entities include `AppointmentSlot`, `DoctorSchedule`, `MemberReservation`, `SlotStateMachine`, and `LockManager`. For the API design, the service exposes `reserveSlot(slotId, memberId)` returning a temporary reservation token, `confirmBooking(reservationToken)`, and `cancelReservation(reservationToken)`. The data flow starts when a reservation request hits the Booking Service. The service generates an idempotency key and attempts to acquire a distributed mutex lock on the specific slot ID using **Redis Redlock** with a 5-second lease time. Once the lock is acquired, the engine verifies that the slot's state machine is currently in the `AVAILABLE` state.
+
+For the low-level design, state transitions follow a strict finite state machine: `AVAILABLE` -> `RESERVED` -> `BOOKED`, with fallback transitions to `CANCELLED` or `AVAILABLE` if the reservation timer expires. To prevent database race conditions, the engine utilizes **Optimistic Concurrency Control** in **PostgreSQL**, executing `UPDATE slots SET status = 'RESERVED', version = version + 1 WHERE id = :id AND version = :expected_version`. For the non-functional deep dive, if the optimistic lock fails due to a concurrent write, the distributed lock is released and a conflict error (`409 Conflict`) is returned immediately to the client. An asynchronous background scheduler (**Redis Keyspace Notifications** combined with Kafka) listens for expired reservation keys, automatically transitioning abandoned slots back to `AVAILABLE`.
+
+---
+
+### System Design 5: Fast Healthcare Interoperability Resources (FHIR) API Gateway (HLD)
+
+![Fast Healthcare Interoperability Resources FHIR API Gateway](/ashutosh_fhir_gateway.jpg)
+
+Let us examine the architecture of an enterprise Fast Healthcare Interoperability Resources (FHIR) API Gateway, designed to expose standardized healthcare data (such as Patient, Observation, DiagnosticReport, and Coverage resources) to third-party hospital EHRs, telehealth platforms, and member mobile applications. For functional requirements, the gateway must support standard FHIR R4 RESTful interactions (Create, Read, Update, Delete, Search), translate legacy HL7 v2 and C-CDA feeds into FHIR JSON models, and enforce SMART on FHIR authorization scopes. For non-functional requirements, the gateway must process 15,000 requests per second, support sub-80ms query responses, maintain strict audit compliance, and guarantee zero unauthorized PHI exposure.
+
+The core entities are the FHIR Resource (Patient, Condition, Encounter, Claim), OAuth Client Application, Access Scope, Audit Event, and Legacy Translation Rule. For the API design, we expose standardized endpoints adhering to the HL7 FHIR R4 specification, including `GET /fhir/r4/Patient/:id`, `GET /fhir/r4/Observation?patient=:id&code=:loinc`, and `POST /fhir/r4/Coverage`. The data flow begins when a third-party application initiates a request with a bearer token. The **SMART on FHIR OAuth2 Auth Server** validates the client's identity and issues cryptographically signed JWT tokens containing granular clinical scopes (such as `patient/Observation.read`). The request arrives at the **Kong API Gateway**, which verifies token signatures, applies rate limiting, and routes the validated call to the **FHIR Ingestion Engine**.
+
+For the high-level design, incoming queries are resolved against a read-optimized **PostgreSQL** JSONB resource store, with frequently requested resources cached in an in-memory **Redis** cluster. Incoming legacy hospital feeds (HL7 v2 messages received over MLLP) are ingested by an asynchronous **HL7 to FHIR Translation Service**, converted into FHIR bundles, and persisted to the resource store. For the non-functional deep dive, security is enforced by implementing an OAuth2 reverse proxy interceptor that evaluates user consent records before executing database queries, ensuring that third parties can only access clinical records for which the member has explicitly granted authorization.
+
+---
+
+### System Design 6: Real-Time Member Benefit & Deductible Accumulator Engine (HLD)
+
+![Real-Time Member Benefit and Deductible Accumulator Engine](/ashutosh_deductible_accumulator.jpg)
+
+Let us analyze the high-level system architecture of a Real-Time Member Benefit and Deductible Accumulator Engine, which tracks and updates member out-of-pocket spending, individual deductibles, and family maximum thresholds in real time as medical and pharmacy claims are adjudicated. For functional requirements, the engine must atomically deduct approved claim copays from remaining deductible balances, support multi-tier accumulators (individual vs family limits, in-network vs out-of-network), and publish instant accumulator updates to member-facing applications. For non-functional requirements, the engine must guarantee strict financial consistency (zero race conditions or balance oversights under concurrent claims processing), achieve sub-10ms accumulator balance evaluations, and maintain high fault tolerance.
+
+The core entities comprise the Member Accumulator ledger, Benefit Year Plan, Claim Transaction, Accumulator Ledger Entry, and Balance Event. For the API design, the engine exposes `POST /v1/accumulators/apply-claim` accepting claim financial details and an idempotency key, and `GET /v1/accumulators/member/:member_id` returning current remaining deductible balances. The data flow begins when an adjudicated claim event is published to an **Apache Kafka** claims topic. The **Distributed Accumulator Service** consumes the event, identifies the member's plan policy, and evaluates the claim against the member's active deductible threshold.
+
+For the high-level design, high-speed atomic transactions are handled by sharding accumulator ledgers across a **Redis Cluster** utilizing Lua scripts to execute atomic balance checks and decrements without distributed lock overhead. Once the Lua script updates the balance in Redis, the service writes an append-only ledger transaction to a **PostgreSQL** Write-Ahead Log (**WAL**) and records an event in an transactional Outbox table. An **Outbox Pattern Publisher** then emits an accumulator update event to Kafka, notifying downstream member portals and mobile push notification gateways. For the non-functional deep dive, financial consistency is maintained by making the PostgreSQL database the ultimate source of truth: during nightly reconciliation batches, materialized ledger views recalculate all member totals to verify that in-memory Redis counters match the persistent transaction ledger perfectly.
+
+---
+
+### System Design 7: Extensible Healthcare Rules & Clinical Prior Authorization Engine (LLD)
+
+![Extensible Healthcare Rules and Clinical Prior Authorization Engine](/ashutosh_rules_engine.jpg)
+
+Let us examine the low-level object-oriented architecture of an Extensible Healthcare Rules and Clinical Prior Authorization Engine, responsible for evaluating whether specialized medical treatments, diagnostic MRIs, or costly surgeries qualify for automatic insurance authorization. For functional requirements, the engine must ingest clinical prior authorization requests from doctors, evaluate them against a dynamic suite of medical policies (such as Milliman Care Guidelines or CMS criteria), and return an automated decision (`APPROVED`, `DENIED`, or `PENDING_MANUAL_REVIEW`). For non-functional requirements, the engine must be highly extensible (allowing new clinical rules to be added without modifying existing code), thread-safe, and capable of executing complex rule graphs within 50 milliseconds.
+
+The core domain classes include `PriorAuthorizationContext` (holding patient diagnosis codes, provider details, and clinical history), `RuleComponent` (an abstract interface defining the `evaluate(context)` method), `SimpleCondition`, `ComplexCondition`, `DecisionGraphDAG`, and `ExecutionResult`. For the API design, we define an interface `IAuthorizationManager` with the primary method `evaluateAuthorization(request: PriorAuthorizationRequest): ExecutionResult`. The data flow begins when the authorization manager receives a request, constructs the `PriorAuthorizationContext`, and passes it to the `DecisionGraphDAG`.
+
+For the low-level design, we combine the **Composite Pattern** and the **Strategy Pattern**. The Composite Pattern allows individual clinical rules (such as age limits, prerequisite drug trial requirements, or lab value thresholds) to be composed recursively into complex logical trees (`AND`, `OR`, `NOT` branches) using the shared `RuleComponent` interface. The Strategy Pattern encapsulates clinical policy variants (e.g., Commercial Plan Policy vs Medicare Policy) behind an abstract `PolicyStrategy` interface, allowing the execution engine to switch rule evaluation strategies dynamically at runtime based on the member's insurance tier. For the non-functional deep dive, the rule evaluator executes branches asynchronously using thread pools, short-circuiting evaluation as soon as a definitive approval or denial condition is satisfied. Every rule evaluation step emits a structured audit trace, ensuring full clinical transparency for subsequent regulatory or medical appeal reviews.
+
+---
+
+### System Design 8: Distributed Prescription & Pharmacy Fulfillment Tracker (HLD)
+
+![Distributed Prescription and Pharmacy Order Fulfillment Tracker](/ashutosh_pharmacy_tracker.jpg)
+
+Let us break down the high-level architecture of a Distributed Prescription and Pharmacy Order Fulfillment Tracker, which manages the complete lifecycle of member prescription orders across retail pharmacies (such as CVS and Walgreens) and mail-order delivery partners. For functional requirements, the system must ingest electronic prescriptions from healthcare providers, verify pharmacy network coverage, route orders to fulfillment partners, track order statuses in real time (Created, Transmitted, Packed, Shipped, Delivered), and push instant status alerts to members. For non-functional requirements, the tracker must guarantee at-least-once status synchronization, support 99.95% system uptime, handle 500,000 active daily prescriptions, and provide sub-second notification delivery to member devices.
+
+The core entities are the Prescription Order, Member profile, Medication SKU, Pharmacy Partner integration, and Fulfillment Status History. For the public API design, we expose `POST /v1/pharmacy/orders` to create fulfillment requests, `GET /v1/pharmacy/orders/:order_id/status` to inspect current progress, and a secure webhook receiver `POST /v1/pharmacy/webhooks/:partner_id` to ingest external status updates from partner pharmacies. The data flow starts when a doctor e-prescribes a medication. The **Pharmacy Order Service** validates member pharmacy benefits, writes the order record to **PostgreSQL**, and publishes a `prescription_created` event to an **Apache Kafka** event stream.
+
+For the high-level design, an asynchronous **Fulfillment State Machine Worker** (implemented using Temporal or Camunda) consumes Kafka events, calls partner pharmacy APIs over secure HTTPS connections, and monitors status updates through a combination of webhooks and automated polling. When a status transition occurs (e.g., medication is dispatched), the worker writes the updated status to the PostgreSQL order database and emits an event to a **WebSocket Push Gateway**, which streams instant notifications to the member's active web or mobile application. For the non-functional deep dive, resilience against third-party partner downtime is achieved by configuring exponential back-off retries with jitter and dead-letter queues (DLQ) in Kafka, ensuring that temporary partner API outages never drop or corrupt pending member prescriptions.
+
+---
+
+### System Design 9: Clinical AI Triage Assistant with Tool-Use & MCP Orchestration (HLD)
+
+![Clinical AI Triage Assistant Architecture Diagram](/ashutosh_clinical_triage_mcp.jpg)
+
+Let us examine the architecture of a Clinical AI Triage Assistant incorporating Model Context Protocol (MCP) and LLM tool-use orchestration, designed to help Oscar members describe medical symptoms, navigate in-network care options, understand insurance benefits, and book doctor consultations through natural conversational interfaces. For functional requirements, the assistant must understand member symptoms in plain English, sanitize Protected Health Information (PHI) before model ingestion, autonomously call internal clinical tools via MCP to fetch provider availability and benefit details, and synthesize helpful, empathetic triage recommendations. For non-functional requirements, the assistant must achieve sub-800ms streaming token responses, prevent prompt injection and hallucinations through deterministic guardrails, and adhere strictly to HIPAA compliance.
+
+The core entities comprise the Member Conversation session, Chat Message, Tool Definition, MCP Execution Context, and Clinical Triage Recommendation. For the API design, the client communicates with the backend via WebSocket or Server-Sent Events (`POST /v1/triage/chat/stream`), sending user message tokens and receiving real-time streamed AI responses. The data flow begins when a member sends a chat message from the **React/TypeScript** frontend. The request arrives at the **FastAPI LLM Gateway**, which queries **Redis** to retrieve active conversation history. Before passing the prompt to the language model (such as Claude or fine-tuned LLaMA), a **PHI Sanitizer and Guardrails Filter** redacts sensitive medical identifiers and checks for jailbreak attempts.
+
+For the high-level design, the LLM determines whether external data is needed; if so, it emits a standardized tool call. An **MCP Tool Server** intercepts the tool call, executing secure, pre-authorized backend API calls against the **Provider Directory API**, **Deductibles & Benefits API**, or **Appointment Booking API**. The structured results are injected back into the LLM context window, which generates the final streaming response. For the non-functional deep dive, security is maintained by running the MCP tool servers in sandboxed network enclaves with read-only database replicas. All tool execution latencies are cached in Redis to minimize model wait times, while deterministic medical disclaimers are appended to all clinical guidance to guarantee patient safety.
+
+---
+
+### System Design 10: HIPAA-Compliant Audit Logging & Data Access Vault (LLD)
+
+![HIPAA-Compliant Audit Logging and Data Access Vault](/ashutosh_hipaa_audit_vault.jpg)
+
+Let us review the low-level architecture and class design of a HIPAA-Compliant Audit Logging and Data Access Vault, engineered to record, cryptographically seal, and verify every single read, write, export, or administrative access to Protected Health Information across Oscar's entire microservice fleet. For functional requirements, the audit vault must intercept all API requests to protected health records, log the accessor's identity, IP address, timestamp, action, and accessed patient ID, and provide an immutable, tamper-evident verification ledger. For non-functional requirements, audit logging must introduce less than 2 milliseconds of overhead to user requests, guarantee zero audit log loss even during system crashes, and ensure cryptographic non-repudiation.
+
+The core classes include `AuditEvent` (data model containing `eventId`, `timestamp`, `userPrincipal`, `ipAddress`, `action`, `resourceId`, and `integrityHash`), `IAuditVault` (interface exposing `recordAccess(event)` and `verifyChainIntegrity()`), `AuditLogDecorator` (intercepting service calls), `MerkleHashChainBuilder`, and `AsynchronousBatchFlusher`. For the API design, the audit vault provides an internal client library exposing `@Audited(action=ActionType.PHI_READ)` decorators for FastAPI and Spring Boot endpoints. The data flow begins when a user invokes an API endpoint. The **AuditLogDecorator** captures access metadata, constructs an `AuditEvent`, and pushes it onto an in-memory, thread-safe ring buffer managed by the **AsynchronousBatchFlusher**.
+
+For the low-level design, we use the **Decorator Pattern** to separate audit logging concerns cleanly from core clinical business logic. To prevent tamper-ability, the `MerkleHashChainBuilder` computes a cryptographically linked hash for each audit record: `nodeHash = SHA256(previousHash + eventPayload)`, creating an immutable blockchain-style Merkle chain. For the non-functional deep dive, zero performance impact is achieved by offloading all disk and network writes to a dedicated background daemon that flushes batched audit events to an append-only **PostgreSQL** table and archives daily sealed blocks to **AWS S3 Object Lock** in Compliance Mode. Every log block is encrypted using **AWS KMS Envelope Encryption**, guaranteeing that historical audit trails can never be altered or purged, even by root administrative accounts.
+
+---
+
+</PasswordGate>
