@@ -109,7 +109,7 @@ title: Lakshmi Pranitha — Senior Commercial Analyst (Wise Platform) Prep Suite
 description: 20 high-yield interview questions and comprehensive answers for Senior Commercial Analyst (North America) at Wise Platform, covering deal velocity, pre-sales impact, delivery telemetry, and modern data stack.
 ---
 
-<PasswordGate password="Lakshmi">
+<PasswordGate password="Lakshmi" candidateName="Lakshmi Pranitha">
 
 """
 

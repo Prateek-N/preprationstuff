@@ -97,7 +97,7 @@ mdx_lines.append("title: Janaki Ashok Kumar — QA Automation Engineer 14-Day Ma
 mdx_lines.append("description: Intensive Day 0 to Day 14 (5 hours/day) interview preparation guide for Senior QA Automation Engineer / SDET roles — Java, Selenium, Playwright, REST Assured, Cucumber, TestNG, Docker, Jenkins.")
 mdx_lines.append("---")
 mdx_lines.append("")
-mdx_lines.append('<PasswordGate password="Janaki">')
+mdx_lines.append('<PasswordGate password="Janaki" candidateName="Janaki Ashok Kumar">')
 mdx_lines.append("")
 mdx_lines.append("# Janaki Ashok Kumar — QA Automation Engineer 14-Day Master Preparation Blueprint")
 mdx_lines.append("## Daily 5-Hour Intensive Study Roadmap (Day 0 to Day 14 · Total 75 Dedicated Study Hours)")

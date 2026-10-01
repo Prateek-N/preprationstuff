@@ -253,7 +253,7 @@ title: Rujuwal Garg — Team Lead, Data Analytics & AI Solutions Resume Deep-Div
 description: Comprehensive project-by-project deep-dive into Rujuwal Garg's resume covering SilverSpace Inc., Vaco Binary Semantics (Google Hotel Ads), Profitmart, and enterprise AI engineering.
 ---
 
-<PasswordGate password="RG">
+<PasswordGate password="RG" candidateName="Rujuwal Garg">
 
 """
 

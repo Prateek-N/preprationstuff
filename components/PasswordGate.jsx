@@ -1,8 +1,77 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
+import { usePathname } from 'next/navigation'
 
-export function PasswordGate({ password = 'Suvishal', children }) {
+const SLUG_TO_CANDIDATE = {
+  'ashutosh-amazon-live-events-prep': 'Ashutosh Rudraksh',
+  'ashutosh-mercor-applied-ai-prep': 'Ashutosh Rudraksh',
+  'ashutosh-oscar-health-prep': 'Ashutosh Rudraksh',
+  'ashutosh-oscar-prep': 'Ashutosh Rudraksh',
+  'kiranmai-amazon-sde-prep': 'Venkata Satya Kiranmai Challagulla',
+  'karthik-kalyan-fullstack-prep': 'Karthik Kalyan Kakumanu',
+  'lakshmi-pranitha-wise-prep': 'Lakshmi Pranitha',
+  'rujuwal-garg-resume-deepdive': 'Rujuwal Garg',
+  'janaki-qa-automation-14day-prep': 'Janaki Ashok Kumar',
+  'janaki-oracle-prep': 'Janaki Ashok Kumar',
+  'pavan-fal-senior-data-engineer-prep': 'Pavan Chandramouleswara',
+  'lawrence-cybersecurity-analyst-prep': 'Lawrence Doh',
+  'ashish-fedex-data-scientist-prep': 'Sai Ashish Chavali',
+  'charan-amazon-sysde-prep': 'Charan Kumar Kundavarapu',
+  'pranavi-rooms-to-go-prep': 'Pranavi Myneni',
+  'suvishal-operations-analyst-prep': 'Suvishal Kalakoti',
+  'aryan-bigcommerce-prep': 'Aryan Agrawal',
+  'dhwani-eq-bank-prep': 'Dhwani Vora',
+  'dhwani-vora-uline-prep': 'Dhwani Vora',
+  'sampath-cid-prep': 'Sampath Thota',
+  'vijaya-fintech-ops-prep': 'Vijaya Krishna Ande',
+  'pratik-hanchate-amplitude-prep': 'Pratik Hanchate',
+  'sirisha-genai-prep': 'Sirisha Nelapudi',
+  'sirisha-genai-new-prep': 'Sirisha Nelapudi',
+  'dineesha-support-prep': 'Dineesha',
+  'ali-shan-integra-prep': 'Ali Shan',
+  'sai-mallesh-aws-prep': 'Sai Mallesh',
+  'sai-charan-caterpillar-prep': 'Sai Charan',
+  'venkata-chaitanya-aws-glue-prep': 'Venkata Chaitanya',
+  'venkata-chaitanya-citi-prep': 'Venkata Chaitanya',
+  'haritha-anand-bcg-prep': 'Haritha Anand',
+  'vaishnavi-torc-mcu-applications-prep': 'Vaishnavi',
+  'harnish-frontend-backend-coding-prep': 'Harnish Savadia',
+}
+
+const PASSWORD_TO_CANDIDATE = {
+  suvishal: 'Suvishal Kalakoti',
+  ashutosh: 'Ashutosh Rudraksh',
+  mercor: 'Ashutosh Rudraksh',
+  kiranmai: 'Venkata Satya Kiranmai Challagulla',
+  karthik: 'Karthik Kalyan Kakumanu',
+  lakshmi: 'Lakshmi Pranitha',
+  rg: 'Rujuwal Garg',
+  janaki: 'Janaki Ashok Kumar',
+  pavan: 'Pavan Chandramouleswara',
+  lawrence: 'Lawrence Doh',
+  ashish: 'Sai Ashish Chavali',
+  charan: 'Charan Kumar Kundavarapu',
+  pranavi: 'Pranavi Myneni',
+  aryan: 'Aryan Agrawal',
+  dhwani: 'Dhwani Vora',
+  sampath: 'Sampath Thota',
+  vijaya: 'Vijaya Krishna Ande',
+}
+
+export function PasswordGate({ password = 'Access', candidateName, name, children }) {
+  const pathname = usePathname() || ''
+  const slug = pathname.replace(/^\/docs\//, '').replace(/\/$/, '').toLowerCase()
+
+  const resolvedName =
+    candidateName ||
+    name ||
+    SLUG_TO_CANDIDATE[slug] ||
+    (password && PASSWORD_TO_CANDIDATE[password.toLowerCase()]) ||
+    (typeof document !== 'undefined' && document.title
+      ? document.title.split('—')[0].split('-')[0].trim()
+      : 'Candidate')
+
   const [unlocked, setUnlocked] = useState(false)
   const [inputVal, setInputVal] = useState('')
   const [error, setError] = useState('')
@@ -217,7 +286,7 @@ export function PasswordGate({ password = 'Suvishal', children }) {
               lineHeight: '1.6',
               WebkitTextFillColor: '#7a7f99',
             }}>
-              This material for <strong style={{ color: '#c4c9e2', WebkitTextFillColor: '#c4c9e2' }}>Suvishal Kalakoti</strong> is password-protected.
+              This material for <strong style={{ color: '#c4c9e2', WebkitTextFillColor: '#c4c9e2' }}>{resolvedName}</strong> is password-protected.
               Enter your access key to continue.
             </p>
 

@@ -1535,7 +1535,7 @@ title: Ashutosh Rudraksh — Mercor Applied AI Engineer Prep Guide
 description: Comprehensive interview preparation guide for Software Engineer, Applied AI at Mercor ($10B Series C) — Coding Challenge, Search Challenge, and Hiring Manager Chat.
 ---
 
-<PasswordGate password="Mercor">
+<PasswordGate password="Mercor" candidateName="Ashutosh Rudraksh">
 
 {clean_mdx_body}
 
