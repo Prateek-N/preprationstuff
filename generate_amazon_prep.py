@@ -4,11 +4,13 @@ Master Generator Script for Ashutosh Rudraksh
 Amazon Advertising in Live Events - AI Engineer Technical Interview Preparation Suite
 Generates:
 1. amazon_live_events_ai_ashutosh_prep.md (Comprehensive Markdown Guide)
-2. amazon_live_events_ai_ashutosh_prep.html (Interactive Standalone Web Application)
+2. content/ashutosh-amazon-live-events-prep.mdx (Protected Nextra MDX with <PasswordGate>)
+3. amazon_live_events_ai_ashutosh_prep.html (Standalone Protected Web Application)
+4. public/amazon_live_events_ai_ashutosh_prep.html (Static Production HTML)
 """
 
 import json
-import re
+import os
 from amazon_prep_dsa import dsa_questions
 from amazon_prep_sysde_part1 import sysde_questions_part1
 from amazon_prep_sysde_part2 import sysde_questions_part2
@@ -20,101 +22,140 @@ print(f"Total DSA Questions: {len(dsa_questions)}")
 print(f"Total System Design Questions: {len(all_sysde)}")
 
 # =========================================================================
-# 1. GENERATE MASTER MARKDOWN FILE
+# 1. GENERATE MASTER MARKDOWN FILE & NEXTA MDX FILE
 # =========================================================================
 
-md_lines = []
+md_body_lines = []
 
 # Title & Metadata
-md_lines.append("# Amazon Advertising in Live Events — AI Engineer Technical Interview Master Guide")
-md_lines.append("**Candidate:** Ashutosh Rudraksh | Software Engineer (4 Years Experience: Uber, Meta Reality Labs, Tekainos, Dell Technologies | M.S. CS Ohio State University)")
-md_lines.append("**Target Role:** AI Engineer — Amazon Advertising in Live Events (Thursday Night Football, NBA, NASCAR, Prime Video)")
-md_lines.append("**Core Focus:** Ultra-Low Latency Distributed Systems, Real-Time Ad Decisioning, Server-Side Ad Insertion (SSAI), Agentic Operations (MCP), Multimodal Video AI, and High-Throughput Stream Telemetry\n")
-md_lines.append("---\n")
+md_body_lines.append("# Amazon Advertising in Live Events — AI Engineer Technical Interview Master Guide")
+md_body_lines.append("**Candidate:** Ashutosh Rudraksh | Software Engineer (4 Years Experience: Uber, Meta Reality Labs, Tekainos, Dell Technologies | M.S. CS Ohio State University)")
+md_body_lines.append("**Target Role:** AI Engineer — Amazon Advertising in Live Events (Thursday Night Football, NBA, NASCAR, Prime Video)")
+md_body_lines.append("**Core Focus:** Ultra-Low Latency Distributed Systems, Real-Time Ad Decisioning, Server-Side Ad Insertion (SSAI), Agentic Operations (MCP), Multimodal Video AI, and High-Throughput Stream Telemetry\n")
+md_body_lines.append("---\n")
 
 # Executive Summary & Interview Roadmap
-md_lines.append("## Executive Strategy & Role Alignment\n")
-md_lines.append("This preparation suite is specifically architected for the **AI Engineer - Amazon Advertising in Live Events** technical interview rounds. Amazon live sports broadcasts (such as Thursday Night Football, NBA, and NASCAR) operate at unprecedented concurrency—serving over **15 million concurrent viewers** entering commercial breaks at the exact same split-second.\n")
-md_lines.append("As an engineer with deep expertise across **FastAPI, Python, Java, Kubernetes, AWS (SageMaker, Bedrock, Lambda), Apache Kafka, Redis, pgvector, and Model Context Protocol (MCP)**, this guide bridges Ashutosh's production background directly with Amazon's core technical challenges:\n")
-md_lines.append("1. **Broadcast-Grade Reliability & Latency:** Manifest generation in under 50ms, real-time ad auctions in under 40ms, and in-memory edge rewrites in under 10ms.\n")
-md_lines.append("2. **AI & Agentic Operations:** Autonomous incident remediation using Model Context Protocol (MCP), continuous prompt evaluation pipelines (CI/CD for LLMs), and automated runbook synthesis for on-call engineers.\n")
-md_lines.append("3. **Multimodal Broadcast AI:** Real-time brand safety classification and commercial break auto-cue prediction using computer vision and audio signals.\n")
-md_lines.append("4. **High-Frequency Algorithmic Problem Solving:** Top 30 Python DSA implementations covering sliding windows, monotonic deques, priority queues, topological DAGs, and distributed streaming rate limiters.\n\n")
-md_lines.append("---\n")
+md_body_lines.append("## Executive Strategy & Role Alignment\n")
+md_body_lines.append("This preparation suite is specifically architected for the **AI Engineer - Amazon Advertising in Live Events** technical interview rounds. Amazon live sports broadcasts (such as Thursday Night Football, NBA, and NASCAR) operate at unprecedented concurrency—serving over **15 million concurrent viewers** entering commercial breaks at the exact same split-second.\n")
+md_body_lines.append("As an engineer with deep expertise across **FastAPI, Python, Java, Kubernetes, AWS (SageMaker, Bedrock, Lambda), Apache Kafka, Redis, pgvector, and Model Context Protocol (MCP)**, this guide bridges Ashutosh's production background directly with Amazon's core technical challenges:\n")
+md_body_lines.append("1. **Broadcast-Grade Reliability & Latency:** Manifest generation in under 50ms, real-time ad auctions in under 40ms, and in-memory edge rewrites in under 10ms.\n")
+md_body_lines.append("2. **AI & Agentic Operations:** Autonomous incident remediation using Model Context Protocol (MCP), continuous prompt evaluation pipelines (CI/CD for LLMs), and automated runbook synthesis for on-call engineers.\n")
+md_body_lines.append("3. **Multimodal Broadcast AI:** Real-time brand safety classification and commercial break auto-cue prediction using computer vision and audio signals.\n")
+md_body_lines.append("4. **High-Frequency Algorithmic Problem Solving:** Top 30 Python DSA implementations covering sliding windows, monotonic deques, priority queues, topological DAGs, and distributed streaming rate limiters.\n\n")
+md_body_lines.append("---\n")
 
 # PART 1: Top 30 DSA Questions
-md_lines.append("# Part 1: Top 30 High-Frequency Amazon DSA Practice Questions in Python\n")
-md_lines.append("Each problem follows the strict four-step interview cadence: **Problem Statement**, **Complete Thought Process & Intuition**, **Production-Grade Python Code with Inline Comments**, and **Time & Space Complexity Analysis**.\n\n")
+md_body_lines.append("# Part 1: Top 30 High-Frequency Amazon DSA Practice Questions in Python\n")
+md_body_lines.append("Each problem follows the strict four-step interview cadence: **Problem Statement**, **Complete Thought Process & Intuition**, **Production-Grade Python Code with Inline Comments**, and **Time & Space Complexity Analysis**.\n\n")
 
 for q in dsa_questions:
-    md_lines.append(f"## Problem {q['id']}: {q['title']}")
-    md_lines.append(f"**Topic:** {q['topic']} | **Difficulty:** {q['difficulty']}\n")
+    md_body_lines.append(f"## Problem {q['id']}: {q['title']}")
+    md_body_lines.append(f"**Topic:** {q['topic']} | **Difficulty:** {q['difficulty']}\n")
     
-    md_lines.append("### 1. Problem Statement")
-    md_lines.append(q['problem_statement'].strip() + "\n")
+    md_body_lines.append("### 1. Problem Statement")
+    md_body_lines.append(q['problem_statement'].strip() + "\n")
     
-    md_lines.append("### 2. Complete Thought Process & Intuition")
-    md_lines.append(q['thought_process'].strip() + "\n")
+    md_body_lines.append("### 2. Complete Thought Process & Intuition")
+    md_body_lines.append(q['thought_process'].strip() + "\n")
     
-    md_lines.append("### 3. Python 3 Implementation")
-    md_lines.append("```python")
-    md_lines.append(q['code'].strip())
-    md_lines.append("```\n")
+    md_body_lines.append("### 3. Python 3 Implementation")
+    md_body_lines.append("```python")
+    md_body_lines.append(q['code'].strip())
+    md_body_lines.append("```\n")
     
-    md_lines.append("### 4. Complexity Analysis")
-    md_lines.append(q['complexity'].strip() + "\n")
-    md_lines.append("---\n")
+    md_body_lines.append("### 4. Complexity Analysis")
+    md_body_lines.append(q['complexity'].strip() + "\n")
+    md_body_lines.append("---\n")
 
 # PART 2: 30 System Design Questions
-md_lines.append("# Part 2: Top 30 System Design Questions (Amazon Live Events & Advertising AI)\n")
-md_lines.append("Every system design breakdown is presented in a **simple, conversational walkthrough format written in small, clear paragraph chunks WITHOUT ANY BULLET POINTS**, guiding the interviewer naturally through Functional Requirements, Non-Functional Requirements, Core Entities, API Design, Data Flow, High-Level Architecture, and Non-Functional Deep Dives.\n\n")
+md_body_lines.append("# Part 2: Top 30 System Design Questions (Amazon Live Events & Advertising AI)\n")
+md_body_lines.append("Every system design breakdown is presented in a **simple, conversational walkthrough format written in small, clear paragraph chunks WITHOUT ANY BULLET POINTS**, guiding the interviewer naturally through Functional Requirements, Non-Functional Requirements, Core Entities, API Design, Data Flow, High-Level Architecture, and Non-Functional Deep Dives.\n\n")
 
 for s in all_sysde:
-    md_lines.append(f"## System Design {s['id']}: {s['title']}")
-    md_lines.append(f"**Domain Category:** {s['category']}\n")
+    md_body_lines.append(f"## System Design {s['id']}: {s['title']}")
+    md_body_lines.append(f"**Domain Category:** {s['category']}\n")
     
-    md_lines.append("### 1. Complete Problem Statement")
-    md_lines.append(s['problem_statement'].strip() + "\n")
+    md_body_lines.append("### 1. Complete Problem Statement")
+    md_body_lines.append(s['problem_statement'].strip() + "\n")
     
-    md_lines.append("### 2. Clarifying Questions & Scope Definition")
-    md_lines.append(s['clarifying_questions'].strip() + "\n")
+    md_body_lines.append("### 2. Clarifying Questions & Scope Definition")
+    md_body_lines.append(s['clarifying_questions'].strip() + "\n")
     
-    md_lines.append("### 3. High-Level Architecture Diagram")
-    md_lines.append(s['svg_diagram'].strip() + "\n")
+    md_body_lines.append("### 3. High-Level Architecture Diagram")
+    md_body_lines.append(s['svg_diagram'].strip() + "\n")
     
-    md_lines.append("### 4. Functional Requirements")
-    md_lines.append(s['functional_requirements'].strip() + "\n")
+    md_body_lines.append("### 4. Functional Requirements")
+    md_body_lines.append(s['functional_requirements'].strip() + "\n")
     
-    md_lines.append("### 5. Non-Functional Requirements")
-    md_lines.append(s['non_functional_requirements'].strip() + "\n")
+    md_body_lines.append("### 5. Non-Functional Requirements")
+    md_body_lines.append(s['non_functional_requirements'].strip() + "\n")
     
-    md_lines.append("### 6. Core Entities & Data Modeling")
-    md_lines.append(s['core_entities'].strip() + "\n")
+    md_body_lines.append("### 6. Core Entities & Data Modeling")
+    md_body_lines.append(s['core_entities'].strip() + "\n")
     
-    md_lines.append("### 7. API & Interface Design")
-    md_lines.append(s['api_design'].strip() + "\n")
+    md_body_lines.append("### 7. API & Interface Design")
+    md_body_lines.append(s['api_design'].strip() + "\n")
     
-    md_lines.append("### 8. End-to-End Data Flow")
-    md_lines.append(s['data_flow'].strip() + "\n")
+    md_body_lines.append("### 8. End-to-End Data Flow")
+    md_body_lines.append(s['data_flow'].strip() + "\n")
     
-    md_lines.append("### 9. High-Level System Architecture (HLD)")
-    md_lines.append(s['high_level_design'].strip() + "\n")
+    md_body_lines.append("### 9. High-Level System Architecture (HLD)")
+    md_body_lines.append(s['high_level_design'].strip() + "\n")
     
-    md_lines.append("### 10. Deep Dive into Non-Functional Requirements & Edge Cases")
-    md_lines.append(s['nfr_deep_dive'].strip() + "\n")
-    md_lines.append("---\n")
+    md_body_lines.append("### 10. Deep Dive into Non-Functional Requirements & Edge Cases")
+    md_body_lines.append(s['nfr_deep_dive'].strip() + "\n")
+    md_body_lines.append("---\n")
 
+raw_markdown = "\n".join(md_body_lines)
+
+# Write master pure markdown file
 with open("amazon_live_events_ai_ashutosh_prep.md", "w", encoding="utf-8") as f:
-    f.write("\n".join(md_lines))
-
+    f.write(raw_markdown)
 print("Wrote amazon_live_events_ai_ashutosh_prep.md successfully.")
 
+# Write Nextra MDX with PasswordGate
+mdx_frontmatter = """---
+title: Ashutosh Rudraksh — Amazon Live Events Advertising AI Engineer Prep
+description: Complete technical preparation suite for AI Engineer at Amazon Advertising in Live Events (Thursday Night Football, NBA, NASCAR) — Top 30 Python DSA + Top 30 System Designs.
+---
+
+<PasswordGate password="Ashutosh" candidateName="Ashutosh Rudraksh">
+
+"""
+
+mdx_closing = """
+
+</PasswordGate>
+"""
+
+def sanitize_mdx(mdx_str):
+    parts = mdx_str.split('```')
+    for i in range(0, len(parts), 2):
+        # Only sanitize markdown prose outside code fences
+        parts[i] = parts[i].replace('<=', '&le;')
+        # Sanitize < followed by number or space
+        import re
+        parts[i] = re.sub(r'<(?=[0-9\s])', '&lt;', parts[i])
+        # Wrap URL/prose parameters like {job_id} in backticks so MDX does not evaluate them as JS expressions
+        parts[i] = re.sub(r'\{([a-zA-Z0-9_-]+)\}', r'`{\1}`', parts[i])
+    return '```'.join(parts)
+
+sanitized_md_content = sanitize_mdx(raw_markdown)
+
+with open("content/ashutosh-amazon-live-events-prep.mdx", "w", encoding="utf-8") as f:
+    f.write(mdx_frontmatter + sanitized_md_content + mdx_closing)
+print("Wrote content/ashutosh-amazon-live-events-prep.mdx successfully with <PasswordGate>.")
+
+# Remove any old .md file in content/ to avoid route collision
+if os.path.exists("content/ashutosh-amazon-live-events-prep.md"):
+    os.remove("content/ashutosh-amazon-live-events-prep.md")
+    print("Cleaned up redundant content/ashutosh-amazon-live-events-prep.md.")
+
 
 # =========================================================================
-# 2. GENERATE MASTER STANDALONE INTERACTIVE HTML FILE
+# 2. GENERATE PROTECTED STANDALONE HTML APPLICATION
 # =========================================================================
 
-# Prepare JSON data for client-side search and filtering
 items_data = []
 
 # Add DSA questions
@@ -152,13 +193,12 @@ for q in dsa_questions:
 
 # Add System Design questions
 for s in all_sysde:
-    # Format each section into clean, small paragraph chunks without any bullet points
     def p_chunks(text: str) -> str:
         paragraphs = [p.strip() for p in text.strip().split("\n\n") if p.strip()]
         return "".join([f'<p class="conv-p">{p.replace(chr(10), " ")}</p>' for p in paragraphs])
 
     items_data.append({
-        "num": s["id"] + 30, # Offset to maintain unique IDs 31-60
+        "num": s["id"] + 30,
         "sys_id": s["id"],
         "type": "sysde",
         "title": f"System Design {s['id']}: {s['title']}",
@@ -262,11 +302,99 @@ html_template = f"""<!DOCTYPE html>
       -webkit-font-smoothing: antialiased;
     }}
 
+    /* LOCK SCREEN */
+    #lockScreen {{
+      position: fixed; inset: 0;
+      background: radial-gradient(circle at center, #142442 0%, #070d18 100%);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 99999; padding: 1.5rem;
+    }}
+    .lock-box {{
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 153, 0, 0.35);
+      border-radius: 20px;
+      padding: 2.75rem 2.25rem;
+      max-width: 460px; width: 100%;
+      text-align: center;
+      box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.8), 0 0 50px rgba(255, 153, 0, 0.15);
+    }}
+    .lock-icon-wrap {{
+      width: 68px; height: 68px; margin: 0 auto 1.25rem;
+      background: linear-gradient(135deg, rgba(255, 153, 0, 0.25), rgba(56, 189, 248, 0.2));
+      border: 1px solid var(--amz-orange);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--amz-orange);
+    }}
+    .lock-title {{
+      font-size: 1.45rem; font-weight: 700; color: #fff;
+      margin-bottom: 0.5rem; letter-spacing: -0.02em;
+    }}
+    .lock-desc {{
+      color: var(--text-muted); font-size: 0.88rem; line-height: 1.6;
+      margin-bottom: 1.75rem;
+    }}
+    .lock-desc strong {{
+      color: var(--amz-orange); font-weight: 700;
+    }}
+    .input-wrap {{
+      position: relative; margin-bottom: 1.25rem;
+    }}
+    .lock-input {{
+      width: 100%;
+      background: rgba(7, 13, 24, 0.9);
+      border: 1.5px solid var(--border);
+      padding: 0.95rem 1.2rem;
+      border-radius: 12px;
+      color: #fff;
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      outline: none;
+      text-align: center;
+      letter-spacing: 0.12em;
+      transition: all 0.2s;
+    }}
+    .lock-input:focus {{
+      border-color: var(--amz-orange);
+      box-shadow: 0 0 0 3px rgba(255, 153, 0, 0.25);
+    }}
+    .btn-unlock {{
+      width: 100%;
+      background: linear-gradient(135deg, #ff9900 0%, #ea580c 100%);
+      color: #0b1120;
+      border: none;
+      padding: 0.95rem;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all 0.2s;
+    }}
+    .btn-unlock:hover {{
+      transform: translateY(-1px);
+      box-shadow: 0 10px 25px -5px rgba(255, 153, 0, 0.45);
+    }}
+    .lock-error {{
+      color: var(--amz-rose); font-size: 0.82rem; margin-top: 0.75rem;
+      display: none; font-weight: 600;
+    }}
+    .lock-footer {{
+      margin-top: 1.75rem; font-size: 0.76rem; color: var(--text-dim);
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }}
+
+    /* APP CONTENT (HIDDEN UNTIL UNLOCKED) */
+    #appContent {{
+      display: none; opacity: 0; transition: opacity 0.4s ease;
+    }}
+
     /* HEADER & HERO */
     .hero-header {{
       background: linear-gradient(180deg, rgba(255, 153, 0, 0.08) 0%, rgba(15, 23, 42, 0.95) 100%), #070d18;
       border-bottom: 1px solid var(--border);
-      padding: 3rem 1.5rem 2rem;
+      padding: 2.5rem 1.5rem 2rem;
       position: sticky; top: 0; z-index: 100;
       backdrop-filter: blur(16px);
     }}
@@ -302,6 +430,13 @@ html_template = f"""<!DOCTYPE html>
     }}
     .cand-name {{ font-weight: 700; color: #fff; font-size: 0.95rem; }}
     .cand-meta {{ font-size: 0.8rem; color: var(--amz-blue); }}
+    .btn-relock {{
+      align-self: flex-start; margin-top: 6px;
+      background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border);
+      color: var(--text-dim); padding: 3px 8px; border-radius: 6px; font-size: 0.72rem;
+      cursor: pointer; transition: all 0.2s;
+    }}
+    .btn-relock:hover {{ color: var(--amz-rose); border-color: var(--amz-rose); }}
 
     /* PROGRESS BAR */
     .progress-bar-wrap {{
@@ -456,7 +591,7 @@ html_template = f"""<!DOCTYPE html>
     .badge-green {{ background: rgba(52, 211, 153, 0.2); color: var(--amz-green); }}
     .badge-rose {{ background: rgba(251, 113, 133, 0.2); color: var(--amz-rose); }}
 
-    /* CONVERSATIONAL PARAGRAPHS - NO BULLETS */
+    /* CONVERSATIONAL PARAGRAPHS - ZERO BULLETS */
     .conv-p {{
       color: #cbd5e1; font-size: 0.95rem; line-height: 1.7;
       margin-bottom: 0.85rem;
@@ -504,81 +639,157 @@ html_template = f"""<!DOCTYPE html>
 </head>
 <body>
 
-  <!-- HERO SECTION -->
-  <header class="hero-header">
-    <div class="hero-container">
-      <div class="hero-top">
-        <div>
-          <div class="brand-tag">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-            Amazon Advertising in Live Events · Technical Master Suite
+  <!-- LOCK SCREEN OVERLAY -->
+  <div id="lockScreen">
+    <div class="lock-box">
+      <div class="lock-icon-wrap">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2.5" ry="2.5"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          <circle cx="12" cy="16" r="1.5" fill="currentColor"></circle>
+          <line x1="12" y1="17.5" x2="12" y2="19.5" stroke="currentColor" stroke-width="2"></line>
+        </svg>
+      </div>
+      <h2 class="lock-title">Protected Guide</h2>
+      <p class="lock-desc">
+        This material for <strong>Ashutosh Rudraksh</strong> is password-protected.<br>
+        Enter your access key to continue.
+      </p>
+      <div class="input-wrap">
+        <input type="password" id="passInput" class="lock-input" placeholder="Enter access password..." onkeydown="if(event.key==='Enter') unlockApp()" autofocus>
+      </div>
+      <button class="btn-unlock" onclick="unlockApp()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Unlock Preparation Guide
+      </button>
+      <div id="lockError" class="lock-error">Incorrect password. Please try again.</div>
+      <div class="lock-footer">
+        <span>🔒 Protected candidate preparation suite · PrepSuite</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION CONTENT -->
+  <div id="appContent">
+    <header class="hero-header">
+      <div class="hero-container">
+        <div class="hero-top">
+          <div>
+            <div class="brand-tag">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+              Amazon Advertising in Live Events · Technical Master Suite
+            </div>
+            <h1 class="hero-title">AI Engineer Technical Interview <span>Master Guide</span></h1>
+            <p class="hero-subtitle">
+              Curated preparation suite for <strong>Ashutosh Rudraksh</strong>. Tailored directly to <strong>Amazon Advertising in Live Events</strong> (Thursday Night Football, NBA, NASCAR, Prime Video). Covers Top 30 High-Frequency Python DSA questions and 30 Conversational System Design questions with zero bullet points.
+            </p>
           </div>
-          <h1 class="hero-title">AI Engineer Technical Interview <span>Master Guide</span></h1>
-          <p class="hero-subtitle">
-            Curated preparation suite for <strong>Ashutosh Rudraksh</strong>. Tailored directly to <strong>Amazon Advertising in Live Events</strong> (Thursday Night Football, NBA, NASCAR, Prime Video). Covers Top 30 High-Frequency Python DSA questions and 30 Conversational System Design questions with zero bullet points.
-          </p>
+          <div class="candidate-pill">
+            <div class="cand-name">Ashutosh Rudraksh</div>
+            <div class="cand-meta">4 Yrs Exp: Uber · Meta Reality Labs · Tekainos · Dell</div>
+            <div class="cand-meta">M.S. CS Ohio State University · LLMs & AI Systems</div>
+            <button class="btn-relock" onclick="relockApp()">🔒 Lock Guide</button>
+          </div>
         </div>
-        <div class="candidate-pill">
-          <div class="cand-name">Ashutosh Rudraksh</div>
-          <div class="cand-meta">4 Yrs Exp: Uber · Meta Reality Labs · Tekainos · Dell</div>
-          <div class="cand-meta">M.S. CS Ohio State University · LLMs & AI Systems</div>
+
+        <!-- PROGRESS TRACKER -->
+        <div class="progress-bar-wrap">
+          <div id="topProgress" class="progress-fill"></div>
+        </div>
+        <div class="stats-row">
+          <span id="readCounter">0 / 60 Prepared</span>
+          <span>Target: 100% Broadcast Ready</span>
+        </div>
+
+        <!-- CONTROLS & SEARCH -->
+        <div class="controls-row">
+          <div class="tab-group">
+            <button class="tab-btn active" onclick="switchTab('all', this)">All (60)</button>
+            <button class="tab-btn" onclick="switchTab('dsa', this)">Top 30 DSA (Python)</button>
+            <button class="tab-btn" onclick="switchTab('sysde', this)">Top 30 System Design</button>
+          </div>
+          <div class="search-box-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="globalSearch" class="search-input" placeholder="Search algorithms, SSAI, SCTE-35, MCP, Kafka, Redis..." oninput="handleSearch()">
+          </div>
+        </div>
+
+        <!-- CATEGORY PILLS -->
+        <div class="filter-pills">
+          <button class="cat-pill active" onclick="filterCategory('all', this)">All Categories</button>
+          <button class="cat-pill" onclick="filterCategory('DSA (Algorithms & Data Structures)', this)">Algorithms & Data Structures</button>
+          <button class="cat-pill" onclick="filterCategory('Live Video Streaming & Ad Insertion', this)">Live Video & SSAI</button>
+          <button class="cat-pill" onclick="filterCategory('Real-Time Bidding & Ad Auctions', this)">Auctions & RTB</button>
+          <button class="cat-pill" onclick="filterCategory('AI Agents & Autonomous Operations', this)">AI Agents & MCP</button>
+          <button class="cat-pill" onclick="filterCategory('Multimodal AI & Computer Vision', this)">Multimodal & Computer Vision</button>
+          <button class="cat-pill" onclick="filterCategory('Telemetry & Observability', this)">Telemetry & Stream ETL</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN LISTING -->
+    <main class="main-content">
+      <div class="action-bar">
+        <span id="visibleCount">Showing 60 of 60 items</span>
+        <div style="display:flex; gap: 8px;">
+          <button class="expand-btn" onclick="expandAll()">Expand All</button>
+          <button class="expand-btn" onclick="collapseAll()">Collapse All</button>
         </div>
       </div>
 
-      <!-- PROGRESS TRACKER -->
-      <div class="progress-bar-wrap">
-        <div id="topProgress" class="progress-fill"></div>
+      <div id="cardsContainer">
+        <!-- Cards rendered via JS -->
       </div>
-      <div class="stats-row">
-        <span id="readCounter">0 / 60 Prepared</span>
-        <span>Target: 100% Broadcast Ready</span>
-      </div>
-
-      <!-- CONTROLS & SEARCH -->
-      <div class="controls-row">
-        <div class="tab-group">
-          <button class="tab-btn active" onclick="switchTab('all', this)">All (60)</button>
-          <button class="tab-btn" onclick="switchTab('dsa', this)">Top 30 DSA (Python)</button>
-          <button class="tab-btn" onclick="switchTab('sysde', this)">Top 30 System Design</button>
-        </div>
-        <div class="search-box-wrap">
-          <span class="search-icon">🔍</span>
-          <input type="text" id="globalSearch" class="search-input" placeholder="Search algorithms, SSAI, SCTE-35, MCP, Kafka, Redis..." oninput="handleSearch()">
-        </div>
-      </div>
-
-      <!-- CATEGORY PILLS -->
-      <div class="filter-pills">
-        <button class="cat-pill active" onclick="filterCategory('all', this)">All Categories</button>
-        <button class="cat-pill" onclick="filterCategory('DSA (Algorithms & Data Structures)', this)">Algorithms & Data Structures</button>
-        <button class="cat-pill" onclick="filterCategory('Live Video Streaming & Ad Insertion', this)">Live Video & SSAI</button>
-        <button class="cat-pill" onclick="filterCategory('Real-Time Bidding & Ad Auctions', this)">Auctions & RTB</button>
-        <button class="cat-pill" onclick="filterCategory('AI Agents & Autonomous Operations', this)">AI Agents & MCP</button>
-        <button class="cat-pill" onclick="filterCategory('Multimodal AI & Computer Vision', this)">Multimodal & Computer Vision</button>
-        <button class="cat-pill" onclick="filterCategory('Telemetry & Observability', this)">Telemetry & Stream ETL</button>
-      </div>
-    </div>
-  </header>
-
-  <!-- MAIN LISTING -->
-  <main class="main-content">
-    <div class="action-bar">
-      <span id="visibleCount">Showing 60 of 60 items</span>
-      <div style="display:flex; gap: 8px;">
-        <button class="expand-btn" onclick="expandAll()">Expand All</button>
-        <button class="expand-btn" onclick="collapseAll()">Collapse All</button>
-      </div>
-    </div>
-
-    <div id="cardsContainer">
-      <!-- Cards rendered via JS -->
-    </div>
-  </main>
+    </main>
+  </div>
 
   <div id="toast" class="toast">✓ Copied to clipboard!</div>
 
   <script>
     const itemsData = {items_json};
+    const MASTER_PASS = "Ashutosh";
+    const AUTH_KEY = "ashutosh_live_events_unlocked";
+
+    function checkAuth() {{
+      const isAuth = sessionStorage.getItem(AUTH_KEY) === "true";
+      if (isAuth) {{
+        document.getElementById("lockScreen").style.display = "none";
+        const app = document.getElementById("appContent");
+        app.style.display = "block";
+        setTimeout(() => app.style.opacity = "1", 30);
+      }} else {{
+        document.getElementById("lockScreen").style.display = "flex";
+        document.getElementById("appContent").style.display = "none";
+        setTimeout(() => {{
+          const p = document.getElementById("passInput");
+          if (p) p.focus();
+        }}, 100);
+      }}
+    }}
+
+    function unlockApp() {{
+      const input = document.getElementById("passInput");
+      const err = document.getElementById("lockError");
+      const entered = input.value.trim();
+
+      if (entered.toLowerCase() === MASTER_PASS.toLowerCase()) {{
+        sessionStorage.setItem(AUTH_KEY, "true");
+        err.style.display = "none";
+        document.getElementById("lockScreen").style.display = "none";
+        const app = document.getElementById("appContent");
+        app.style.display = "block";
+        setTimeout(() => app.style.opacity = "1", 30);
+      }} else {{
+        err.style.display = "block";
+        input.value = "";
+        input.focus();
+      }}
+    }}
+
+    function relockApp() {{
+      sessionStorage.removeItem(AUTH_KEY);
+      location.reload();
+    }}
 
     let activeTab = 'all';
     let activeCat = 'all';
@@ -712,13 +923,21 @@ html_template = f"""<!DOCTYPE html>
       }});
     }}
 
-    window.addEventListener("DOMContentLoaded", renderCards);
+    window.addEventListener("DOMContentLoaded", () => {{
+      checkAuth();
+      renderCards();
+    }});
   </script>
 </body>
 </html>
 """
 
+# Write standalone app
 with open("amazon_live_events_ai_ashutosh_prep.html", "w", encoding="utf-8") as f:
     f.write(html_template)
-
 print("Wrote amazon_live_events_ai_ashutosh_prep.html successfully.")
+
+# Write to public/ directory for production serving
+with open("public/amazon_live_events_ai_ashutosh_prep.html", "w", encoding="utf-8") as f:
+    f.write(html_template)
+print("Wrote public/amazon_live_events_ai_ashutosh_prep.html successfully.")
