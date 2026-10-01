@@ -1806,54 +1806,24 @@ Next, I would ask about latency and manifest delivery protocol constraints. We n
 Finally, I would ask about fallback behavior and advertiser compliance. If the real-time ad selection system fails or takes too long, we need to know whether we should fall back to a default house ad or a branded stream slate, and whether we need to stitch audio and video segments that exactly match the viewer's current resolution and bitrate ladder without any audio pops or video stutter.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Thursday Night Football SSAI Architecture</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Live Video Ingest</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">SCTE-35 Cue Markers</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">SSAI Manifest Engine</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Per-User Stitcher</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Ad Decision Server</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">RTB & Target Rules</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">ABR Video Transcoder</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Segment Matcher</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">CloudFront Edge CDN</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Manifest Delivery</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== THURSDAY NIGHT FOOTBALL SSAI ARCHITECTURE ===
+
+[1] Live Video Ingest (SCTE-35 Cue Markers)
+        │
+        ▼
+[2] SSAI Manifest Engine (Per-User Stitcher)
+        │
+        ▼
+[3] Ad Decision Server (RTB & Target Rules)
+        │
+        ▼
+[4] ABR Video Transcoder (Segment Matcher)
+        │
+        ▼
+[5] CloudFront Edge CDN (Manifest Delivery)
+```
+
 
 ### 4. Functional Requirements
 From a functional perspective, the system must detect upstream broadcast SCTE-35 markers embedded in the live transport stream that signal the start and duration of an impending commercial break.
@@ -1942,54 +1912,24 @@ Another crucial question is how many external demand partners and internal DSPs 
 Lastly, I would clarify competitive separation rules, such as ensuring that two rival car companies do not win slots in the same commercial break pod.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Ultra-Low Latency Real-Time Auction Engine</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Bid Request Router</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">P99 Fanout Manager</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Demand Connectors</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Direct Fiber to DSPs</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Auction Evaluator</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Floor & Rules Engine</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Category Separator</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Pod Collision Filter</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Winning Creative</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Signed Response Token</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== ULTRA-LOW LATENCY REAL-TIME AUCTION ENGINE ===
+
+[1] Bid Request Router (P99 Fanout Manager)
+        │
+        ▼
+[2] Demand Connectors (Direct Fiber to DSPs)
+        │
+        ▼
+[3] Auction Evaluator (Floor & Rules Engine)
+        │
+        ▼
+[4] Category Separator (Pod Collision Filter)
+        │
+        ▼
+[5] Winning Creative (Signed Response Token)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the auction engine must parse incoming bid opportunities originating from the SSAI service and enrich them with viewer contextual attributes, stream category, and floor pricing constraints.
@@ -2078,54 +2018,24 @@ I would also clarify the scale of active campaigns. We need to know if we are ma
 Finally, I would ask how the system handles surprise blowouts or overtime scenarios where viewership suddenly collapses or skyrockets unexpectedly.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Real-Time Ad Pacing & Budget Smoothing</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Live Game Telemetry</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Game Clock & Viewers</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Pacing Controller</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">PID & Trajectory Math</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Edge Probability Cache</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Sub-Millisecond Sync</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Auction Filter</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Probabilistic Bid Drop</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Budget Ledger</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Stream Count Aggregator</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== REAL-TIME AD PACING & BUDGET SMOOTHING ===
+
+[1] Live Game Telemetry (Game Clock & Viewers)
+        │
+        ▼
+[2] Pacing Controller (PID & Trajectory Math)
+        │
+        ▼
+[3] Edge Probability Cache (Sub-Millisecond Sync)
+        │
+        ▼
+[4] Auction Filter (Probabilistic Bid Drop)
+        │
+        ▼
+[5] Budget Ledger (Stream Count Aggregator)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the pacing system must track the real-time spend of every advertising campaign and compare it against its assigned target budget trajectory for the specific live event.
@@ -2216,54 +2126,24 @@ I would also clarify the taxonomy and depth of competitive separation. How are p
 Finally, I would ask about latency constraints. Because this check sits directly in the ad decision path, the lookup and validation of frequency rules must complete in under five milliseconds.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Frequency Capping & Competitive Separation</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Ad Decision Request</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">User & Slot Context</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">User Ad History</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Redis Sliding Bitmaps</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Category Conflict Map</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">In-Memory Graph</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Pod Builder Engine</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Slot Conflict Resolver</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Filtered Ad Pod</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Compliant Playlist</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== FREQUENCY CAPPING & COMPETITIVE SEPARATION ===
+
+[1] Ad Decision Request (User & Slot Context)
+        │
+        ▼
+[2] User Ad History (Redis Sliding Bitmaps)
+        │
+        ▼
+[3] Category Conflict Map (In-Memory Graph)
+        │
+        ▼
+[4] Pod Builder Engine (Slot Conflict Resolver)
+        │
+        ▼
+[5] Filtered Ad Pod (Compliant Playlist)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the system must record every ad impression delivered to a specific viewer account, tracking which creative, brand, and product category was shown along with the timestamp.
@@ -2354,54 +2234,24 @@ I would also clarify the data freshness requirements for billing and analytics d
 Finally, I would ask about compliance standards, such as Media Rating Council viewability guidelines and fraud detection checks like filtering out bot traffic and duplicate pings.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Ad Impression & Viewability Beacon Pipeline</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Edge Beacon Ingest</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Global CloudFront Fleet</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Ingest Gateway</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Validation & Sig Verify</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Apache Kafka</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Partitioned Event Log</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Flink Deduplicator</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">RocksDB State Store</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">ClickHouse / Druid</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Audit-Ready Analytics</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== AD IMPRESSION & VIEWABILITY BEACON PIPELINE ===
+
+[1] Edge Beacon Ingest (Global CloudFront Fleet)
+        │
+        ▼
+[2] Ingest Gateway (Validation & Sig Verify)
+        │
+        ▼
+[3] Apache Kafka (Partitioned Event Log)
+        │
+        ▼
+[4] Flink Deduplicator (RocksDB State Store)
+        │
+        ▼
+[5] ClickHouse / Druid (Audit-Ready Analytics)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the beacon collector must accept incoming HTTP GET and POST tracking requests from both edge manifest generators and client video playback SDKs.
@@ -2492,54 +2342,24 @@ I would also clarify the latency requirement for incident detection and action e
 Finally, I would ask how MCP servers are structured across the organization and what security sandboxing is in place to prevent hallucinated or dangerous command executions.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Autonomous Broadcast Incident AI Agent (MCP)</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Telemetry Stream</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Metrics, Logs & Traces</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Anomaly Detector</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Dynamic Threshold Alert</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">LLM Reasoning Core</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Claude / Bedrock Agent</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">MCP Tool Orchestrator</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Safe Action Execution</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Broadcast Infrastructure</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Auto-Remediated State</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== AUTONOMOUS BROADCAST INCIDENT AI AGENT (MCP) ===
+
+[1] Telemetry Stream (Metrics, Logs & Traces)
+        │
+        ▼
+[2] Anomaly Detector (Dynamic Threshold Alert)
+        │
+        ▼
+[3] LLM Reasoning Core (Claude / Bedrock Agent)
+        │
+        ▼
+[4] MCP Tool Orchestrator (Safe Action Execution)
+        │
+        ▼
+[5] Broadcast Infrastructure (Auto-Remediated State)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the autonomous agent must continuously ingest real-time operational telemetry, including manifest error rates, SSAI latency spikes, ad auction timeouts, and video frame drop counts.
@@ -2630,54 +2450,24 @@ I would also clarify the taxonomy of sensitive events. Does the model need to di
 Finally, I would ask about infrastructure constraints, such as the availability of GPU clusters at broadcast ingest points and fallback behavior if the AI pipeline experiences backpressure.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Real-Time Video Scene & Brand Safety AI</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Live Video Feed</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Frame & Audio Extractor</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Multimodal AI Model</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Vision + Whisper OCR</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Brand Safety Classifier</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Safety & Context Scores</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Low-Latency Event Bus</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Sub-50ms Redis State</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Ad Decision Engine</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Contextual Ad Filter</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== REAL-TIME VIDEO SCENE & BRAND SAFETY AI ===
+
+[1] Live Video Feed (Frame & Audio Extractor)
+        │
+        ▼
+[2] Multimodal AI Model (Vision + Whisper OCR)
+        │
+        ▼
+[3] Brand Safety Classifier (Safety & Context Scores)
+        │
+        ▼
+[4] Low-Latency Event Bus (Sub-50ms Redis State)
+        │
+        ▼
+[5] Ad Decision Engine (Contextual Ad Filter)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the system must continuously ingest the live broadcast video stream, decoding keyframes at regular intervals and extracting the concurrent closed-caption and commentator audio track.
@@ -2768,54 +2558,24 @@ I would also clarify the scale of the evaluation suite. How many test cases exis
 Finally, I would ask about integration with existing developer workflows, such as GitHub Actions, AWS CodePipeline, and internal model registries.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Prompt Engineering & LLM CI/CD Platform</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Prompt PR Commit</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">GitHub / Git Hook</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Eval Orchestrator</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Parallel Test Runner</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Model Inference Fleet</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Amazon Bedrock API</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">LLM-as-a-Judge</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Rubric Scoring Engine</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">CI/CD Gate & Report</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Pass/Fail Deployment</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== PROMPT ENGINEERING & LLM CI/CD PLATFORM ===
+
+[1] Prompt PR Commit (GitHub / Git Hook)
+        │
+        ▼
+[2] Eval Orchestrator (Parallel Test Runner)
+        │
+        ▼
+[3] Model Inference Fleet (Amazon Bedrock API)
+        │
+        ▼
+[4] LLM-as-a-Judge (Rubric Scoring Engine)
+        │
+        ▼
+[5] CI/CD Gate & Report (Pass/Fail Deployment)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the platform must allow prompt engineers and developers to version-control prompts, tool schemas, and model configurations in Git alongside application code.
@@ -2906,54 +2666,24 @@ I would also clarify the tolerance for false positives. If the system predicts a
 Finally, I would ask about the latency budget for the prediction pipeline: the system must process incoming video and telemetry and broadcast the prediction event in under two seconds.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Live Commercial Break Prediction Engine</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Live Video & Audio Feed</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Multi-Modal Ingest</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Game Clock OCR & Audio</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Feature Extractor</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">ML Break Predictor</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Temporal Transformer</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Pre-Warm Signal Bus</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Redis Pub/Sub</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">SSAI & Auction Fleet</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Pre-Fetched Ad Pods</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== LIVE COMMERCIAL BREAK PREDICTION ENGINE ===
+
+[1] Live Video & Audio Feed (Multi-Modal Ingest)
+        │
+        ▼
+[2] Game Clock OCR & Audio (Feature Extractor)
+        │
+        ▼
+[3] ML Break Predictor (Temporal Transformer)
+        │
+        ▼
+[4] Pre-Warm Signal Bus (Redis Pub/Sub)
+        │
+        ▼
+[5] SSAI & Auction Fleet (Pre-Fetched Ad Pods)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the system must ingest the live broadcast feed and apply Optical Character Recognition (OCR) to the scorebug graphics to continuously extract the game clock, shot clock, quarter, and score.
@@ -3044,54 +2774,24 @@ I would also clarify how personalized ad decisions are propagated to the edge. D
 Finally, I would ask how the system handles failover if the edge ad cache misses or becomes unavailable during a live broadcast.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Edge Manifest Manipulation Service</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Client Video Player</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Polls Playlist (2s)</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">CloudFront Edge Worker</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Lambda@Edge / Envoy</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Local Edge Cache</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Ad Pod Key-Value Store</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Manifest Stitcher</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">In-Memory Playlist Rewrite</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Personalized HLS/DASH</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Sub-10ms Response</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== EDGE MANIFEST MANIPULATION SERVICE ===
+
+[1] Client Video Player (Polls Playlist (2s))
+        │
+        ▼
+[2] CloudFront Edge Worker (Lambda@Edge / Envoy)
+        │
+        ▼
+[3] Local Edge Cache (Ad Pod Key-Value Store)
+        │
+        ▼
+[4] Manifest Stitcher (In-Memory Playlist Rewrite)
+        │
+        ▼
+[5] Personalized HLS/DASH (Sub-10ms Response)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the edge manifest service must intercept incoming HTTP GET requests for live HLS m3u8 and DASH mpd playlist files originating from viewers' video players.
@@ -3182,54 +2882,24 @@ I would also clarify the alerting mechanism. Do we use static threshold alarms, 
 Finally, I would ask about retention policies: we need high-resolution data for the duration of the game, followed by downsampled retention for long-term capacity planning.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Live Telemetry & Anomaly Detection Platform</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Global Metric Collectors</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Edge & Player Agents</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Kafka Message Bus</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">High-Throughput Partitioning</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Flink Stream Aggregator</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">5-Second Rolling Windows</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Isolation Forest ML</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Dynamic Anomaly Detector</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Live Operations Dashboard</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Automated Alert Dispatch</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== LIVE TELEMETRY & ANOMALY DETECTION PLATFORM ===
+
+[1] Global Metric Collectors (Edge & Player Agents)
+        │
+        ▼
+[2] Kafka Message Bus (High-Throughput Partitioning)
+        │
+        ▼
+[3] Flink Stream Aggregator (5-Second Rolling Windows)
+        │
+        ▼
+[4] Isolation Forest ML (Dynamic Anomaly Detector)
+        │
+        ▼
+[5] Live Operations Dashboard (Automated Alert Dispatch)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the platform must collect real-time telemetry from thousands of microservice instances, edge manifest proxies, and millions of active client video players.
@@ -3320,54 +2990,24 @@ I would also clarify the latency SLA from the triggering game event to overlay d
 Finally, I would ask about advertiser brand safety and approval workflows: all brand logos, color palettes, and generative copy templates must be pre-approved by advertisers before the game begins.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Dynamic Creative Personalization & Overlays</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Live Game Trigger</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Touchdown / Home Run</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Contextual Ad Engine</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Template & Rule Matcher</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">GenAI Copy Synthesizer</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Bedrock Fast LLM</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Asset Compositor</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Pre-Approved Brand Layers</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Client Overlay SDK</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Sub-3s Interactive Display</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== DYNAMIC CREATIVE PERSONALIZATION & OVERLAYS ===
+
+[1] Live Game Trigger (Touchdown / Home Run)
+        │
+        ▼
+[2] Contextual Ad Engine (Template & Rule Matcher)
+        │
+        ▼
+[3] GenAI Copy Synthesizer (Bedrock Fast LLM)
+        │
+        ▼
+[4] Asset Compositor (Pre-Approved Brand Layers)
+        │
+        ▼
+[5] Client Overlay SDK (Sub-3s Interactive Display)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the system must listen to real-time game event triggers from official sports data feeds, identifying major moments like touchdowns, home runs, or buzzer-beater shots.
@@ -3458,54 +3098,24 @@ I would also clarify the reservation mechanics and consistency model. When a sal
 Finally, I would ask how the engine handles uncertain game outcomes like playoff series that may end in four games or stretch to seven games.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Ad Inventory Forecasting & Reservation</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Historical Viewership Logs</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Multi-Season S3 Data</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">ML Forecasting Engine</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Time-Series & Team Form</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Multi-Dimensional HyperCube</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Audience Overlap Matrix</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Reservation Service</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">ACID Allocation Locks</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Sales Portal & Ad Server</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Guaranteed Booking</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== AD INVENTORY FORECASTING & RESERVATION ===
+
+[1] Historical Viewership Logs (Multi-Season S3 Data)
+        │
+        ▼
+[2] ML Forecasting Engine (Time-Series & Team Form)
+        │
+        ▼
+[3] Multi-Dimensional HyperCube (Audience Overlap Matrix)
+        │
+        ▼
+[4] Reservation Service (ACID Allocation Locks)
+        │
+        ▼
+[5] Sales Portal & Ad Server (Guaranteed Booking)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the forecasting engine must ingest historical viewership logs, team popularity indices, matchup rivalries, seasonal broadcast ratings, and television scheduling data to predict audience reach for future live events.
@@ -3596,54 +3206,24 @@ I would also clarify the maximum acceptable processing lag. How quickly must inc
 Finally, I would ask about disaster recovery and data replay capabilities in case a bug in an ETL job corrupts downstream state.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">High-Throughput Ad Telemetry ETL Pipeline</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Raw Event Ingestion</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Edge Envoy Fleet</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Kafka Event Buffer</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Partitioned by Session</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Apache Flink ETL</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Enrichment & Sessionize</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Real-Time Store</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">ClickHouse / Pinot</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Cold Data Lake</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">S3 Parquet via Iceberg</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== HIGH-THROUGHPUT AD TELEMETRY ETL PIPELINE ===
+
+[1] Raw Event Ingestion (Edge Envoy Fleet)
+        │
+        ▼
+[2] Kafka Event Buffer (Partitioned by Session)
+        │
+        ▼
+[3] Apache Flink ETL (Enrichment & Sessionize)
+        │
+        ▼
+[4] Real-Time Store (ClickHouse / Pinot)
+        │
+        ▼
+[5] Cold Data Lake (S3 Parquet via Iceberg)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the ETL pipeline must ingest raw telemetry event streams arriving from edge proxy servers, manifest stitching workers, and client video player SDKs.
@@ -3734,54 +3314,24 @@ I would also clarify the data synchronization model between active regions. Do a
 Finally, I would ask about traffic rerouting mechanisms: how do we shift millions of viewer connections between regions without overwhelming the failover region?
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Multi-Region Ad Server Fallback Architecture</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Global Anycast Route 53</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Latency-Based Health Routing</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Primary Region Cluster</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Active Ad Decisioning</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Circuit Breaker Proxy</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">50ms Hard Timeout Guard</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Secondary Region Cluster</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Active-Active Mirror</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Edge Slate Engine</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Local Pre-Warmed Video Reel</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== MULTI-REGION AD SERVER FALLBACK ARCHITECTURE ===
+
+[1] Global Anycast Route 53 (Latency-Based Health Routing)
+        │
+        ▼
+[2] Primary Region Cluster (Active Ad Decisioning)
+        │
+        ▼
+[3] Circuit Breaker Proxy (50ms Hard Timeout Guard)
+        │
+        ▼
+[4] Secondary Region Cluster (Active-Active Mirror)
+        │
+        ▼
+[5] Edge Slate Engine (Local Pre-Warmed Video Reel)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the architecture must support active-active ad serving across multiple geographically distributed cloud regions such as US-East and US-West.
@@ -3872,54 +3422,24 @@ I would also clarify the latency requirement for root cause diagnosis. In a live
 Finally, I would ask how the assistant verifies the safety of proposed commands to ensure it never suggests destructive actions like dropping a production table or terminating an active cluster.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">AI Root Cause Analysis & Runbook Assistant</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Incident Declaration</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">PagerDuty / Alert Trigger</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Context Collector</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Logs, Traces & Git Diffs</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">LLM Reasoning Agent</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">RCA Diagnostic Engine</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Runbook Matcher</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Pre-Approved Safe Fixes</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Interactive Chatbot</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Slack Incident Command</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== AI ROOT CAUSE ANALYSIS & RUNBOOK ASSISTANT ===
+
+[1] Incident Declaration (PagerDuty / Alert Trigger)
+        │
+        ▼
+[2] Context Collector (Logs, Traces & Git Diffs)
+        │
+        ▼
+[3] LLM Reasoning Agent (RCA Diagnostic Engine)
+        │
+        ▼
+[4] Runbook Matcher (Pre-Approved Safe Fixes)
+        │
+        ▼
+[5] Interactive Chatbot (Slack Incident Command)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the assistant must automatically wake whenever a high-severity incident is declared via PagerDuty or an alert in the broadcast operations channel.
@@ -4010,54 +3530,24 @@ I would also ask about the scale of concurrent purchase spikes. If a high-profil
 Finally, I would ask about synchronization with the live video feed: the overlay must appear at the exact frame the product is mentioned by commentators.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Interactive Shopping & Click-to-Buy Platform</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Broadcast Trigger</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Product Cue & Timestamp</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Overlay Distribution</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">WebSocket & CDN Channel</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Client Render Engine</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Interactive Overlay Layer</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">QR & 1-Click Purchase</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Amazon Commerce Gateway</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Order Fulfillment Queue</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">High-Throughput Checkout</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== INTERACTIVE SHOPPING & CLICK-TO-BUY PLATFORM ===
+
+[1] Broadcast Trigger (Product Cue & Timestamp)
+        │
+        ▼
+[2] Overlay Distribution (WebSocket & CDN Channel)
+        │
+        ▼
+[3] Client Render Engine (Interactive Overlay Layer)
+        │
+        ▼
+[4] QR & 1-Click Purchase (Amazon Commerce Gateway)
+        │
+        ▼
+[5] Order Fulfillment Queue (High-Throughput Checkout)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the platform must allow broadcast producers and advertisers to schedule interactive shopping overlays tied to specific presentation timestamps or live game milestones.
@@ -4148,54 +3638,24 @@ I would also clarify the rate limiting algorithm preference. Algorithms like Tok
 Finally, I would ask how the system behaves during rate limiter infrastructure failure: the rate limiter must fail open to prevent an internal throttling glitch from halting the entire live broadcast.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Distributed Rate Limiter & Throttling Fleet</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Incoming Ad Requests</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">15M Viewer Spike</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Envoy Edge Proxy</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Local Token Bucket Cache</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Distributed Rate Limiter</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Redis Cluster Sync</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Downstream Services</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Protected Microservices</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Graceful Shedder</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Default Ad Fallback</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== DISTRIBUTED RATE LIMITER & THROTTLING FLEET ===
+
+[1] Incoming Ad Requests (15M Viewer Spike)
+        │
+        ▼
+[2] Envoy Edge Proxy (Local Token Bucket Cache)
+        │
+        ▼
+[3] Distributed Rate Limiter (Redis Cluster Sync)
+        │
+        ▼
+[4] Downstream Services (Protected Microservices)
+        │
+        ▼
+[5] Graceful Shedder (Default Ad Fallback)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the rate limiting service must evaluate incoming API requests across multiple dimensions, including client IP, viewer session, API route, and downstream target partner.
@@ -4286,54 +3746,24 @@ I would also clarify the output target: does this engine trigger instant on-scre
 Finally, I would ask about high availability and multi-provider failover: if the primary sports feed drops, the system must seamlessly fail over to a backup provider without missing critical game events.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Sports Telemetry Ingest & Contextual Ad Trigger</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Official Sports Feed</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Sportradar / NFL Next Gen</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">State Machine Ingest</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Out-of-Order Play Handler</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Contextual Rule Engine</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Complex Event Processing</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Ad Opportunity Bus</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Sub-50ms Event Trigger</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">SSAI & Overlay Fleet</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Contextual Ad Activation</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== SPORTS TELEMETRY INGEST & CONTEXTUAL AD TRIGGER ===
+
+[1] Official Sports Feed (Sportradar / NFL Next Gen)
+        │
+        ▼
+[2] State Machine Ingest (Out-of-Order Play Handler)
+        │
+        ▼
+[3] Contextual Rule Engine (Complex Event Processing)
+        │
+        ▼
+[4] Ad Opportunity Bus (Sub-50ms Event Trigger)
+        │
+        ▼
+[5] SSAI & Overlay Fleet (Contextual Ad Activation)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the engine must establish persistent, redundant streaming connections to official sports data providers to ingest real-time play-by-play events, player tracking coordinates, and game clock updates.
@@ -4424,54 +3854,24 @@ I would also clarify privacy and compliance boundaries. How do we ensure that Pe
 Finally, I would ask about cache miss behavior at the edge: if a viewer profile is not in the local edge cache, how quickly can the system fetch it without delaying manifest delivery?
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Edge Audience Cohort Segmentation Platform</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Batch Data Lake & DPo</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Offline Segment Builder</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Real-Time Event Stream</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Immediate Behavioral Updates</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Global Profile Store</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">DynamoDB Global Tables</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Edge Cache Sync</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">CloudFront KeyValueStore</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">SSAI Manifest Stitcher</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Sub-2ms Token Lookup</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== EDGE AUDIENCE COHORT SEGMENTATION PLATFORM ===
+
+[1] Batch Data Lake & DPo (Offline Segment Builder)
+        │
+        ▼
+[2] Real-Time Event Stream (Immediate Behavioral Updates)
+        │
+        ▼
+[3] Global Profile Store (DynamoDB Global Tables)
+        │
+        ▼
+[4] Edge Cache Sync (CloudFront KeyValueStore)
+        │
+        ▼
+[5] SSAI Manifest Stitcher (Sub-2ms Token Lookup)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the platform must ingest offline audience segment computations from Amazon's enterprise data lake alongside real-time behavioral events from the streaming app and Amazon retail platform.
@@ -4562,54 +3962,24 @@ I would also clarify the feature store architecture: how are dense user embeddin
 Finally, I would ask how model updates are deployed: we need zero-downtime hot swapping of model weights during live games as models are continuously updated with intraday feedback.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Real-Time CTR/CVR Model Serving Fleet</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Ad Auction Request</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">500 Candidate Ads</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Low-Latency Feature Store</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Redis / Feast In-Memory</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Triton Inference Server</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">TensorRT / AWS Inferentia</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Calibrated CTR/CVR</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Sub-8ms Batch Scoring</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Auction Ranker Engine</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">eCPM Value Selection</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== REAL-TIME CTR/CVR MODEL SERVING FLEET ===
+
+[1] Ad Auction Request (500 Candidate Ads)
+        │
+        ▼
+[2] Low-Latency Feature Store (Redis / Feast In-Memory)
+        │
+        ▼
+[3] Triton Inference Server (TensorRT / AWS Inferentia)
+        │
+        ▼
+[4] Calibrated CTR/CVR (Sub-8ms Batch Scoring)
+        │
+        ▼
+[5] Auction Ranker Engine (eCPM Value Selection)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the serving system must accept a scoring request containing the viewer context, live broadcast attributes, and a candidate list of hundreds of eligible ad creatives.
@@ -4700,54 +4070,24 @@ I would also clarify the acceptable false positive rate. In live sports on Prime
 Finally, I would ask about telemetry signals available from the video player SDK, such as client sensor data, behavioral mouse/touch dynamics, and cryptographically attested device integrity tokens.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Real-Time IVT & Ad Fraud Filtering Engine</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Incoming Ad/Beacon</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Client Request Stream</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">GIVT Fast Filter</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">IP & User-Agent Bloom</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">SIVT ML Classifier</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Behavioral Anomaly Model</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Device Attestation</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">App & Hardware Sig</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Decision Gateway</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Legitimate Traffic Pass</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== REAL-TIME IVT & AD FRAUD FILTERING ENGINE ===
+
+[1] Incoming Ad/Beacon (Client Request Stream)
+        │
+        ▼
+[2] GIVT Fast Filter (IP & User-Agent Bloom)
+        │
+        ▼
+[3] SIVT ML Classifier (Behavioral Anomaly Model)
+        │
+        ▼
+[4] Device Attestation (App & Hardware Sig)
+        │
+        ▼
+[5] Decision Gateway (Legitimate Traffic Pass)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the engine must inspect every incoming ad request and impression beacon to verify device authenticity and human interaction signals.
@@ -4838,54 +4178,24 @@ I would also clarify audio synchronization: how does the system handle language 
 Finally, I would ask about broadcast compliance: audio tracks must be normalized to -24 LKFS loudness standards to comply with television broadcast regulations.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">AI Synthetic Voiceover & Dubbing Pipeline</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Ad Creative Upload</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">English Master Video</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Audio Demux & Whisper</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Speech-to-Text & Diarize</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Contextual LLM Translate</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Duration-Constrained Text</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Voice Cloning TTS</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Neural Audio Synthesis</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Audio Mastering & Mux</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Broadcast -24 LKFS File</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== AI SYNTHETIC VOICEOVER & DUBBING PIPELINE ===
+
+[1] Ad Creative Upload (English Master Video)
+        │
+        ▼
+[2] Audio Demux & Whisper (Speech-to-Text & Diarize)
+        │
+        ▼
+[3] Contextual LLM Translate (Duration-Constrained Text)
+        │
+        ▼
+[4] Voice Cloning TTS (Neural Audio Synthesis)
+        │
+        ▼
+[5] Audio Mastering & Mux (Broadcast -24 LKFS File)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the platform must allow advertisers and operations teams to upload master video commercial files with an original audio track.
@@ -4978,54 +4288,24 @@ I would also clarify the dimensions across which metrics must be aggregated: do 
 Finally, I would ask how the system handles client heartbeat dropouts when viewers abruptly close their apps or lose internet connectivity.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Distributed Global Streaming Counter</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Player Heartbeat Pings</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">30s Periodic Pings</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Edge Ingestion Nodes</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Local HyperLogLog Bins</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Regional Aggregators</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Kafka / Flink Merge</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Global Metric Store</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Central Redis Cluster</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Live Operations Wall</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">2-Second Metric Refresh</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== DISTRIBUTED GLOBAL STREAMING COUNTER ===
+
+[1] Player Heartbeat Pings (30s Periodic Pings)
+        │
+        ▼
+[2] Edge Ingestion Nodes (Local HyperLogLog Bins)
+        │
+        ▼
+[3] Regional Aggregators (Kafka / Flink Merge)
+        │
+        ▼
+[4] Global Metric Store (Central Redis Cluster)
+        │
+        ▼
+[5] Live Operations Wall (2-Second Metric Refresh)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the service must ingest periodic heartbeat telemetry pings from tens of millions of active Prime Video streaming clients.
@@ -5116,54 +4396,24 @@ I would also clarify security and authentication mechanisms: do partner connecti
 Finally, I would ask about payload transformation overhead: how does the gateway translate external partner ad response formats into internal Prime Video manifest schemas without adding latency?
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Publisher Ad Server Integration Gateway</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">External Partner DSP/SSP</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">OpenRTB over mTLS</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Gateway Edge Proxy</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">mTLS & HMAC Verify</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Tenant Sandbox Engine</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Rate Limiting & Quotas</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Protocol Normalizer</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">OpenRTB to Protobuf</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Prime Video Ad Bus</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Internal Ad Decisioning</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== PUBLISHER AD SERVER INTEGRATION GATEWAY ===
+
+[1] External Partner DSP/SSP (OpenRTB over mTLS)
+        │
+        ▼
+[2] Gateway Edge Proxy (mTLS & HMAC Verify)
+        │
+        ▼
+[3] Tenant Sandbox Engine (Rate Limiting & Quotas)
+        │
+        ▼
+[4] Protocol Normalizer (OpenRTB to Protobuf)
+        │
+        ▼
+[5] Prime Video Ad Bus (Internal Ad Decisioning)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the gateway must terminate secure external connections from third-party advertising partners, supply-side platforms, and sports league systems.
@@ -5254,54 +4504,24 @@ I would also clarify the scale of traffic simulation: can the load generation en
 Finally, I would ask about reporting: does the platform generate an automated Broadcast Readiness Certificate that leadership must sign off on before kickoff?
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Broadcast Readiness & Chaos Platform</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Pre-Flight Schedule</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">48h Before Kickoff</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Synthetic Traffic Fleet</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">15M Simulated Players</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Chaos Injection Engine</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Latency & Pod Faults</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Health & Safety Monitor</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Automated Kill Switch</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Readiness Certification</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Executive Sign-Off</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== BROADCAST READINESS & CHAOS PLATFORM ===
+
+[1] Pre-Flight Schedule (48h Before Kickoff)
+        │
+        ▼
+[2] Synthetic Traffic Fleet (15M Simulated Players)
+        │
+        ▼
+[3] Chaos Injection Engine (Latency & Pod Faults)
+        │
+        ▼
+[4] Health & Safety Monitor (Automated Kill Switch)
+        │
+        ▼
+[5] Readiness Certification (Executive Sign-Off)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the platform must allow broadcast reliability engineers to schedule automated pre-flight readiness drills forty-eight hours prior to scheduled live events.
@@ -5392,54 +4612,24 @@ I would also clarify the scale of datasets: how many millions of viewer records 
 Finally, I would ask about query execution latency: while real-time ad serving requires milliseconds, clean room analytical queries typically run in batch mode with acceptable turnaround times of minutes to hours.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Privacy-Preserving Data Clean Room</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Advertiser CRM Data</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Hashed Customer Records</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Amazon Sports Data</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Verified Viewer Sessions</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">AWS Nitro Enclave</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Isolated Hardware Sandbox</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Differential Privacy</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Mathematical Noise Guard</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Attribution Report</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Privacy-Safe Aggregates</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== PRIVACY-PRESERVING DATA CLEAN ROOM ===
+
+[1] Advertiser CRM Data (Hashed Customer Records)
+        │
+        ▼
+[2] Amazon Sports Data (Verified Viewer Sessions)
+        │
+        ▼
+[3] AWS Nitro Enclave (Isolated Hardware Sandbox)
+        │
+        ▼
+[4] Differential Privacy (Mathematical Noise Guard)
+        │
+        ▼
+[5] Attribution Report (Privacy-Safe Aggregates)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the clean room must allow enterprise advertisers to securely upload anonymized customer datasets, including purchase histories and CRM records.
@@ -5530,54 +4720,24 @@ I would also clarify the turnaround SLA: how quickly must a newly uploaded ad cr
 Finally, I would ask about automated quality control: the system must automatically inspect transcoded video for dropped frames, blockiness, color banding, and audio clipping.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">ABR Ad Transcoding & Audio Normalization</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Advertiser Creative Upload</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">ProRes / H.264 Master</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Audio Normalizer</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">ITU BS.1770 -24 LKFS</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Distributed Transcoder</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">AWS Elemental / FFmpeg</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Automated Video QC</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">VMAF & Segment Alignment</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">CDN Edge Distribution</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Broadcast-Ready ABR</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== ABR AD TRANSCODING & AUDIO NORMALIZATION ===
+
+[1] Advertiser Creative Upload (ProRes / H.264 Master)
+        │
+        ▼
+[2] Audio Normalizer (ITU BS.1770 -24 LKFS)
+        │
+        ▼
+[3] Distributed Transcoder (AWS Elemental / FFmpeg)
+        │
+        ▼
+[4] Automated Video QC (VMAF & Segment Alignment)
+        │
+        ▼
+[5] CDN Edge Distribution (Broadcast-Ready ABR)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the platform must accept master video commercial uploads from advertisers and automated campaign management systems via secure S3 upload portals.
@@ -5668,54 +4828,24 @@ I would also clarify the advertising output: does the system trigger interactive
 Finally, I would ask about content moderation: the system must strictly filter profanity, toxic comments, and harassment before aggregating sentiment signals.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Real-Time Chat Sentiment & Contextual Ad Engine</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Live Fan Chat Stream</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">1M Messages / Min</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Profanity & Toxicity Filter</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Sub-10ms Fast Gate</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Streaming NLP Model</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Sentiment & Entity Extractor</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Trending Topic Aggregator</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Flink 5-Second Window</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Contextual Sponsor Card</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Sub-3s Interactive Ad</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== REAL-TIME CHAT SENTIMENT & CONTEXTUAL AD ENGINE ===
+
+[1] Live Fan Chat Stream (1M Messages / Min)
+        │
+        ▼
+[2] Profanity & Toxicity Filter (Sub-10ms Fast Gate)
+        │
+        ▼
+[3] Streaming NLP Model (Sentiment & Entity Extractor)
+        │
+        ▼
+[4] Trending Topic Aggregator (Flink 5-Second Window)
+        │
+        ▼
+[5] Contextual Sponsor Card (Sub-3s Interactive Ad)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the engine must ingest live fan chat messages emitted by viewers participating in interactive Prime Video live event streams.
@@ -5806,54 +4936,24 @@ I would also clarify the human-in-the-loop governance: what level of human overs
 Finally, I would ask about scalability: the control plane must supervise fifty concurrent live sporting events across multiple sports, time zones, and global regions without cross-event interference.
 
 ### 3. High-Level Architecture Diagram
-<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
-      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
-        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Multi-Agent Broadcast Control Plane</text>
-        
-        <g class="node">
-          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Live Telemetry Streams</text>
-          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">50 Concurrent Events</text>
-        </g>
-        <g class="node">
-          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Specialized Domain Agents</text>
-          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Ingest, SSAI, Auction</text>
-        </g>
-        <g class="node">
-          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Supervisor Commander Agent</text>
-          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Hierarchical Planner</text>
-        </g>
-        <g class="node">
-          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">MCP Shared Tool Bus</text>
-          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Safe Operational Actions</text>
-        </g>
-        <g class="node">
-          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Operations Command Wall</text>
-          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Human-in-the-Loop Veto</text>
-        </g>
-        
-            <g class="arrow">
-              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
-            </g>
-            <g class="arrow">
-              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
-            </g>
-      </svg>
-    </div>
+```
+=== MULTI-AGENT BROADCAST CONTROL PLANE ===
+
+[1] Live Telemetry Streams (50 Concurrent Events)
+        │
+        ▼
+[2] Specialized Domain Agents (Ingest, SSAI, Auction)
+        │
+        ▼
+[3] Supervisor Commander Agent (Hierarchical Planner)
+        │
+        ▼
+[4] MCP Shared Tool Bus (Safe Operational Actions)
+        │
+        ▼
+[5] Operations Command Wall (Human-in-the-Loop Veto)
+```
+
 
 ### 4. Functional Requirements
 Functionally, the control plane must orchestrate multiple specialized AI agents, each dedicated to monitoring a specific domain of the live advertising stack.

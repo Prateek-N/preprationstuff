@@ -11,6 +11,7 @@ Generates:
 
 import json
 import os
+import re
 from amazon_prep_dsa import dsa_questions
 from amazon_prep_sysde_part1 import sysde_questions_part1
 from amazon_prep_sysde_part2 import sysde_questions_part2
@@ -71,6 +72,29 @@ for q in dsa_questions:
 md_body_lines.append("# Part 2: Top 30 System Design Questions (Amazon Live Events & Advertising AI)\n")
 md_body_lines.append("Every system design breakdown is presented in a **simple, conversational walkthrough format written in small, clear paragraph chunks WITHOUT ANY BULLET POINTS**, guiding the interviewer naturally through Functional Requirements, Non-Functional Requirements, Core Entities, API Design, Data Flow, High-Level Architecture, and Non-Functional Deep Dives.\n\n")
 
+def svg_to_ascii(svg_html: str) -> str:
+    title_m = re.search(r'font-size="15"[^>]*>([^<]+)<', svg_html)
+    title = title_m.group(1) if title_m else 'High-Level Architecture'
+    
+    node_matches = re.findall(r'<g class="node"[^>]*>(.*?)</g>', svg_html, re.DOTALL)
+    nodes = []
+    for nm in node_matches:
+        texts = re.findall(r'<text[^>]*>([^<]+)</text>', nm)
+        if len(texts) >= 2:
+            nodes.append((texts[0].strip(), texts[1].strip()))
+        elif len(texts) == 1:
+            nodes.append((texts[0].strip(), ''))
+            
+    out = ["```", f"=== {title.upper()} ===", ""]
+    for i, (n1, n2) in enumerate(nodes):
+        node_str = f"[{i+1}] {n1}" + (f" ({n2})" if n2 else "")
+        out.append(node_str)
+        if i < len(nodes) - 1:
+            out.append("        │")
+            out.append("        ▼")
+    out.append("```\n")
+    return "\n".join(out)
+
 for s in all_sysde:
     md_body_lines.append(f"## System Design {s['id']}: {s['title']}")
     md_body_lines.append(f"**Domain Category:** {s['category']}\n")
@@ -82,7 +106,7 @@ for s in all_sysde:
     md_body_lines.append(s['clarifying_questions'].strip() + "\n")
     
     md_body_lines.append("### 3. High-Level Architecture Diagram")
-    md_body_lines.append(s['svg_diagram'].strip() + "\n")
+    md_body_lines.append(svg_to_ascii(s['svg_diagram']) + "\n")
     
     md_body_lines.append("### 4. Functional Requirements")
     md_body_lines.append(s['functional_requirements'].strip() + "\n")

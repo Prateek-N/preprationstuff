@@ -1617,8 +1617,7 @@ Expose OpenAPI spec for your Flask API using `flasgger` or similar, with at leas
 
 If you want, next step can be to fully flesh out, say, React problems 11–15 and Flask problems 11–15 in the same pattern so you have a very dense practice repo.
 
-Which side do you want to deepen first in this `code.md`: frontend (React) or backend (Flask)?
-<span style="display:none">[^10][^11][^12][^13][^14][^15][^2][^3][^4][^5][^6][^7][^8][^9]</span>
+<!-- [^10][^11][^12][^13][^14][^15][^2][^3][^4][^5][^6][^7][^8][^9] -->
 
 <div align="center">⁂</div>
 
