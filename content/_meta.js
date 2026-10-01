@@ -1,5 +1,6 @@
 export default {
   index: 'Docs Home',
+  'ashutosh-amazon-live-events-prep': 'Ashutosh Rudraksh Amazon Live Events AI Prep',
   'karthik-kalyan-fullstack-prep': 'Karthik Kalyan Full Stack SDE Prep',
   'lakshmi-pranitha-wise-prep': 'Lakshmi Pranitha Wise Commercial Analyst Prep',
   'rujuwal-garg-resume-deepdive': 'Rujuwal Garg Resume Deep-Dive',
