@@ -1,0 +1,5922 @@
+# Amazon Advertising in Live Events — AI Engineer Technical Interview Master Guide
+**Candidate:** Ashutosh Rudraksh | Software Engineer (4 Years Experience: Uber, Meta Reality Labs, Tekainos, Dell Technologies | M.S. CS Ohio State University)
+**Target Role:** AI Engineer — Amazon Advertising in Live Events (Thursday Night Football, NBA, NASCAR, Prime Video)
+**Core Focus:** Ultra-Low Latency Distributed Systems, Real-Time Ad Decisioning, Server-Side Ad Insertion (SSAI), Agentic Operations (MCP), Multimodal Video AI, and High-Throughput Stream Telemetry
+
+---
+
+## Executive Strategy & Role Alignment
+
+This preparation suite is specifically architected for the **AI Engineer - Amazon Advertising in Live Events** technical interview rounds. Amazon live sports broadcasts (such as Thursday Night Football, NBA, and NASCAR) operate at unprecedented concurrency—serving over **15 million concurrent viewers** entering commercial breaks at the exact same split-second.
+
+As an engineer with deep expertise across **FastAPI, Python, Java, Kubernetes, AWS (SageMaker, Bedrock, Lambda), Apache Kafka, Redis, pgvector, and Model Context Protocol (MCP)**, this guide bridges Ashutosh's production background directly with Amazon's core technical challenges:
+
+1. **Broadcast-Grade Reliability & Latency:** Manifest generation in under 50ms, real-time ad auctions in under 40ms, and in-memory edge rewrites in under 10ms.
+
+2. **AI & Agentic Operations:** Autonomous incident remediation using Model Context Protocol (MCP), continuous prompt evaluation pipelines (CI/CD for LLMs), and automated runbook synthesis for on-call engineers.
+
+3. **Multimodal Broadcast AI:** Real-time brand safety classification and commercial break auto-cue prediction using computer vision and audio signals.
+
+4. **High-Frequency Algorithmic Problem Solving:** Top 30 Python DSA implementations covering sliding windows, monotonic deques, priority queues, topological DAGs, and distributed streaming rate limiters.
+
+
+---
+
+# Part 1: Top 30 High-Frequency Amazon DSA Practice Questions in Python
+
+Each problem follows the strict four-step interview cadence: **Problem Statement**, **Complete Thought Process & Intuition**, **Production-Grade Python Code with Inline Comments**, and **Time & Space Complexity Analysis**.
+
+
+## Problem 1: Design In-Memory LRU Cache with Time-To-Live (TTL)
+**Topic:** Hash Map + Doubly Linked List | **Difficulty:** Medium-Hard
+
+### 1. Problem Statement
+Design and implement a data structure for a Least Recently Used (LRU) Cache that supports a Time-To-Live (TTL) expiration mechanism for each key-value pair.
+The cache must support the following operations:
+- `get(key: str) -> int`: Returns the value of the key if it exists and has not expired. If the key does not exist or has expired, return -1. Accessing a non-expired key marks it as most recently used.
+- `put(key: str, value: int, ttl_ms: int) -> None`: Inserts or updates the key with the given value and time-to-live in milliseconds. If inserting exceeds the capacity, evict the least recently used non-expired key. If all non-expired keys exceed capacity, evict the LRU key regardless.
+- `clean_expired() -> None`: Optional maintenance routine to purge expired keys.
+Both `get` and `put` operations must run in O(1) average time complexity.
+
+### 2. Complete Thought Process & Intuition
+To achieve O(1) get and put operations while maintaining LRU ordering, the standard approach combines a hash table with a doubly linked list. The hash table maps each key to its corresponding Node in the linked list, allowing O(1) key lookups. The doubly linked list maintains the temporal access order: the head represents the most recently accessed node, while the tail represents the least recently accessed node.
+
+To incorporate TTL (Time-To-Live), each node stores an absolute expiration timestamp (`expire_at = current_time + ttl_ms`). When `get(key)` is invoked, we first check if the key exists in our hash map. If present, we compare its expiration timestamp with the current time. If it has expired, we remove the node from both the hash map and the linked list, returning -1. If valid, we move the node to the head of the doubly linked list and return its value.
+
+For `put(key, value, ttl_ms)`, if the key already exists, we update its value and new expiration timestamp, then move it to the head. If it is a new key and the cache has reached maximum capacity, we evict the node at the tail (the least recently used item). We also maintain dummy head and tail sentinel nodes in the doubly linked list to eliminate edge cases during pointer manipulations.
+
+### 3. Python 3 Implementation
+```python
+import time
+from typing import Optional, Dict
+
+class Node:
+    def __init__(self, key: str = "", val: int = 0, expire_at: float = 0.0):
+        # Store key, value, and expiration timestamp
+        self.key = key
+        self.val = val
+        self.expire_at = expire_at
+        # Pointers for doubly linked list
+        self.prev: Optional['Node'] = None
+        self.next: Optional['Node'] = None
+
+class LRUCacheWithTTL:
+    def __init__(self, capacity: int):
+        self.capacity = capacity
+        # Hash map mapping key -> Node
+        self.lookup: Dict[str, Node] = {}
+        # Sentinel dummy nodes for O(1) insertions and removals
+        self.head = Node()
+        self.tail = Node()
+        self.head.next = self.tail
+        self.tail.prev = self.head
+
+    def _remove(self, node: Node) -> None:
+        # Detach node from current linked list position
+        p = node.prev
+        n = node.next
+        p.next = n
+        n.prev = p
+
+    def _add_to_front(self, node: Node) -> None:
+        # Insert node right after the dummy head (most recently used)
+        node.next = self.head.next
+        node.prev = self.head
+        self.head.next.prev = node
+        self.head.next = node
+
+    def get(self, key: str) -> int:
+        if key not in self.lookup:
+            return -1
+        
+        node = self.lookup[key]
+        now = time.time()
+        
+        # Check if the entry has expired
+        if now > node.expire_at:
+            # Clean up expired node from both map and linked list
+            self._remove(node)
+            del self.lookup[key]
+            return -1
+        
+        # Move accessed node to front (mark as most recently used)
+        self._remove(node)
+        self._add_to_front(node)
+        return node.val
+
+    def put(self, key: str, value: int, ttl_ms: int) -> None:
+        now = time.time()
+        expire_at = now + (ttl_ms / 1000.0)
+        
+        if key in self.lookup:
+            # Update existing node
+            node = self.lookup[key]
+            node.val = value
+            node.expire_at = expire_at
+            self._remove(node)
+            self._add_to_front(node)
+        else:
+            # If at capacity, evict least recently used (node before tail)
+            if len(self.lookup) >= self.capacity:
+                lru = self.tail.prev
+                self._remove(lru)
+                del self.lookup[lru.key]
+            
+            # Create and insert new node
+            new_node = Node(key, value, expire_at)
+            self.lookup[key] = new_node
+            self._add_to_front(new_node)
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(1) average for both `get` and `put`. Node lookups in the hash map take O(1) time, and pointer adjustments in the doubly linked list take O(1) time.
+- **Space Complexity:** O(C) where C is the maximum cache capacity. We store at most C key-node mappings in the dictionary and C nodes in the doubly linked list.
+
+---
+
+## Problem 2: Sliding Window Maximum / Real-Time Ad Telemetry Spikes
+**Topic:** Monotonic Deque | **Difficulty:** Hard
+
+### 1. Problem Statement
+You are monitoring an event stream of viewer request metrics during a live broadcast (e.g., Thursday Night Football ad impression bids per second). You are given an array of integers `nums` representing the incoming stream metrics, and an integer `k` representing the sliding window duration in seconds.
+Return the maximum metric observed in each sliding window of size `k` as the window moves from left to right across the stream.
+You must solve the problem in O(N) time complexity.
+
+### 2. Complete Thought Process & Intuition
+A naive brute-force search looks at all k elements in each window, leading to O(N * k) time, which will breach real-time streaming constraints when k is large. A max-heap achieves O(N log k) time by tracking elements with their indices, but evicting stale elements outside the window requires heap maintenance.
+
+To achieve optimal O(N) time, we use a Monotonic Deque (double-ended queue). The deque will store the indices of the array elements such that the values corresponding to these indices are in strictly descending order:
+1. Stale Index Removal: Before inserting the current element at index `i`, we pop indices from the front of the deque if they fall outside the current window (`index <= i - k`).
+2. Monotonic Property Maintenance: We pop indices from the back of the deque as long as their corresponding values are less than or equal to `nums[i]`. This is because `nums[i]` is both newer and larger than those elements, meaning those smaller elements can never be the maximum of any future window.
+3. Front Element is Maximum: After pushing `i` to the back, the index at the front of the deque will always point to the maximum element in the current window once `i >= k - 1`.
+
+### 3. Python 3 Implementation
+```python
+from collections import deque
+from typing import List
+
+def maxSlidingWindow(nums: List[int], k: int) -> List[int]:
+    # Monotonic deque storing indices of candidate maximums
+    dq = deque()
+    result = []
+    
+    for i, num in enumerate(nums):
+        # Step 1: Remove indices that are out of the current sliding window
+        if dq and dq[0] < i - k + 1:
+            dq.popleft()
+            
+        # Step 2: Maintain descending order in deque
+        # Pop elements from back that are smaller than current element
+        while dq and nums[dq[-1]] <= num:
+            dq.pop()
+            
+        # Step 3: Add current element index to the deque
+        dq.append(i)
+        
+        # Step 4: Record current window max once window reaches size k
+        if i >= k - 1:
+            result.append(nums[dq[0]])
+            
+    return result
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(N), where N is the length of `nums`. Each index is pushed onto the deque exactly once and popped from either the front or back at most once.
+- **Space Complexity:** O(k) auxiliary space for the deque, which stores at most k indices at any given moment.
+
+---
+
+## Problem 3: Merge K Sorted Event Streams / Impression Log Aggregator
+**Topic:** Min-Heap / Priority Queue | **Difficulty:** Hard
+
+### 1. Problem Statement
+You are given an array of `k` sorted lists of event logs, where each log is represented by a timestamp and payload `(timestamp: int, event_id: str)`. Each individual stream is sorted in ascending order of timestamp.
+Merge all `k` sorted streams into one unified sorted event stream and return it.
+Ensure the solution scales efficiently when `k` is large (e.g., thousands of distributed partition workers).
+
+### 2. Complete Thought Process & Intuition
+When merging multiple sorted streams, comparing all k heads sequentially takes O(k) per element, leading to O(N * k) total time where N is the total number of events across all streams.
+
+Instead, we use a Min-Heap (Priority Queue) of size k:
+1. Initialization: We push the first element of each non-empty stream into the min-heap. The heap stores tuples of `(timestamp, stream_index, element_index)`.
+2. Extract Minimum: In each step, we extract the root of the min-heap, which is guaranteed to be the smallest timestamp across all current stream heads. We append its event to our output stream.
+3. Advance Stream: We advance the pointer in the stream from which the minimum was extracted. If that stream has more elements, we push its next element into the min-heap.
+4. Termination: We repeat this process until the heap is empty. This guarantees that at any point, the heap holds at most k elements, giving an extraction and insertion cost of O(log k).
+
+### 3. Python 3 Implementation
+```python
+import heapq
+from typing import List, Tuple
+
+def merge_k_sorted_streams(streams: List[List[Tuple[int, str]]]) -> List[Tuple[int, str]]:
+    # Min-heap to track the smallest current element across k streams
+    # Heap stores: (timestamp, stream_idx, elem_idx, payload)
+    min_heap = []
+    
+    # Initialize heap with the first element from each non-empty stream
+    for stream_idx, stream in enumerate(streams):
+        if stream:
+            timestamp, payload = stream[0]
+            # Use stream_idx to break ties deterministically without comparing payloads
+            heapq.heappush(min_heap, (timestamp, stream_idx, 0, payload))
+            
+    merged_results = []
+    
+    # Process elements in order of timestamp
+    while min_heap:
+        timestamp, stream_idx, elem_idx, payload = heapq.heappop(min_heap)
+        merged_results.append((timestamp, payload))
+        
+        # If the stream has a next element, push it into the heap
+        next_elem_idx = elem_idx + 1
+        if next_elem_idx < len(streams[stream_idx]):
+            next_timestamp, next_payload = streams[stream_idx][next_elem_idx]
+            heapq.heappush(min_heap, (next_timestamp, stream_idx, next_elem_idx, next_payload))
+            
+    return merged_results
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(N log k), where N is the total number of items across all k streams and k is the number of streams. Each of the N items is pushed and popped from a heap of size at most k.
+- **Space Complexity:** O(k) auxiliary space for the min-heap, plus O(N) to store the output merged stream.
+
+---
+
+## Problem 4: Trapping Rain Water / Buffer Capacity Analysis
+**Topic:** Two Pointers | **Difficulty:** Hard
+
+### 1. Problem Statement
+Given `n` non-negative integers representing an elevation map where the width of each bar is 1, compute how much water it can trap after raining.
+In distributed streaming systems, this algorithm is analogous to calculating buffer reserve capacities between bursty load peaks.
+
+### 2. Complete Thought Process & Intuition
+The volume of water trapped at any single index `i` is determined by the minimum of the maximum height to its left and the maximum height to its right, minus its own height:
+`water[i] = max(0, min(left_max[i], right_max[i]) - height[i])`.
+
+Precomputing `left_max` and `right_max` arrays takes O(N) time and O(N) space. However, we can optimize space to O(1) using the Two-Pointer technique:
+1. We initialize two pointers: `left = 0` and `right = n - 1`, along with `left_max = 0` and `right_max = 0`.
+2. If `height[left] <= height[right]`, we know that the water level at `left` is bounded by `left_max` (since `height[right]` is at least as large, ensuring a right wall exists). We update `left_max` and accumulate trapped water `left_max - height[left]`, then advance `left += 1`.
+3. Otherwise, if `height[left] > height[right]`, the water level at `right` is bounded by `right_max`. We update `right_max` and accumulate `right_max - height[right]`, then decrement `right -= 1`.
+4. We stop when `left >= right`.
+
+### 3. Python 3 Implementation
+```python
+from typing import List
+
+def trap(height: List[int]) -> int:
+    if not height:
+        return 0
+        
+    left, right = 0, len(height) - 1
+    left_max, right_max = 0, 0
+    total_water = 0
+    
+    # Process elevation bars inwards from both ends
+    while left < right:
+        if height[left] <= height[right]:
+            # Left side is the limiting factor
+            if height[left] >= left_max:
+                left_max = height[left]
+            else:
+                total_water += left_max - height[left]
+            left += 1
+        else:
+            # Right side is the limiting factor
+            if height[right] >= right_max:
+                right_max = height[right]
+            else:
+                total_water += right_max - height[right]
+            right -= 1
+            
+    return total_water
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(N), as each bar is visited at most once by either the left or right pointer.
+- **Space Complexity:** O(1), requiring only a few integer variables.
+
+---
+
+## Problem 5: Course Schedule II / Automated Pipeline Dependency DAG & Cycle Detection
+**Topic:** Graph / Topological Sort (Kahn's BFS) | **Difficulty:** Medium
+
+### 1. Problem Statement
+There are a total of `numCourses` tasks you have to take, labeled from `0` to `numCourses - 1`. You are given an array `prerequisites` where `prerequisites[i] = [a, b]` indicates that you must take task `b` first if you want to take task `a`.
+Return the ordering of tasks you should take to finish all tasks. If there are many valid answers, return any of them. If it is impossible to finish all tasks (due to a circular dependency), return an empty array.
+
+### 2. Complete Thought Process & Intuition
+This problem requires finding a valid topological ordering of a Directed Acyclic Graph (DAG) and detecting any cycles.
+We apply Kahn's Algorithm (BFS-based Topological Sort):
+1. Graph Representation: We build an adjacency list representing directed edges `prereq -> dependent` and maintain an `in_degree` array tracking how many incoming edges (unmet prerequisites) each task has.
+2. Initialize Queue: Any task with `in_degree == 0` has no prerequisites and is ready to execute immediately. We enqueue all such tasks.
+3. Process Tasks: While the queue is not empty, we pop task `u`, append it to our topological execution order, and iterate through all its dependent neighbors `v`. For each neighbor, we decrement `in_degree[v] -= 1`.
+4. Trigger Dependent Tasks: If `in_degree[v]` drops to 0, all of task `v`'s prerequisites have been satisfied, so we push `v` into the queue.
+5. Cycle Check: After the queue is empty, if the length of the execution order equals `numCourses`, no cycles exist and the order is valid. If it is less than `numCourses`, a circular dependency exists, so we return `[]`.
+
+### 3. Python 3 Implementation
+```python
+from collections import deque, defaultdict
+from typing import List
+
+def findOrder(numCourses: int, prerequisites: List[List[int]]) -> List[int]:
+    adj = defaultdict(list)
+    in_degree = [0] * numCourses
+    
+    # Build graph: prereq (b) -> dependent (a)
+    for course, prereq in prerequisites:
+        adj[prereq].append(course)
+        in_degree[course] += 1
+        
+    # Queue all courses that have no prerequisites
+    queue = deque([c for c in range(numCourses) if in_degree[c] == 0])
+    order = []
+    
+    while queue:
+        curr = queue.popleft()
+        order.append(curr)
+        
+        # Decrement in-degree for all downstream dependent tasks
+        for neighbor in adj[curr]:
+            in_degree[neighbor] -= 1
+            if in_degree[neighbor] == 0:
+                queue.append(neighbor)
+                
+    # If not all courses could be ordered, a circular dependency exists
+    if len(order) == numCourses:
+        return order
+    return []
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(V + E), where V is `numCourses` and E is the number of dependency constraints in `prerequisites`.
+- **Space Complexity:** O(V + E) to store the adjacency list, in-degree array, and BFS queue.
+
+---
+
+## Problem 6: Lowest Common Ancestor in a Binary Tree / Ad Category Taxonomy Hierarchy
+**Topic:** Tree DFS / Recursion | **Difficulty:** Medium
+
+### 1. Problem Statement
+Given a binary tree representing a hierarchical categorization taxonomy (e.g., ad product taxonomy: Sports -> Equipment -> Footwear), find the lowest common ancestor (LCA) of two given nodes `p` and `q`.
+The lowest common ancestor is defined between two nodes `p` and `q` as the lowest node `T` in the tree that has both `p` and `q` as descendants (where we allow a node to be a descendant of itself).
+
+### 2. Complete Thought Process & Intuition
+We can solve this problem elegantly using post-order depth-first search (DFS):
+1. Base Case: If the current root is `None`, or matches either target node `p` or `q`, we return the current root immediately. If we hit `p` or `q`, that node is an ancestor candidate.
+2. Recursive Traversal: We recursively search the left subtree and the right subtree:
+   - `left_result = lowestCommonAncestor(root.left, p, q)`
+   - `right_result = lowestCommonAncestor(root.right, p, q)`
+3. Decision Logic:
+   - If both `left_result` and `right_result` are non-null, it means `p` is in one subtree and `q` is in the other subtree. Therefore, the current `root` is the Lowest Common Ancestor.
+   - If only one of the subtrees returns a non-null node, both targets reside within that subtree (or one target is an ancestor of the other), so we bubble up that non-null node.
+   - If both are null, neither node exists in the current subtree, so return `None`.
+
+### 3. Python 3 Implementation
+```python
+class TreeNode:
+    def __init__(self, x: int):
+        self.val = x
+        self.left: Optional['TreeNode'] = None
+        self.right: Optional['TreeNode'] = None
+
+def lowestCommonAncestor(root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> Optional['TreeNode']:
+    # Base case: empty node or found one of the targets
+    if not root or root == p or root == q:
+        return root
+        
+    # Search recursively in both left and right subtrees
+    left = lowestCommonAncestor(root.left, p, q)
+    right = lowestCommonAncestor(root.right, p, q)
+    
+    # If both subtrees returned a match, current node is the LCA
+    if left and right:
+        return root
+        
+    # Otherwise return the non-null child (or None if both are None)
+    return left if left else right
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(N), where N is the number of nodes in the binary tree. In the worst case, every node in the tree is visited.
+- **Space Complexity:** O(H), where H is the height of the tree (O(log N) for balanced trees, O(N) for degenerate trees) representing recursion call stack space.
+
+---
+
+## Problem 7: Word Break II / Ad Creative Keyword & Tag Segmentation
+**Topic:** Trie / Backtracking with Memoization | **Difficulty:** Hard
+
+### 1. Problem Statement
+Given a string `s` and a dictionary of strings `wordDict`, add spaces in `s` to construct a sentence where each word is a valid dictionary word. Return all such possible sentences in any order.
+Note that the same word in the dictionary may be reused multiple times in the segmentation.
+This is heavily used when parsing unsegmented campaign search keywords and live audio transcript tokens.
+
+### 2. Complete Thought Process & Intuition
+To avoid redundant subproblem evaluations, we use Depth-First Search (DFS) with Memoization:
+1. State Definition: Let `dfs(start_index)` return all valid sentence segmentations for the substring `s[start_index:]`.
+2. Memoization Table: We cache `memo[start_index] = list_of_sentences` to ensure each suffix is computed only once.
+3. Recursive Step: At index `start`, we iterate through all possible prefixes `word = s[start:end]`. If `word` is in `wordDict` (stored as a set for O(1) membership check), we recursively evaluate the remaining suffix `dfs(end)`.
+4. String Combination: For each sentence returned by `dfs(end)`, we prepend `word + " "` to form full sentences. If `end == len(s)`, the prefix itself completes the string.
+5. Base Case: When `start == len(s)`, return `[""]`.
+
+### 3. Python 3 Implementation
+```python
+from typing import List, Dict
+
+def wordBreak(s: str, wordDict: List[str]) -> List[str]:
+    word_set = set(wordDict)
+    # Memoization cache: start_idx -> list of segmented sentences
+    memo: Dict[int, List[str]] = {}
+    
+    def dfs(start: int) -> List[str]:
+        if start in memo:
+            return memo[start]
+            
+        # Base case: reached end of string
+        if start == len(s):
+            return [""]
+            
+        sentences = []
+        for end in range(start + 1, len(s) + 1):
+            prefix = s[start:end]
+            if prefix in word_set:
+                # Recursively parse the remainder of the string
+                rest_sentences = dfs(end)
+                for rest in rest_sentences:
+                    if rest:
+                        sentences.append(prefix + " " + rest)
+                    else:
+                        sentences.append(prefix)
+                        
+        memo[start] = sentences
+        return sentences
+        
+    return dfs(0)
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(N * 2^N) in the worst case (e.g., s = 'aaaa', wordDict = ['a', 'aa', 'aaa']), but practically O(N^2 + M) on average with memoization where N is the length of `s` and M is the number of valid sentences.
+- **Space Complexity:** O(N * 2^N) to store all combinations in memoization, with O(N) recursive call stack depth.
+
+---
+
+## Problem 8: Find Median from High-Throughput Real-Time Bidding Stream
+**Topic:** Two Heaps (Max-Heap & Min-Heap) | **Difficulty:** Hard
+
+### 1. Problem Statement
+The median is the middle value in an ordered integer list. If the size of the list is even, there is no middle value, and the median is the mean of the two middle values.
+Design a data structure that supports the following two operations for a continuous real-time data stream of ad bid prices:
+- `addNum(num: int) -> None`: Adds an integer number from the data stream.
+- `findMedian() -> float`: Returns the median of all elements so far in O(1) time.
+
+### 2. Complete Thought Process & Intuition
+To compute the median in O(1) time dynamically as new numbers arrive, we partition the data stream into two halves:
+1. Max-Heap (`small`): Stores the smaller half of the numbers. The root contains the largest of the small numbers.
+2. Min-Heap (`large`): Stores the larger half of the numbers. The root contains the smallest of the large numbers.
+
+Balancing Invariants:
+1. Every element in `small` must be <= every element in `large`.
+2. The sizes of both heaps must remain balanced: either `len(small) == len(large)` (even count) or `len(small) == len(large) + 1` (odd count).
+
+Operations:
+- `addNum(num)`: We first push `num` onto `small` (negated because Python's `heapq` is a min-heap). To ensure invariant 1, we pop the max from `small` and push it to `large`. If `len(large) > len(small)`, we pop the min from `large` back to `small` to maintain invariant 2.
+- `findMedian()`: If `len(small) > len(large)`, the median is simply the top of `small`. If sizes are equal, the median is the average of both heap roots.
+
+### 3. Python 3 Implementation
+```python
+import heapq
+
+class MedianFinder:
+    def __init__(self):
+        # Max-heap (simulated with negative numbers) stores the smaller half
+        self.small = []
+        # Min-heap stores the larger half
+        self.large = []
+
+    def addNum(self, num: int) -> None:
+        # Step 1: Add to small (max-heap)
+        heapq.heappush(self.small, -num)
+        
+        # Step 2: Ensure all elements in small are <= elements in large
+        largest_small = -heapq.heappop(self.small)
+        heapq.heappush(self.large, largest_small)
+        
+        # Step 3: Maintain size balance (small can have at most 1 more element than large)
+        if len(self.large) > len(self.small):
+            smallest_large = heapq.heappop(self.large)
+            heapq.heappush(self.small, -smallest_large)
+
+    def findMedian(self) -> float:
+        # If odd number of elements, small has the extra middle element
+        if len(self.small) > len(self.large):
+            return float(-self.small[0])
+        # If even number of elements, average of both roots
+        return (-self.small[0] + self.large[0]) / 2.0
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(log N) for `addNum` because of heap pushes and pops; O(1) for `findMedian` by directly inspecting the heap roots.
+- **Space Complexity:** O(N) to store all N incoming numbers across the two heaps.
+
+---
+
+## Problem 9: Meeting Rooms II / Live Broadcast Commercial Break Resource Allocator
+**Topic:** Min-Heap / Interval Sweep | **Difficulty:** Medium
+
+### 1. Problem Statement
+Given an array of meeting time intervals `intervals` where `intervals[i] = [start_i, end_i]`, find the minimum number of conference rooms (or parallel encoder/transcoder channels) required to broadcast all scheduled intervals without conflicts.
+
+### 2. Complete Thought Process & Intuition
+Two events that overlap in time cannot share the same encoder channel or room. Therefore, the problem asks for the maximum number of concurrent overlapping intervals at any point in time.
+
+Approach using a Min-Heap:
+1. Sort Intervals: Sort all intervals by their start times. This allows us to process intervals chronologically as they begin.
+2. Min-Heap for Active Rooms: We use a min-heap to track the end times of active rooms. The room with the earliest end time will always be at the top of the heap.
+3. Allocation Logic:
+   - For each interval `[start, end]`, we check if the earliest finishing room has already freed up (`heap[0] <= start`).
+   - If it has, we can reuse that room: we pop the old end time from the heap and push the new `end` time.
+   - If not, all current rooms are occupied, so we must allocate a new room: we simply push `end` onto the heap.
+4. The maximum size reached by the heap equals the minimum number of rooms needed.
+
+### 3. Python 3 Implementation
+```python
+import heapq
+from typing import List
+
+def minMeetingRooms(intervals: List[List[int]]) -> int:
+    if not intervals:
+        return 0
+        
+    # Sort intervals primarily by start time
+    intervals.sort(key=lambda x: x[0])
+    
+    # Min-heap to store the end times of currently active rooms
+    end_times_heap = []
+    
+    # Allocate the first room
+    heapq.heappush(end_times_heap, intervals[0][1])
+    
+    for start, end in intervals[1:]:
+        # If the earliest ending room is free before this meeting starts, reuse it
+        if end_times_heap[0] <= start:
+            heapq.heappop(end_times_heap)
+            
+        # Push the new meeting's end time
+        heapq.heappush(end_times_heap, end)
+        
+    # The number of allocated rooms is the size of the heap
+    return len(end_times_heap)
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(N log N) dominated by sorting the N intervals. Processing each interval involves heap operations taking O(log N).
+- **Space Complexity:** O(N) to hold the end times in the min-heap.
+
+---
+
+## Problem 10: Longest Substring Without Repeating Characters
+**Topic:** Sliding Window + Hash Map | **Difficulty:** Medium
+
+### 1. Problem Statement
+Given a string `s`, find the length of the longest substring without duplicate characters.
+In live telemetry tracking, this pattern is used to extract maximal contiguous valid token sequences without repeated identifiers.
+
+### 2. Complete Thought Process & Intuition
+We use a Sliding Window technique maintained by two pointers `left` and `right`, accompanied by a hash map `char_index` storing the most recent index where each character appeared:
+1. As the `right` pointer iterates through the string from `0` to `len(s) - 1`, we check if the character `s[right]` was seen previously.
+2. If `s[right]` exists in `char_index` and its previous position is `>= left`, we have encountered a duplicate within the current window. We move `left` forward to `char_index[s[right]] + 1` to exclude the previous instance.
+3. We update `char_index[s[right]] = right` with the new occurrence.
+4. The window length at any step is `right - left + 1`. We track the maximum window length observed.
+
+### 3. Python 3 Implementation
+```python
+def lengthOfLongestSubstring(s: str) -> int:
+    char_index = {}
+    left = 0
+    max_len = 0
+    
+    for right, char in enumerate(s):
+        # If duplicate character found within current window, jump left pointer
+        if char in char_index and char_index[char] >= left:
+            left = char_index[char] + 1
+            
+        # Update latest position of character
+        char_index[char] = right
+        
+        # Calculate current window size
+        current_len = right - left + 1
+        if current_len > max_len:
+            max_len = current_len
+            
+    return max_len
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(N), where N is the length of `s`. Each character is visited once by the right pointer, and the left pointer jumps forward monotonically.
+- **Space Complexity:** O(min(N, M)), where M is the character set size (e.g., ASCII 128 or Unicode charset).
+
+---
+
+## Problem 11: Number of Connected Server Clusters / Islands in Ad Network Topology
+**Topic:** Graph BFS / DFS | **Difficulty:** Medium
+
+### 1. Problem Statement
+Given an `m x n` 2D binary grid `grid` which represents a map of '1's (active nodes/servers) and '0's (network boundaries), return the number of isolated server clusters (islands).
+An island is surrounded by water and is formed by connecting adjacent lands horizontally or vertically.
+
+### 2. Complete Thought Process & Intuition
+We can solve this problem using Breadth-First Search (BFS) or Depth-First Search (DFS) to explore and sink each connected component:
+1. We iterate through every cell `(r, c)` in the `m x n` grid.
+2. When we encounter a cell with value `'1'`, we increment our cluster counter `islands_count += 1`.
+3. We then launch a BFS or DFS starting from `(r, c)`. To avoid allocating an extra `visited` set, we can mutate the cell in place by setting it to `'0'` (sinking the island).
+4. The traversal explores all 4 cardinal directions (up, down, left, right). For every neighbor that is `'1'`, we mark it as `'0'` and continue traversal until the entire connected component is exhausted.
+
+### 3. Python 3 Implementation
+```python
+from collections import deque
+from typing import List
+
+def numIslands(grid: List[List[str]]) -> int:
+    if not grid or not grid[0]:
+        return 0
+        
+    rows, cols = len(grid), len(grid[0])
+    island_count = 0
+    
+    def bfs(start_r: int, start_c: int) -> None:
+        queue = deque([(start_r, start_c)])
+        grid[start_r][start_c] = '0'  # Mark visited by sinking the cell
+        
+        while queue:
+            r, c = queue.popleft()
+            for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                nr, nc = r + dr, c + dc
+                if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] == '1':
+                    grid[nr][nc] = '0'
+                    queue.append((nr, nc))
+                    
+    for r in range(rows):
+        for c in range(cols):
+            if grid[r][c] == '1':
+                island_count += 1
+                bfs(r, c)
+                
+    return island_count
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(M * N), where M is the number of rows and N is the number of columns. Every cell is visited at most a constant number of times.
+- **Space Complexity:** O(min(M, N)) auxiliary space for the BFS queue in the worst-case scenario where the entire grid is land.
+
+---
+
+## Problem 12: Design In-Memory Key-Value Store with Nested Transaction Support
+**Topic:** Hash Map + Rollback Stack | **Difficulty:** Hard
+
+### 1. Problem Statement
+Design an in-memory Key-Value store supporting nested ACID-like transactions with the following operations:
+- `set(key: str, value: str)`: Sets the key to value.
+- `get(key: str) -> Optional[str]`: Retrieves the value of the key, or None if it doesn't exist.
+- `delete(key: str)`: Deletes the key.
+- `begin()`: Starts a new transaction block. Transactions can be nested.
+- `commit() -> bool`: Commits all changes made in the current transaction block. If no transaction is active, return False.
+- `rollback() -> bool`: Reverts all changes made in the most recent transaction block. If no transaction is active, return False.
+
+### 2. Complete Thought Process & Intuition
+To support nested transactions with instant rollback capability, we maintain:
+1. `global_store`: A dictionary representing the committed baseline key-value mappings.
+2. `transaction_stack`: A list of dictionaries representing the delta modifications made within each active transaction level. Each entry in the stack maps `key -> previous_value` before the transaction mutated it.
+3. Operations:
+   - `begin()`: Push an empty undo dictionary `{}` onto `transaction_stack`.
+   - `set(key, val)`: If inside a transaction, record `key`'s previous state in the current transaction's undo map (only on the first modification of that key within the transaction). Then update the current store.
+   - `rollback()`: Pop the top transaction from the stack. For each key in its undo map, restore the previous value (or delete the key if it did not exist before).
+   - `commit()`: Pop the top transaction from the stack. If there is still an outer transaction on the stack, merge the undo entries downwards; otherwise, the changes become permanent.
+
+### 3. Python 3 Implementation
+```python
+from typing import Optional, Dict, List
+
+class TransactionalKVStore:
+    def __init__(self):
+        self.store: Dict[str, str] = {}
+        # Stack of transaction rollback dictionaries
+        # Each dict maps key -> previous_value (or None if key didn't exist before)
+        self.transaction_stack: List[Dict[str, Optional[str]]] = []
+
+    def get(self, key: str) -> Optional[str]:
+        return self.store.get(key, None)
+
+    def set(self, key: str, value: str) -> None:
+        if self.transaction_stack:
+            # If inside transaction and key hasn't been logged yet in this frame
+            current_frame = self.transaction_stack[-1]
+            if key not in current_frame:
+                current_frame[key] = self.store.get(key, None)
+        self.store[key] = value
+
+    def delete(self, key: str) -> None:
+        if key not in self.store:
+            return
+        if self.transaction_stack:
+            current_frame = self.transaction_stack[-1]
+            if key not in current_frame:
+                current_frame[key] = self.store.get(key, None)
+        del self.store[key]
+
+    def begin(self) -> None:
+        # Start new transaction scope
+        self.transaction_stack.append({})
+
+    def rollback(self) -> bool:
+        if not self.transaction_stack:
+            return False
+        # Pop the latest transaction frame and restore states
+        frame = self.transaction_stack.pop()
+        for key, prev_val in frame.items():
+            if prev_val is None:
+                self.store.pop(key, None)
+            else:
+                self.store[key] = prev_val
+        return True
+
+    def commit(self) -> bool:
+        if not self.transaction_stack:
+            return False
+        committed_frame = self.transaction_stack.pop()
+        # If there is an enclosing parent transaction, merge unrecorded previous states
+        if self.transaction_stack:
+            parent_frame = self.transaction_stack[-1]
+            for key, prev_val in committed_frame.items():
+                if key not in parent_frame:
+                    parent_frame[key] = prev_val
+        return True
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(1) for `get`, `begin`, and `set`/`delete` operations. O(K) for `rollback` and `commit`, where K is the number of keys mutated within the rolling transaction scope.
+- **Space Complexity:** O(U) where U is the total number of uncommitted transaction state mutations stored across the stack.
+
+---
+
+## Problem 13: Serialize and Deserialize Binary Tree for Distributed State Replication
+**Topic:** Tree DFS / Serialization | **Difficulty:** Hard
+
+### 1. Problem Statement
+Serialization is the process of converting a data structure or object into a sequence of bits so that it can be stored in a file or memory buffer, or transmitted across a network connection link to be reconstructed later in the same or another computer environment.
+Design an algorithm to serialize and deserialize a binary tree. Ensure the encoded string is compact and reconstruction handles null nodes correctly.
+
+### 2. Complete Thought Process & Intuition
+Pre-order Depth-First Search (DFS) provides a clean, unambiguous serialization format:
+1. Serialization (`serialize`):
+   - We traverse the tree in pre-order (`root -> left -> right`).
+   - If a node is null, we append a sentinel string `"#"` to our list of tokens.
+   - If a node is non-null, we append `str(node.val)`.
+   - We join all tokens using a delimiter like `","`.
+2. Deserialization (`deserialize`):
+   - We split the serialized string by `","` into an iterator or queue of tokens.
+   - We recursively build the tree:
+     - Pop the next token from the front of the queue.
+     - If the token is `"#"`, return `None`.
+     - Otherwise, instantiate a new `TreeNode(int(token))`.
+     - Recursively call `node.left = build()` and `node.right = build()`.
+     - Return the reconstructed node.
+
+### 3. Python 3 Implementation
+```python
+class TreeNode:
+    def __init__(self, val: int = 0):
+        self.val = val
+        self.left = None
+        self.right = None
+
+class Codec:
+    def serialize(self, root: Optional[TreeNode]) -> str:
+        tokens = []
+        def dfs(node: Optional[TreeNode]):
+            if not node:
+                tokens.append("#")
+                return
+            tokens.append(str(node.val))
+            dfs(node.left)
+            dfs(node.right)
+            
+        dfs(root)
+        return ",".join(tokens)
+
+    def deserialize(self, data: str) -> Optional[TreeNode]:
+        tokens = iter(data.split(","))
+        
+        def build() -> Optional[TreeNode]:
+            val = next(tokens)
+            if val == "#":
+                return None
+            node = TreeNode(int(val))
+            node.left = build()
+            node.right = build()
+            return node
+            
+        return build()
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(N) for both serialization and deserialization, where N is the number of nodes in the binary tree.
+- **Space Complexity:** O(N) memory to store the serialized string and recursive call stack.
+
+---
+
+## Problem 14: Search in Rotated Sorted Array / Partition Offset Lookup
+**Topic:** Binary Search | **Difficulty:** Medium
+
+### 1. Problem Statement
+There is an integer array `nums` sorted in ascending order (with distinct values) that has been rotated at an unknown pivot index `k` (`1 <= k < nums.length`).
+Given the array `nums` after rotation and an integer `target`, return the index of `target` if it is in `nums`, or `-1` if it is not in `nums`.
+You must write an algorithm with O(log n) runtime complexity.
+
+### 2. Complete Thought Process & Intuition
+Even though the array has been rotated, dividing the array in half will always yield at least one sorted half:
+1. We set `low = 0` and `high = len(nums) - 1`.
+2. Compute `mid = (low + high) // 2`. If `nums[mid] == target`, we return `mid`.
+3. Check which half is sorted:
+   - Left Half Sorted (`nums[low] <= nums[mid]`): If `target` falls within the range `[nums[low], nums[mid])`, we search the left half (`high = mid - 1`); otherwise, search the right half (`low = mid + 1`).
+   - Right Half Sorted (`nums[mid] < nums[high]`): If `target` falls within the range `(nums[mid], nums[high]]`, we search the right half (`low = mid + 1`); otherwise, search the left half (`high = mid - 1`).
+4. If `low > high`, target is not present, so return -1.
+
+### 3. Python 3 Implementation
+```python
+from typing import List
+
+def search(nums: List[int], target: int) -> int:
+    low, high = 0, len(nums) - 1
+    
+    while low <= high:
+        mid = (low + high) // 2
+        if nums[mid] == target:
+            return mid
+            
+        # Determine if left half is sorted
+        if nums[low] <= nums[mid]:
+            if nums[low] <= target < nums[mid]:
+                high = mid - 1  # Target is within sorted left half
+            else:
+                low = mid + 1   # Target is in right half
+        # Otherwise, right half must be sorted
+        else:
+            if nums[mid] < target <= nums[high]:
+                low = mid + 1   # Target is within sorted right half
+            else:
+                high = mid - 1  # Target is in left half
+                
+    return -1
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(log N) as the search space is halved in every iteration.
+- **Space Complexity:** O(1) auxiliary space using iterative two-pointer binary search.
+
+---
+
+## Problem 15: Kth Largest Element in an Array / Quickselect for Ad Auction Clearing Price
+**Topic:** Quickselect / Min-Heap | **Difficulty:** Medium
+
+### 1. Problem Statement
+Given an integer array `nums` and an integer `k`, return the `k`-th largest element in the array.
+Note that it is the `k`-th largest element in sorted order, not the `k`-th distinct element.
+Can you solve it in O(N) average time complexity?
+
+### 2. Complete Thought Process & Intuition
+There are two primary approaches:
+1. Min-Heap of Size k: Maintain a min-heap of size `k`. Push each element into the heap; if heap size exceeds `k`, pop the minimum. At the end, the root is the k-th largest element. This takes O(N log k) time and O(k) space.
+2. Quickselect Algorithm (Optimal):
+   - Finding the k-th largest element is equivalent to finding the element at index `target_idx = len(nums) - k` in a sorted array.
+   - We use the partition logic of Quicksort: choose a random pivot, partition elements into smaller and larger sections.
+   - If the pivot ends up at `target_idx`, we are done.
+   - If pivot index > `target_idx`, recurse on the left partition.
+   - If pivot index < `target_idx`, recurse on the right partition.
+   - On average, the work done is N + N/2 + N/4 + ... = 2N = O(N).
+
+### 3. Python 3 Implementation
+```python
+import random
+from typing import List
+
+def findKthLargest(nums: List[int], k: int) -> int:
+    target_idx = len(nums) - k
+    
+    def quickselect(left: int, right: int) -> int:
+        pivot_idx = random.randint(left, right)
+        pivot_val = nums[pivot_idx]
+        
+        # Move pivot to end
+        nums[pivot_idx], nums[right] = nums[right], nums[pivot_idx]
+        
+        store_idx = left
+        for i in range(left, right):
+            if nums[i] < pivot_val:
+                nums[store_idx], nums[i] = nums[i], nums[store_idx]
+                store_idx += 1
+                
+        # Move pivot to final resting place
+        nums[store_idx], nums[right] = nums[right], nums[store_idx]
+        
+        if store_idx == target_idx:
+            return nums[store_idx]
+        elif store_idx < target_idx:
+            return quickselect(store_idx + 1, right)
+        else:
+            return quickselect(left, store_idx - 1)
+            
+    return quickselect(0, len(nums) - 1)
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(N) average runtime using randomized Quickselect; O(N^2) worst case (extremely rare with random pivot selection).
+- **Space Complexity:** O(1) auxiliary space (in-place partitioning) with O(log N) average recursion call stack.
+
+---
+
+## Problem 16: Subarray Sum Equals K / Ad Campaign Budget Window Identification
+**Topic:** Prefix Sum + Hash Map | **Difficulty:** Medium
+
+### 1. Problem Statement
+Given an array of integers `nums` and an integer `k`, return the total number of continuous subarrays whose sum equals `k`.
+This matches calculating continuous event stream intervals that consume exact campaign budget allocations.
+
+### 2. Complete Thought Process & Intuition
+A brute-force calculation evaluates all O(N^2) subarrays.
+We can optimize this to O(N) using Prefix Sums and a Hash Map:
+1. Let `prefix_sum[i]` be the cumulative sum of elements from index 0 to `i`.
+2. The sum of a subarray from `j + 1` to `i` is given by: `sum(j+1 .. i) = prefix_sum[i] - prefix_sum[j]`.
+3. We want this subarray sum to equal `k`:
+   `prefix_sum[i] - prefix_sum[j] = k`  <=>  `prefix_sum[j] = prefix_sum[i] - k`.
+4. As we iterate through `nums`, we maintain running cumulative sum `current_sum` and a hash map `prefix_counts` recording how many times each prefix sum has occurred.
+5. In each step:
+   - Check if `current_sum - k` exists in `prefix_counts`. If so, add its frequency to our result.
+   - Increment `prefix_counts[current_sum] += 1`.
+6. Base Case: Initialize `prefix_counts = {0: 1}` to account for subarrays starting at index 0 whose sum equals `k`.
+
+### 3. Python 3 Implementation
+```python
+from typing import List
+from collections import defaultdict
+
+def subarraySum(nums: List[int], k: int) -> int:
+    prefix_counts = defaultdict(int)
+    prefix_counts[0] = 1  # Base case for subarrays starting at index 0
+    
+    current_sum = 0
+    total_subarrays = 0
+    
+    for num in nums:
+        current_sum += num
+        # If (current_sum - k) was seen before, add the number of occurrences
+        needed_prefix = current_sum - k
+        if needed_prefix in prefix_counts:
+            total_subarrays += prefix_counts[needed_prefix]
+            
+        prefix_counts[current_sum] += 1
+        
+    return total_subarrays
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(N), where N is the length of `nums`. We traverse the array once, performing O(1) hash map operations.
+- **Space Complexity:** O(N) to store prefix sum counts in the hash map.
+
+---
+
+## Problem 17: Word Search II / Live Broadcast Closed Caption Sensitive Word Detection
+**Topic:** Trie + 2D Backtracking | **Difficulty:** Hard
+
+### 1. Problem Statement
+Given an `m x n` board of characters and a list of strings `words`, return all words on the board.
+Each word must be constructed from letters of sequentially adjacent cells, where adjacent cells are horizontally or vertically neighboring. The same letter cell may not be used more than once in a word.
+In live broadcast moderation, this enables simultaneous scanning of video frame text grids for prohibited or brand-unsafe terms.
+
+### 2. Complete Thought Process & Intuition
+Running individual 2D DFS for every single word results in repeated board traversals.
+Instead, we index all search words into a Prefix Tree (Trie) and traverse the board once:
+1. Build Trie: Insert all `words` into a Trie. Each terminal node stores the complete word string for O(1) retrieval.
+2. DFS Traversal: For each cell `(r, c)` on the board, if `board[r][c]` matches a root child in the Trie, launch a backtracking search.
+3. Pruning:
+   - Mark the current cell visited by setting `board[r][c] = '#'` to prevent reusing it.
+   - Explore all 4 orthogonal directions.
+   - Once a word is found, add it to the output set and set `node.word = None` to prevent duplicate matches.
+   - Trie Pruning: If a leaf Trie node has no children after exploration, delete it from its parent to prune future traversal branches.
+   - Restore cell character `board[r][c] = original_char` during backtrack.
+
+### 3. Python 3 Implementation
+```python
+from typing import List, Dict
+
+class TrieNode:
+    def __init__(self):
+        self.children: Dict[str, 'TrieNode'] = {}
+        self.word: Optional[str] = None
+
+class Solution:
+    def findWords(self, board: List[List[str]], words: List[str]) -> List[str]:
+        # Step 1: Build the Trie
+        root = TrieNode()
+        for word in words:
+            curr = root
+            for char in word:
+                if char not in curr.children:
+                    curr.children[char] = TrieNode()
+                curr = curr.children[char]
+            curr.word = word
+            
+        rows, cols = len(board), len(board[0])
+        result = []
+        
+        # Step 2: Backtracking search
+        def backtrack(r: int, c: int, parent_node: TrieNode):
+            char = board[r][c]
+            curr_node = parent_node.children[char]
+            
+            # Check if current node completes a word
+            if curr_node.word:
+                result.append(curr_node.word)
+                curr_node.word = None  # Avoid duplicate entries
+                
+            # Mark cell visited
+            board[r][c] = '#'
+            
+            for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                nr, nc = r + dr, c + dc
+                if 0 <= nr < rows and 0 <= nc < cols and board[nr][nc] in curr_node.children:
+                    backtrack(nr, nc, curr_node)
+                    
+            # Restore cell character
+            board[r][c] = char
+            
+            # Prune leaf node to optimize remaining searches
+            if not curr_node.children:
+                parent_node.children.pop(char)
+                
+        for r in range(rows):
+            for c in range(cols):
+                if board[r][c] in root.children:
+                    backtrack(r, c, root)
+                    
+        return result
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(M * N * 4^(L-1)), where M*N is board size and L is maximum word length. Pruning significantly lowers this in practice.
+- **Space Complexity:** O(W * L) to construct the Trie, where W is the number of words and L is average word length.
+
+---
+
+## Problem 18: Alien Dictionary / Custom Ad Priority & Tier Ordering Resolution
+**Topic:** Graph / Topological Sort | **Difficulty:** Hard
+
+### 1. Problem Statement
+There is a new alien language that uses the Latin alphabet. However, the order among letters is unknown to you.
+You are given a list of strings `words` from the alien language's dictionary, where the strings are claimed to be sorted lexicographically by the rules of this new language.
+Derive the order of letters in this language. If the order is invalid (e.g., contains a cycle or prefix conflict), return `""`. If there are multiple valid orders, return any of them.
+
+### 2. Complete Thought Process & Intuition
+This problem maps directly to building a Directed Graph of character precedence and finding a Topological Order:
+1. Character Extraction: Every unique character in all words is a node in the graph. Initialize `in_degree[char] = 0`.
+2. Edge Extraction: Compare adjacent pairs of words `w1` and `w2`:
+   - Prefix Conflict: If `len(w1) > len(w2)` and `w1.startswith(w2)`, the ordering is fundamentally invalid (e.g., "apple" before "app"), return `""`.
+   - Find First Difference: Find the first index `i` where `w1[i] != w2[i]`. A directed edge exists from `w1[i] -> w2[i]`.
+   - If the edge hasn't been added yet, add it to `adj[w1[i]]` and increment `in_degree[w2[i]] += 1`.
+3. Topological Sort (BFS): Enqueue all characters with `in_degree == 0`. Process characters, decrementing neighbor in-degrees.
+4. Validation: If the length of the topological order matches the number of unique characters, return the joined string; otherwise, a cycle exists, return `""`.
+
+### 3. Python 3 Implementation
+```python
+from collections import deque, defaultdict
+from typing import List
+
+def alienOrder(words: List[str]) -> str:
+    adj = defaultdict(set)
+    in_degree = {c: 0 for word in words for c in word}
+    
+    # Compare adjacent words to infer character ordering
+    for i in range(len(words) - 1):
+        w1, w2 = words[i], words[i + 1]
+        min_len = min(len(w1), len(w2))
+        
+        # Check invalid prefix case
+        if len(w1) > len(w2) and w1[:min_len] == w2[:min_len]:
+            return ""
+            
+        for j in range(min_len):
+            if w1[j] != w2[j]:
+                if w2[j] not in adj[w1[j]]:
+                    adj[w1[j]].add(w2[j])
+                    in_degree[w2[j]] += 1
+                break
+                
+    # Kahn's BFS
+    queue = deque([c for c in in_degree if in_degree[c] == 0])
+    order = []
+    
+    while queue:
+        curr = queue.popleft()
+        order.append(curr)
+        for neighbor in adj[curr]:
+            in_degree[neighbor] -= 1
+            if in_degree[neighbor] == 0:
+                queue.append(neighbor)
+                
+    if len(order) == len(in_degree):
+        return "".join(order)
+    return ""
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(C), where C is the total length of all words in the input. Comparing adjacent words takes at most O(C) operations.
+- **Space Complexity:** O(1) auxiliary space (bounded by the alphabet size, at most 26 lowercase English letters).
+
+---
+
+## Problem 19: Reorganize String / Commercial Ad Pod Competitive Separation
+**Topic:** Max-Heap + Greedy | **Difficulty:** Medium
+
+### 1. Problem Statement
+Given a string `s`, rearrange the characters of `s` so that any two adjacent characters are not the same.
+Return any possible rearrangement of `s` or return `""` if not possible.
+In broadcast ad pod construction, this ensures competitive separation: two ads from competing automotive brands are never placed back-to-back.
+
+### 2. Complete Thought Process & Intuition
+If any character appears more than `(len(s) + 1) // 2` times, by the Pigeonhole Principle it is impossible to separate all instances, so we immediately return `""`.
+
+Greedy Approach with a Max-Heap:
+1. Count character frequencies using `collections.Counter(s)`.
+2. Push all characters and their counts into a Max-Heap (stored as `(-count, char)`).
+3. In each step, we pop the most frequent character `char1` from the heap and append it to our result.
+4. To avoid placing two identical characters consecutively, we cannot immediately push `char1` back. Instead, we pop the second most frequent character `char2`, append it to the result, decrement both frequencies, and push any remaining counts back into the heap.
+5. If only one character remains in the heap with count 1, append it to conclude.
+
+### 3. Python 3 Implementation
+```python
+import heapq
+from collections import Counter
+
+def reorganizeString(s: str) -> str:
+    counts = Counter(s)
+    max_freq = max(counts.values())
+    
+    # Pigeonhole principle check
+    if max_freq > (len(s) + 1) // 2:
+        return ""
+        
+    # Max-heap storing (-count, char)
+    max_heap = [(-count, char) for char, count in counts.items()]
+    heapq.heapify(max_heap)
+    
+    result = []
+    
+    while len(max_heap) >= 2:
+        cnt1, ch1 = heapq.heappop(max_heap)
+        cnt2, ch2 = heapq.heappop(max_heap)
+        
+        result.append(ch1)
+        result.append(ch2)
+        
+        # Decrement counts (stored as negative values)
+        if cnt1 + 1 < 0:
+            heapq.heappush(max_heap, (cnt1 + 1, ch1))
+        if cnt2 + 1 < 0:
+            heapq.heappush(max_heap, (cnt2 + 1, ch2))
+            
+    if max_heap:
+        result.append(max_heap[0][1])
+        
+    return "".join(result)
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(N log A), where N is the length of `s` and A is the alphabet size (at most 26 for English letters). Since A <= 26, this is effectively O(N).
+- **Space Complexity:** O(A) auxiliary space for the heap and hash map.
+
+---
+
+## Problem 20: Minimum Window Substring / Minimum Telemetry Range Covering Target Signals
+**Topic:** Sliding Window with Frequency Map | **Difficulty:** Hard
+
+### 1. Problem Statement
+Given two strings `s` and `t` of lengths `m` and `n` respectively, return the minimum window substring of `s` such that every character in `t` (including duplicates) is included in the window. If there is no such substring, return the empty string `""`.
+
+### 2. Complete Thought Process & Intuition
+We use a variable-size sliding window with two pointers `left` and `right`:
+1. Target Counts: Store frequency of each character in `t` in `target_counts`. Let `required = len(target_counts)` be the number of unique characters that must meet target frequency.
+2. Window Expansion: Move `right` pointer forward. If `s[right]` is in `target_counts`, increment `window_counts[s[right]]`. If `window_counts[s[right]] == target_counts[s[right]]`, increment `formed += 1`.
+3. Window Contraction: As long as `formed == required` (all characters satisfied), the current window `s[left:right+1]` is valid:
+   - Check if current window is smaller than previously recorded minimum; if so, update minimum window indices.
+   - Shrink window from the left by advancing `left += 1`, decrementing `window_counts[s[left]]`. If `window_counts` drops below `target_counts`, decrement `formed -= 1`.
+4. Return the recorded minimum substring.
+
+### 3. Python 3 Implementation
+```python
+from collections import Counter
+
+def minWindow(s: str, t: str) -> str:
+    if not s or not t:
+        return ""
+        
+    target_counts = Counter(t)
+    required = len(target_counts)
+    
+    left = 0
+    formed = 0
+    window_counts = {}
+    
+    # Store: (window_length, start_idx, end_idx)
+    min_window = (float('inf'), None, None)
+    
+    for right, char in enumerate(s):
+        window_counts[char] = window_counts.get(char, 0) + 1
+        
+        if char in target_counts and window_counts[char] == target_counts[char]:
+            formed += 1
+            
+        # Try to contract window until it's no longer valid
+        while left <= right and formed == required:
+            # Update minimum window record
+            if (right - left + 1) < min_window[0]:
+                min_window = (right - left + 1, left, right)
+                
+            left_char = s[left]
+            window_counts[left_char] -= 1
+            if left_char in target_counts and window_counts[left_char] < target_counts[left_char]:
+                formed -= 1
+                
+            left += 1
+            
+    return "" if min_window[0] == float('inf') else s[min_window[1]:min_window[2] + 1]
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(M + N), where M = len(s) and N = len(t). Each character in `s` is visited at most twice (once by right, once by left).
+- **Space Complexity:** O(M + N) to maintain frequency maps.
+
+---
+
+## Problem 21: Decode String / Nested Macro Expansion in Dynamic Ad Templates
+**Topic:** Stack | **Difficulty:** Medium
+
+### 1. Problem Statement
+Given an encoded string, return its decoded string.
+The encoding rule is: `k[encoded_string]`, where the `encoded_string` inside the square brackets is being repeated exactly `k` times. Note that `k` is guaranteed to be a positive integer.
+You may assume that the input string is always valid; no extra white spaces, square brackets are well-formed, etc.
+
+### 2. Complete Thought Process & Intuition
+When dealing with nested patterns like `3[a2[c]]` (which yields `accaccacc`), a Stack is ideal for tracking context:
+1. State Variables: Maintain `curr_str = ""` and `curr_num = 0`.
+2. Iteration:
+   - Digits (`char.isdigit()`): Build multi-digit numbers: `curr_num = curr_num * 10 + int(char)`.
+   - Open Bracket (`[`): A new nested context begins. We push `(curr_str, curr_num)` onto our stack, then reset `curr_str = ""` and `curr_num = 0`.
+   - Close Bracket (`]`): A nested context concludes. We pop `(prev_str, repeat_count)` from the stack. The new `curr_str` becomes `prev_str + curr_str * repeat_count`.
+   - Letters: Append `char` directly to `curr_str`.
+3. Return `curr_str` at the end.
+
+### 3. Python 3 Implementation
+```python
+def decodeString(s: str) -> str:
+    stack = []
+    curr_str = ""
+    curr_num = 0
+    
+    for char in s:
+        if char.isdigit():
+            curr_num = curr_num * 10 + int(char)
+        elif char == '[':
+            # Push current string and repeat multiplier onto stack
+            stack.append((curr_str, curr_num))
+            curr_str = ""
+            curr_num = 0
+        elif char == ']':
+            prev_str, repeat_k = stack.pop()
+            curr_str = prev_str + curr_str * repeat_k
+        else:
+            curr_str += char
+            
+    return curr_str
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(Total Output Length) to construct and duplicate strings.
+- **Space Complexity:** O(D) where D is the maximum nesting depth of square brackets.
+
+---
+
+## Problem 22: All Nodes Distance K in Binary Tree / Broadcast Infrastructure Blast Radius Analysis
+**Topic:** Tree to Graph Conversion + BFS | **Difficulty:** Medium
+
+### 1. Problem Statement
+Given the `root` of a binary tree, the value of a target node `target`, and an integer `k`, return an array of the values of all nodes that have a distance `k` from the target node in any direction (including parent directions).
+
+### 2. Complete Thought Process & Intuition
+In a standard binary tree, node pointers only go downwards to children. To search in all directions (including upwards toward parents), we can:
+1. Map Parent Pointers: Run a DFS to build a `parent` dictionary mapping each node to its parent node.
+2. BFS from Target: Launch a Breadth-First Search (BFS) starting at the `target` node:
+   - Keep a `visited` set to avoid cycling back.
+   - At each step of the BFS, expand in all 3 possible directions: `node.left`, `node.right`, and `node.parent`.
+   - Increment distance level at each BFS wave.
+3. When the BFS reaches distance level `k`, the contents of the queue represent all nodes at distance `k`.
+
+### 3. Python 3 Implementation
+```python
+from collections import deque
+from typing import List, Optional
+
+class TreeNode:
+    def __init__(self, x: int):
+        self.val = x
+        self.left = None
+        self.right = None
+
+def distanceK(root: TreeNode, target: TreeNode, k: int) -> List[int]:
+    parents = {}
+    
+    # DFS to record parent pointers for all nodes
+    def find_parents(node: Optional[TreeNode], parent: Optional[TreeNode]):
+        if not node:
+            return
+        parents[node] = parent
+        find_parents(node.left, node)
+        find_parents(node.right, node)
+        
+    find_parents(root, None)
+    
+    # BFS starting from the target node
+    queue = deque([(target, 0)])
+    visited = {target}
+    result = []
+    
+    while queue:
+        node, dist = queue.popleft()
+        
+        if dist == k:
+            result.append(node.val)
+            continue
+            
+        # Explore left, right, and parent neighbors
+        for neighbor in [node.left, node.right, parents.get(node)]:
+            if neighbor and neighbor not in visited:
+                visited.add(neighbor)
+                queue.append((neighbor, dist + 1))
+                
+    return result
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(N), where N is the number of nodes in the binary tree.
+- **Space Complexity:** O(N) to store parent pointers, visited set, and BFS queue.
+
+---
+
+## Problem 23: Find Median of Two Sorted Arrays / Distributed P99 Auction Latency Calculation
+**Topic:** Binary Search on Partitions | **Difficulty:** Hard
+
+### 1. Problem Statement
+Given two sorted arrays `nums1` and `nums2` of size `m` and `n` respectively, return the median of the two sorted arrays.
+The overall run time complexity should be O(log (m+n)).
+
+### 2. Complete Thought Process & Intuition
+Merging the two arrays takes O(m + n) time. To achieve O(log(min(m, n))), we binary search for the correct partition cut across the smaller array:
+1. Ensure `nums1` is the smaller array (if not, swap). Let `m = len(nums1)` and `n = len(nums2)`.
+2. The combined left half must contain `(m + n + 1) // 2` elements.
+3. If we pick `cut1` elements from `nums1`, we must pick `cut2 = ((m + n + 1) // 2) - cut1` elements from `nums2`.
+4. Partition Boundaries:
+   - `left1 = nums1[cut1 - 1]` (or -inf if cut1 == 0)
+   - `right1 = nums1[cut1]` (or +inf if cut1 == m)
+   - `left2 = nums2[cut2 - 1]` (or -inf if cut2 == 0)
+   - `right2 = nums2[cut2]` (or +inf if cut2 == n)
+5. Validation:
+   - If `left1 <= right2` and `left2 <= right1`, the partition is valid!
+     - If total length is odd, median is `max(left1, left2)`.
+     - If even, median is `(max(left1, left2) + min(right1, right2)) / 2.0`.
+   - If `left1 > right2`, we took too many elements from `nums1`, so move binary search left (`high = cut1 - 1`).
+   - Otherwise, move binary search right (`low = cut1 + 1`).
+
+### 3. Python 3 Implementation
+```python
+from typing import List
+
+def findMedianSortedArrays(nums1: List[int], nums2: List[int]) -> float:
+    # Ensure nums1 is smaller to minimize binary search range
+    if len(nums1) > len(nums2):
+        nums1, nums2 = nums2, nums1
+        
+    m, n = len(nums1), len(nums2)
+    low, high = 0, m
+    total_left = (m + n + 1) // 2
+    
+    while low <= high:
+        cut1 = (low + high) // 2
+        cut2 = total_left - cut1
+        
+        left1 = float('-inf') if cut1 == 0 else nums1[cut1 - 1]
+        right1 = float('inf') if cut1 == m else nums1[cut1]
+        
+        left2 = float('-inf') if cut2 == 0 else nums2[cut2 - 1]
+        right2 = float('inf') if cut2 == n else nums2[cut2]
+        
+        # Valid partition found
+        if left1 <= right2 and left2 <= right1:
+            if (m + n) % 2 == 1:
+                return float(max(left1, left2))
+            return (max(left1, left2) + min(right1, right2)) / 2.0
+        elif left1 > right2:
+            high = cut1 - 1
+        else:
+            low = cut1 + 1
+            
+    return 0.0
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(log(min(m, n))) by performing binary search strictly over the shorter array.
+- **Space Complexity:** O(1) auxiliary space.
+
+---
+
+## Problem 24: Binary Tree Maximum Path Sum / Ad Campaign Multi-Touch Attribution Path Value
+**Topic:** Tree Post-Order DFS | **Difficulty:** Hard
+
+### 1. Problem Statement
+A path in a binary tree is a sequence of nodes where each pair of adjacent nodes in the sequence has an edge connecting them. A node can only appear in the sequence at most once. Note that the path does not need to pass through the root.
+The path sum of a path is the sum of the node's values in the path.
+Given the `root` of a binary tree, return the maximum path sum of any non-empty path.
+
+### 2. Complete Thought Process & Intuition
+For any node in the tree, there are two distinct concepts:
+1. Max Single Branch Gain (`max_gain`): The maximum sum path starting from this node and extending down through either its left OR right subtree (cannot branch in both directions if extending to the parent). This value is returned to the parent: `node.val + max(0, left_gain, right_gain)`.
+2. Arch Path Through Node: A path that arches through the current node using both left and right branches: `current_arch_sum = node.val + max(0, left_gain) + max(0, right_gain)`. This arch path cannot be extended upwards, but it might be the global maximum path.
+
+We use post-order DFS to compute `max_gain` from leaves up to the root while maintaining a global `max_sum` variable tracking the highest arch sum seen anywhere.
+
+### 3. Python 3 Implementation
+```python
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+def maxPathSum(root: Optional[TreeNode]) -> int:
+    max_sum = float('-inf')
+    
+    def dfs(node: Optional[TreeNode]) -> int:
+        nonlocal max_sum
+        if not node:
+            return 0
+            
+        # Ignore subtrees with negative contribution
+        left_gain = max(dfs(node.left), 0)
+        right_gain = max(dfs(node.right), 0)
+        
+        # Max path arched at current node
+        current_path_sum = node.val + left_gain + right_gain
+        max_sum = max(max_sum, current_path_sum)
+        
+        # Return max single branch gain to parent
+        return node.val + max(left_gain, right_gain)
+        
+    dfs(root)
+    return max_sum
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(N), where N is the number of nodes in the binary tree.
+- **Space Complexity:** O(H) call stack space, where H is tree height.
+
+---
+
+## Problem 25: Task Scheduler / Live Sports Commercial Slot Pacer with Cooldown
+**Topic:** Greedy / Max-Heap / Frequency Math | **Difficulty:** Medium
+
+### 1. Problem Statement
+Given a characters array `tasks`, representing the tasks a CPU needs to do, where each letter represents a different task. Tasks could be done in any order. Each task is done in one unit of time. For each unit of time, the CPU could complete either one task or just be idle.
+However, there is a non-negative integer `n` that represents the cooldown period between two same tasks (the same task must be separated by at least `n` units of time).
+Return the least number of units of times that the CPU will take to finish all the given tasks.
+
+### 2. Complete Thought Process & Intuition
+We can solve this problem in O(N) time using mathematical slot framing:
+1. Find the highest task frequency `max_freq` and count how many tasks share this maximum frequency `max_count`.
+2. Construct execution frames: The task with `max_freq` requires `max_freq - 1` gaps between its executions.
+3. Each gap has size `n`. Therefore, the number of empty slots within these blocks is:
+   `empty_slots = (max_freq - 1) * (n - (max_count - 1))`.
+4. Calculate remaining tasks that can fill these slots:
+   `available_tasks = len(tasks) - (max_freq * max_count)`.
+5. The number of idle units is `max(0, empty_slots - available_tasks)`.
+6. Total time is simply `len(tasks) + idles`.
+
+### 3. Python 3 Implementation
+```python
+from collections import Counter
+from typing import List
+
+def leastInterval(tasks: List[str], n: int) -> int:
+    task_counts = Counter(tasks)
+    max_freq = max(task_counts.values())
+    
+    # Count how many tasks appear with max_freq
+    max_freq_tasks = sum(1 for count in task_counts.values() if count == max_freq)
+    
+    # Calculate minimal intervals needed based on the most frequent task
+    part_count = max_freq - 1
+    part_length = n - (max_freq_tasks - 1)
+    empty_slots = part_count * part_length
+    available_tasks = len(tasks) - (max_freq * max_freq_tasks)
+    idles = max(0, empty_slots - available_tasks)
+    
+    return len(tasks) + idles
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(N), where N is the number of tasks.
+- **Space Complexity:** O(1) auxiliary space (at most 26 uppercase task keys).
+
+---
+
+## Problem 26: Longest Increasing Subsequence / Viewer Retention Trend Analysis
+**Topic:** Patience Sorting / Binary Search | **Difficulty:** Medium
+
+### 1. Problem Statement
+Given an integer array `nums`, return the length of the longest strictly increasing subsequence.
+Solve in O(N log N) runtime complexity.
+
+### 2. Complete Thought Process & Intuition
+A naive dynamic programming approach takes O(N^2) time. We can achieve O(N log N) using Patience Sorting with Binary Search:
+1. Maintain an array `tails`, where `tails[i]` stores the smallest tail of all increasing subsequences of length `i + 1` found so far.
+2. For each number `x` in `nums`:
+   - Use `bisect_left(tails, x)` to find the smallest element in `tails` that is `>= x`.
+   - If `x` is larger than all elements in `tails`, append `x` (extending the longest subsequence length by 1).
+   - If `tails[idx] >= x`, replace `tails[idx] = x`. This lowers the bar for future numbers to extend subsequences of that length.
+3. The length of `tails` at the end is the length of the LIS.
+
+### 3. Python 3 Implementation
+```python
+import bisect
+from typing import List
+
+def lengthOfLIS(nums: List[int]) -> int:
+    tails = []
+    
+    for num in nums:
+        idx = bisect.bisect_left(tails, num)
+        if idx == len(tails):
+            tails.append(num)
+        else:
+            tails[idx] = num
+            
+    return len(tails)
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(N log N), where N is the length of `nums`. For each of the N numbers, we perform a binary search taking O(log N).
+- **Space Complexity:** O(N) to store the `tails` array.
+
+---
+
+## Problem 27: Network Delay Time / Multi-Region Broadcast Ad Signal Propagation
+**Topic:** Graph / Dijkstra's Algorithm | **Difficulty:** Medium
+
+### 1. Problem Statement
+You are given a network of `n` nodes, labeled from `1` to `n`. You are also given `times`, a list of travel times as directed edges `times[i] = (u_i, v_i, w_i)`, where `u_i` is the source node, `v_i` is the target node, and `w_i` is the time it takes for a signal to travel from source to target.
+We will send a signal from a given node `k`. Return the minimum time it takes for all the `n` nodes to receive the signal. If it is impossible for all `n` nodes to receive the signal, return `-1`.
+
+### 2. Complete Thought Process & Intuition
+This problem asks for the Single-Source Shortest Path to all nodes on a directed graph with positive edge weights, which is solved using Dijkstra's Algorithm:
+1. Build adjacency list `adj[u]` storing `(neighbor, travel_time)`.
+2. Maintain a `min_heap` initialized with `(0, k)` representing `(accumulated_time, current_node)`.
+3. Track `shortest_dist[node]` to store the minimum known latency to reach each node.
+4. Process nodes greedily from the min-heap:
+   - If node already reached with a shorter latency, skip.
+   - Otherwise, record `shortest_dist[curr] = curr_time`.
+   - Traverse neighbors and push `(curr_time + weight, neighbor)` to heap.
+5. If `len(shortest_dist) == n`, return `max(shortest_dist.values())`; otherwise, some nodes are unreachable, return `-1`.
+
+### 3. Python 3 Implementation
+```python
+import heapq
+from collections import defaultdict
+from typing import List
+
+def networkDelayTime(times: List[List[int]], n: int, k: int) -> int:
+    adj = defaultdict(list)
+    for u, v, w in times:
+        adj[u].append((v, w))
+        
+    min_heap = [(0, k)]
+    shortest_dist = {}
+    
+    while min_heap:
+        curr_time, node = heapq.heappop(min_heap)
+        
+        if node in shortest_dist:
+            continue
+            
+        shortest_dist[node] = curr_time
+        
+        for neighbor, weight in adj[node]:
+            if neighbor not in shortest_dist:
+                heapq.heappush(min_heap, (curr_time + weight, neighbor))
+                
+    if len(shortest_dist) == n:
+        return max(shortest_dist.values())
+    return -1
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(E log V), where E is the number of edges and V is the number of nodes (`n`).
+- **Space Complexity:** O(V + E) to store the adjacency list and priority queue.
+
+---
+
+## Problem 28: Basic Calculator II / Dynamic Real-Time Bidding Formula Evaluator
+**Topic:** Stack / Expression Evaluation | **Difficulty:** Medium
+
+### 1. Problem Statement
+Given a string `s` which represents an expression, evaluate this expression and return its value.
+The integer division should truncate toward zero.
+You may assume that the given expression is always valid. All intermediate results will be in the range of `[-2^31, 2^31 - 1]`.
+Operators include `+`, `-`, `*`, `/` and spaces.
+
+### 2. Complete Thought Process & Intuition
+Multiplication and division have higher precedence than addition and subtraction:
+1. Traverse string while accumulating digits into `curr_num`.
+2. When an operator or the end of the string is encountered:
+   - If previous operator was `+`: push `curr_num` onto stack.
+   - If `-`: push `-curr_num` onto stack.
+   - If `*`: pop the last number from stack, multiply with `curr_num`, and push result back.
+   - If `/`: pop last number, divide by `curr_num` (using integer truncation toward zero: `int(prev / curr_num)`), and push back.
+   - Update operator to the newly encountered character and reset `curr_num = 0`.
+3. Return `sum(stack)`.
+
+### 3. Python 3 Implementation
+```python
+def calculate(s: str) -> int:
+    stack = []
+    curr_num = 0
+    op = '+'
+    
+    for i, char in enumerate(s):
+        if char.isdigit():
+            curr_num = curr_num * 10 + int(char)
+            
+        # Process on operator or at the end of the string
+        if (not char.isdigit() and char != ' ') or i == len(s) - 1:
+            if op == '+':
+                stack.append(curr_num)
+            elif op == '-':
+                stack.append(-curr_num)
+            elif op == '*':
+                stack.append(stack.pop() * curr_num)
+            elif op == '/':
+                prev = stack.pop()
+                stack.append(int(prev / curr_num))  # Truncate towards zero
+                
+            op = char
+            curr_num = 0
+            
+    return sum(stack)
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(N), where N is the length of string `s`.
+- **Space Complexity:** O(N) auxiliary space for the evaluation stack.
+
+---
+
+## Problem 29: Maximal Square / 2D Display Screen Layout Space Optimization
+**Topic:** Dynamic Programming | **Difficulty:** Medium
+
+### 1. Problem Statement
+Given an `m x n` binary matrix filled with `0`'s and `1`'s, find the largest square containing only `1`'s and return its area.
+
+### 2. Complete Thought Process & Intuition
+We use 2D Dynamic Programming:
+1. Let `dp[r][c]` represent the side length of the largest square whose bottom-right corner is at cell `(r, c)`.
+2. If `matrix[r][c] == '1'`:
+   - A square ending at `(r, c)` can only be formed if squares of size `k` exist ending at `(r-1, c)`, `(r, c-1)`, and `(r-1, c-1)`.
+   - Transition: `dp[r][c] = 1 + min(dp[r-1][c], dp[r][c-1], dp[r-1][c-1])`.
+3. If `matrix[r][c] == '0'`: `dp[r][c] = 0`.
+4. Keep track of `max_side` seen across all cells.
+5. Return `max_side * max_side`.
+
+### 3. Python 3 Implementation
+```python
+from typing import List
+
+def maximalSquare(matrix: List[List[str]]) -> int:
+    if not matrix or not matrix[0]:
+        return 0
+        
+    rows, cols = len(matrix), len(matrix[0])
+    dp = [[0] * (cols + 1) for _ in range(rows + 1)]
+    max_side = 0
+    
+    for r in range(1, rows + 1):
+        for c in range(1, cols + 1):
+            if matrix[r - 1][c - 1] == '1':
+                dp[r][c] = 1 + min(dp[r - 1][c], dp[r][c - 1], dp[r - 1][c - 1])
+                if dp[r][c] > max_side:
+                    max_side = dp[r][c]
+                    
+    return max_side * max_side
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(M * N), where M and N are matrix dimensions.
+- **Space Complexity:** O(M * N) (can be reduced to O(N) using a single 1D rolling array).
+
+---
+
+## Problem 30: Distributed Rate Limiter / Sliding Window Counter
+**Topic:** Sliding Window / In-Memory Queue | **Difficulty:** Medium
+
+### 1. Problem Statement
+Design a Rate Limiter that allows at most `max_requests` requests per client within any sliding window of `window_size_seconds`.
+Implement `allow_request(client_id: str, timestamp: float) -> bool` which returns `True` if the request is permitted, or `False` if dropped due to rate limiting.
+
+### 2. Complete Thought Process & Intuition
+To prevent sudden boundary burst vulnerabilities that afflict fixed-window algorithms, we use the Sliding Window Log approach:
+1. For each `client_id`, maintain a double-ended queue `deque` of past request timestamps.
+2. When a request arrives at `timestamp`:
+   - Compute cutoff time: `cutoff = timestamp - window_size_seconds`.
+   - Evict all timestamps from the front of the client's deque that are `<= cutoff`.
+   - Check current deque length: if `len(dq) < max_requests`, append `timestamp` and return `True`.
+   - Otherwise, the client has exceeded their quota, so drop request and return `False`.
+
+### 3. Python 3 Implementation
+```python
+import time
+from collections import defaultdict, deque
+from typing import Dict
+
+class SlidingWindowRateLimiter:
+    def __init__(self, max_requests: int, window_size_seconds: float):
+        self.max_requests = max_requests
+        self.window_size_seconds = window_size_seconds
+        # Maps client_id -> deque of request timestamps
+        self.client_logs: Dict[str, deque] = defaultdict(deque)
+
+    def allow_request(self, client_id: str, timestamp: Optional[float] = None) -> bool:
+        now = timestamp if timestamp is not None else time.time()
+        cutoff = now - self.window_size_seconds
+        dq = self.client_logs[client_id]
+        
+        # Purge stale requests outside current sliding window
+        while dq and dq[0] <= cutoff:
+            dq.popleft()
+            
+        # Check quota
+        if len(dq) < self.max_requests:
+            dq.append(now)
+            return True
+            
+        return False
+```
+
+### 4. Complexity Analysis
+- **Time Complexity:** O(1) amortized per request. Each timestamp is added once and evicted at most once.
+- **Space Complexity:** O(C * R), where C is the number of active clients and R is `max_requests` per window.
+
+---
+
+# Part 2: Top 30 System Design Questions (Amazon Live Events & Advertising AI)
+
+Every system design breakdown is presented in a **simple, conversational walkthrough format written in small, clear paragraph chunks WITHOUT ANY BULLET POINTS**, guiding the interviewer naturally through Functional Requirements, Non-Functional Requirements, Core Entities, API Design, Data Flow, High-Level Architecture, and Non-Functional Deep Dives.
+
+
+## System Design 1: Server-Side Dynamic Ad Insertion (SSAI) Engine for Thursday Night Football
+**Domain Category:** Live Video Streaming & Ad Insertion
+
+### 1. Complete Problem Statement
+Design a broadcast-grade Server-Side Ad Insertion (SSAI) platform for Thursday Night Football on Prime Video. The system must seamlessly stitch targeted video advertisements into the live HLS and DASH video manifests for over 15 million concurrent viewers when an upstream SCTE-35 cue point signal announces a commercial break, without causing playback buffering or stream desynchronization.
+
+### 2. Clarifying Questions & Scope Definition
+When approaching this problem, the first thing I would clarify with the interviewer is the scale of concurrent viewers and how sudden the spikes are. For Thursday Night Football, we have roughly fifteen million concurrent viewers, and every viewer enters the commercial break at the exact same second when a commercial cue is triggered.
+
+Next, I would ask about latency and manifest delivery protocol constraints. We need to know whether the stream is formatted in HLS or DASH, what the typical chunk segment duration is, and what our end-to-end manifest generation budget looks like. Usually, live low-latency video chunks are two seconds long, meaning manifest generation cannot take more than fifty milliseconds.
+
+Finally, I would ask about fallback behavior and advertiser compliance. If the real-time ad selection system fails or takes too long, we need to know whether we should fall back to a default house ad or a branded stream slate, and whether we need to stitch audio and video segments that exactly match the viewer's current resolution and bitrate ladder without any audio pops or video stutter.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Thursday Night Football SSAI Architecture</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Live Video Ingest</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">SCTE-35 Cue Markers</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">SSAI Manifest Engine</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Per-User Stitcher</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Ad Decision Server</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">RTB & Target Rules</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">ABR Video Transcoder</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Segment Matcher</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">CloudFront Edge CDN</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Manifest Delivery</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+From a functional perspective, the system must detect upstream broadcast SCTE-35 markers embedded in the live transport stream that signal the start and duration of an impending commercial break.
+
+Once that marker is detected, the platform must query our ad decision engine to select a personalized sequence of video advertisements tailored to each viewer's profile, geographic location, and device capabilities.
+
+The service must then stitch the media URLs for those chosen ads directly into each viewer's live HLS master and media playlists, ensuring the video segments perfectly match the viewer's active adaptive bitrate resolution profile.
+
+Lastly, the system needs to emit server-side impression beacons to third-party measurement and tracking partners as the viewer progresses through playback, confirming each ad was delivered and viewed.
+
+### 5. Non-Functional Requirements
+On the non-functional side, ultra-low latency is paramount because live video manifests must be generated and delivered within fifty milliseconds to prevent the viewer's playback buffer from running dry and causing video stalling.
+
+The system must handle enormous peak concurrency, scaling up to support fifteen million simultaneous stream requests hitting the manifest generation layer in unison when the referee calls a timeout.
+
+Reliability must be at least four nines because any failure during a high-stakes football broadcast directly leads to lost advertising revenue and poor viewer experience.
+
+Security and anti-tampering are also vital, meaning all video segments and manifest URLs must be digitally signed with short-lived tokens to prevent ad-skipping and unauthorized stream scraping.
+
+### 6. Core Entities & Data Modeling
+The core entities begin with the Live Event Session, which encapsulates the broadcast identifier, sport type, teams playing, and active stream metadata.
+
+Next is the Ad Break Cue, which stores the SCTE-35 payload, the exact presentation timestamp when the break begins, and the expected duration in seconds.
+
+We also have the Viewer Profile, containing demographic indicators, subscription tier, viewing region, and device video playback capabilities.
+
+Then we have the Ad Pod and Ad Creative entities, where the pod represents the scheduled container of two to four individual commercial slots, and the creative represents the transcoded video segments and tracking beacon URLs.
+
+Finally, the Playback Manifest entity represents the actual playlist document containing media chunk URIs, sequence numbers, and discontinuity tags sent to the client device.
+
+### 7. API & Interface Design
+For the API layer, the video player initiates stream playback by calling a manifest endpoint with the event identifier and session token, receiving the master playlist containing different quality tracks.
+
+During active playback, the player periodically polls for updated media playlist manifests every two seconds, passing the current playback sequence number and stream variant.
+
+Internally, the SSAI manifest generator communicates with the Ad Decision Service via a low-latency gRPC call that passes the viewer's targeting tokens and the available break duration, receiving back an ordered array of ad segment URLs.
+
+A separate telemetry beacon API receives tracking events asynchronously from the edge stitcher as each ad segment is served, logging impressions and quartiles directly into a real-time event pipeline.
+
+### 8. End-to-End Data Flow
+The data flow starts when the broadcast encoder detects a commercial break signal from the stadium production truck and injects an SCTE-35 splice cue into the live transport stream.
+
+The ingest service receives this stream, extracts the cue point, and broadcasts the upcoming ad break event with its duration to our distributed manifest manipulation cluster.
+
+When viewers' video players make their recurring playlist poll requests to the nearest edge location, the manifest generator checks whether an ad break is active for this timestamp.
+
+If an ad break is active, the generator looks up pre-fetched ad decisions or makes an ultra-fast lookup to the ad decision cache, stitches the appropriate ad segment URIs between discontinuity tags in the playlist, and returns the modified manifest to the viewer.
+
+As the viewer plays through the stitched commercial segments, the edge proxy or server-side beacon emitter fires viewability and impression tracking pings to our analytics pipeline.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture is split into three main layers consisting of ingest and cue detection, edge manifest manipulation, and the core ad decisioning plane.
+
+At the front, Prime Video live encoders stream video into AWS Elemental MediaLive, where SCTE-35 splices are detected and normalized into event messages published to a high-speed Redis cluster.
+
+In the middle layer, CloudFront edge workers or regional SSAI proxy clusters intercept incoming manifest requests from millions of active player sessions.
+
+These proxy instances maintain lightweight in-memory session states and consult an ad decisioning service backed by distributed Redis caches to grab personalized ad pods without querying relational databases.
+
+Pre-transcoded ad creatives are pre-warmed across global S3 buckets and edge CDNs, ensuring that when an ad is stitched, every video segment is already encoded into the identical resolutions and bitrates as the live game feed.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, handling the sudden surge of fifteen million concurrent viewers requires aggressive pre-decisioning and edge caching. Instead of waiting for the exact second the commercial break starts to compute ad decisions, our system uses predictive pre-fetching so that candidate ad pods are already calculated and cached thirty seconds before the referee signals a break.
+
+To meet our strict fifty-millisecond latency budget, manifest manipulation is performed entirely in memory at the edge using lightweight C++ or Rust workers running in AWS Lambda@Edge or regional container clusters, bypassing disk storage and complex relational lookups.
+
+For broadcast-grade fault tolerance, if an ad decision service fails to return a result within twenty milliseconds, the manifest generator automatically falls back to a pre-cached slate video segment or a default Prime Video promo reel, guaranteeing that viewers never experience a black screen or buffering wheel.
+
+To maintain perfect video synchronization across different devices, all stitched ad chunks are normalized using frame-accurate segment splitters that align presentation timestamps, preventing audio drift and video lip-sync errors when transitioning between the football game and commercial breaks.
+
+---
+
+## System Design 2: Ultra-Low Latency Real-Time Ad Auction and Bidding System
+**Domain Category:** Real-Time Bidding & Ad Auctions
+
+### 1. Complete Problem Statement
+Design a real-time bidding and auction engine for live sports advertising that solicits bids from internal Amazon DSP and external third-party demand partners, executes a second-price or first-price auction, enforces advertiser category separation, and selects the winning creative within an uncompromising forty-millisecond SLA.
+
+### 2. Clarifying Questions & Scope Definition
+To start, I want to clarify the exact latency budget for the entire auction cycle. In live broadcast advertising, the entire round-trip time from receiving the ad request to returning the winning creative cannot exceed forty milliseconds, which means downstream DSPs only have about twenty to twenty-five milliseconds to respond.
+
+I would also ask about the auction mechanics and pricing model. We should clarify whether we are running a generalized first-price auction or a second-price auction, and whether we need to enforce floor prices that vary based on game score, team popularity, or viewership spikes.
+
+Another crucial question is how many external demand partners and internal DSPs we are fanning out to simultaneously. If we fan out to twenty DSPs across the internet, network jitter can easily breach our SLA, so we need to know whether server-to-server direct fibers or regional co-location are in place.
+
+Lastly, I would clarify competitive separation rules, such as ensuring that two rival car companies do not win slots in the same commercial break pod.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Ultra-Low Latency Real-Time Auction Engine</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Bid Request Router</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">P99 Fanout Manager</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Demand Connectors</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Direct Fiber to DSPs</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Auction Evaluator</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Floor & Rules Engine</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Category Separator</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Pod Collision Filter</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Winning Creative</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Signed Response Token</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the auction engine must parse incoming bid opportunities originating from the SSAI service and enrich them with viewer contextual attributes, stream category, and floor pricing constraints.
+
+The engine must then fan out bid requests in parallel to all eligible demand-side platforms and internal Amazon advertising channels over low-latency network connections.
+
+It must collect all incoming bids that arrive before the strict timeout deadline, filtering out any bids that fail reserve price thresholds or violate advertiser brand safety rules.
+
+The system must then execute the auction algorithm to pick the winning bid, determine the clearing price, verify competitive brand separation across the entire ad pod, and return the winning creative URL.
+
+### 5. Non-Functional Requirements
+In terms of non-functional requirements, the absolute highest priority is meeting the strict forty-millisecond P99 latency SLA, because any bid evaluation that exceeds this window is discarded to prevent broadcast delay.
+
+The system must scale horizontally to handle throughput spikes of up to one million auction evaluations per second during peak live sporting events like the Super Bowl or NBA Finals.
+
+High availability must reach 99.999 percent, meaning the auction platform must have automatic failover to local fallback ads if upstream network connections to third-party DSPs degrade.
+
+Data consistency for budget pacing must be maintained so that advertisers do not overspend their allocations within fractions of a second during high-volume spikes.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Auction Request, which holds the unique auction identifier, ad slot duration, screen dimensions, viewer segment keys, and reserve floor price.
+
+The next entity is the Demand Partner Profile, which specifies the network endpoint, connection pool settings, timeout thresholds, and cryptographic credentials for each DSP.
+
+We also have the Bid Submission entity, containing the DSP identifier, bid amount in cost-per-mille, target creative identifier, and brand category classification.
+
+Another entity is the Ad Pod Rule, which governs minimum spacing between identical brand categories and maximum allowed total duration for the break.
+
+Finally, the Auction Result entity records the winning advertiser, clearing price, timestamp, and audit log token for billing reconciliation.
+
+### 7. API & Interface Design
+The auction service exposes an internal high-speed gRPC interface for the SSAI manifest stitcher called ExecuteAuction, which accepts the viewer context, slot duration, and current pod state, returning the chosen creative and price.
+
+For external DSPs, the platform implements an optimized OpenRTB compliant JSON or Protobuf payload over persistent HTTP/2 or gRPC connections, sending bid requests with a hard deadline header.
+
+There is also a management API for advertisers and account executives to configure campaign floor prices, targeting rules, and category separation restrictions in real time.
+
+Finally, a streaming event API publishes all auction bid metrics and clearing telemetry to an event bus for real-time monitoring and reporting.
+
+### 8. End-to-End Data Flow
+The data flow begins when an ad break opportunity arrives at the auction service from the SSAI engine, containing information about the upcoming slot and the viewer's anonymous profile.
+
+The auction service enriches the request with real-time floor prices stored in an in-memory cache and initiates an asynchronous fan-out to all registered DSPs simultaneously.
+
+Each DSP evaluates the bid request and returns its bid along with creative metadata over pre-warmed connection pools within twenty milliseconds.
+
+A scatter-gather coordinator collects the bids, trims any late responses that miss the deadline, validates the remaining bids against floor prices, and applies second-price or first-price auction logic.
+
+The winning bid is checked against the active ad pod to ensure no conflicting advertiser categories exist, after which the winning creative URL is returned to the SSAI stitcher, and an auction win log is streamed to Kafka.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the auction architecture consists of a high-throughput API gateway, a distributed auction orchestrator, and an in-memory caching and pacing layer.
+
+Incoming requests hit an Envoy-based proxy fleet that routes traffic using low-overhead gRPC to auction orchestrator worker pods deployed across Kubernetes clusters in multiple AWS regions.
+
+The orchestrator utilizes non-blocking asynchronous event loops implemented in C++ or Go, dispatching bid requests across persistent connection pools directly to DSPs.
+
+A Redis cluster running in memory maintains real-time advertiser pacing limits and floor price tables with sub-millisecond read access.
+
+Downstream winning bids and transaction audit trails are decoupled from the real-time path by immediately dumping event payloads into Apache Kafka topics for asynchronous financial settlement and analytics.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Taking a deep dive into the non-functional requirements, managing the forty-millisecond latency SLA requires aggressive connection pooling and strict circuit breaking. Every connection to an external DSP is maintained over pre-warmed HTTP/2 connections with TCP keep-alive, eliminating the latency penalty of TLS handshakes during live games.
+
+The scatter-gather coordinator sets a rigid twenty-five millisecond hard timer. As soon as that timer expires, the coordinator proceeds immediately with whatever bids have already arrived, completely ignoring any late packets without waiting or retrying.
+
+If a specific DSP exhibits consecutive timeouts or latency spikes, an automated circuit breaker trips and temporarily stops sending traffic to that partner for sixty seconds, protecting the overall system from thread starvation.
+
+To prevent advertiser overspending during sudden viewership surges, real-time budget decrements are tracked in Redis using atomic Lua scripts with probabilistic pacing algorithms, ensuring budget allocations are smoothly consumed without locking database rows.
+
+---
+
+## System Design 3: Real-Time Ad Pacing and Global Budget Smoothing Engine
+**Domain Category:** Ad Pacing & Optimization
+
+### 1. Complete Problem Statement
+Design a distributed ad pacing and budget smoothing service that prevents advertisers from exhausting their daily or game-long campaign budgets in the first quarter of a live sporting event. The system must adaptively throttle or accelerate bid participation rates across millions of real-time impressions based on game progression, quarter pacing, and viewer fluctuations.
+
+### 2. Clarifying Questions & Scope Definition
+When clarifying this design, my first question is about the pacing model: are we pacing budgets evenly across wall-clock time, or are we pacing dynamically based on game progression like quarters, halves, and potential overtime? Because live sports have unpredictable game lengths and viewing spikes, pacing must adjust based on live game telemetry rather than a simple clock.
+
+Next, I would ask about the acceptable delay for budget synchronization. Can pacing parameters be calculated asynchronously every few seconds and pushed to edge auction nodes, or does every single impression need an immediate atomic counter decrement? Calculating probabilistic pacing probabilities every few seconds is the industry standard to protect auction latency.
+
+I would also clarify the scale of active campaigns. We need to know if we are managing ten thousand campaigns or hundreds of thousands of concurrent ad lines across multiple live sporting events simultaneously.
+
+Finally, I would ask how the system handles surprise blowouts or overtime scenarios where viewership suddenly collapses or skyrockets unexpectedly.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Real-Time Ad Pacing & Budget Smoothing</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Live Game Telemetry</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Game Clock & Viewers</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Pacing Controller</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">PID & Trajectory Math</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Edge Probability Cache</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Sub-Millisecond Sync</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Auction Filter</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Probabilistic Bid Drop</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Budget Ledger</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Stream Count Aggregator</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the pacing system must track the real-time spend of every advertising campaign and compare it against its assigned target budget trajectory for the specific live event.
+
+It must ingest real-time live game status updates, including current quarter, remaining game time, score differentials, and current viewer counts, to dynamically adjust expected future impression inventory.
+
+The system must compute a dynamic bid pass-through probability between zero and one for every active campaign and distribute these parameters to auction nodes.
+
+When an ad slot opportunity occurs, the auction filter evaluates the campaign's current probability using a random coin flip, deciding whether to submit a bid or sit out to conserve budget.
+
+It must also provide an administrative dashboard allowing campaign managers to manually accelerate spend or inject emergency budget additions during the game.
+
+### 5. Non-Functional Requirements
+From a non-functional perspective, the evaluation of pacing decisions at auction time must happen in under one millisecond to fit within the broader forty-millisecond auction SLA.
+
+Budget overspend must not exceed one percent of the advertiser's total allocated cap, even during extreme viewership spikes when millions of viewers hit a commercial break at once.
+
+The pacing calculation service must be fault-tolerant and capable of surviving node crashes without losing track of accumulated spend.
+
+The system must scale effortlessly to manage thousands of active advertising campaigns simultaneously across dozens of concurrent live broadcast streams.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Campaign Budget Specification, defining the total budget, daily limit, target sporting event, and preferred pacing profile such as even, front-loaded, or late-game focused.
+
+Another entity is the Game State Tracker, capturing the current quarter, game clock, home and away scores, and live concurrent stream count.
+
+We also have the Accumulated Spend Ledger, which records confirmed impressions, total dollar spend, and remaining balance for each campaign.
+
+Then there is the Pacing Rate Entity, which stores the calculated bid participation probability, timestamp of calculation, and target spend velocity for the upcoming five-second window.
+
+Finally, the Budget Adjustment Event entity logs manual budget top-ups, campaign suspensions, and post-game reconciliation records.
+
+### 7. API & Interface Design
+The service provides a configuration API for advertisers to set campaign budgets, flight dates, and pacing preferences using standard REST endpoints.
+
+For the auction engine, the service provides an ultra-fast local memory lookup API that returns whether a campaign is eligible to bid based on its pre-calculated pass-through probability.
+
+There is an internal stream ingestion API that consumes real-time impression confirmation events from Kafka topics to continuously update campaign spend balances.
+
+Finally, a metrics API exposes current spend trajectories, burn rates, and projected completion percentages to internal monitoring tools and advertiser dashboards.
+
+### 8. End-to-End Data Flow
+The data flow begins when impression confirmation beacons are recorded by the ad serving fleet as viewers watch commercial breaks.
+
+These beacons are published to an Apache Kafka impression topic, where stream processing jobs aggregate spend metrics in near real time across five-second sliding windows.
+
+The aggregated spend is written into an in-memory Redis cluster that maintains the current cumulative spend for every campaign.
+
+Concurrently, a centralized Pacing Calculation Service reads the cumulative spend, compares it against the campaign's target spend curve and live game clock telemetry, and runs a control algorithm to compute updated bidding probabilities.
+
+These new bidding probabilities are broadcast every two seconds to the local memory of all auction worker nodes, which use them to filter candidate bids instantaneously.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the pacing platform is decoupled into a fast-path local evaluation layer and a background control loop.
+
+On the auction worker nodes, each server keeps an in-memory dictionary of campaign IDs mapped to their current bid participation probability, allowing zero-latency local checks without any network calls.
+
+In the background, an Apache Flink streaming pipeline ingests verified impression events from Kafka, summing up dollar spend per campaign across all global regions.
+
+A centralized Pacing Engine implemented as a Python and FastAPI service reads these real-time spend numbers from Redis and ingests sports metadata from an official sports radar feed.
+
+The Pacing Engine executes a Proportional-Integral-Derivative control algorithm to recalibrate bidding probabilities, pushing updates back to all auction nodes via Redis Pub/Sub or high-performance gRPC channels.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into non-functional requirements, preventing budget overspend during explosive viewership spikes requires a combination of feedback control loops and safety margins. When a dramatic game moment occurs, such as a game-winning drive in the fourth quarter, viewership can double within minutes, causing burn rates to surge unpredictably.
+
+To counteract this, our PID controller incorporates a derivative term that detects the acceleration of spend, automatically dialing back bidding probabilities before the budget ceiling is breached.
+
+Furthermore, we implement a soft reserve buffer where the pacing engine targets spending only ninety-eight percent of the allocated budget during normal pacing calculations, reserving the final two percent as a shock absorber for in-flight requests.
+
+To guarantee sub-millisecond evaluation at auction time, auction nodes never query a central database to check budget balance. Instead, they perform a purely local pseudorandom check against their synchronized probability cache, completely eliminating database contention under heavy load.
+
+---
+
+## System Design 4: Real-Time Ad Frequency Capping and Competitive Separation Service
+**Domain Category:** Ad Targeting & Business Rules
+
+### 1. Complete Problem Statement
+Design a real-time frequency capping and competitive separation service for live sports broadcasts on Prime Video. The system must ensure that a single viewer does not see the same commercial more than twice during a live game, while simultaneously ensuring that competing advertisers (such as two rival automotive brands) are never scheduled in the same ad pod or back-to-back across adjacent breaks.
+
+### 2. Clarifying Questions & Scope Definition
+To properly frame this system, I would first clarify the scope of frequency capping. Is the frequency cap enforced strictly per viewer device, per user account across multiple devices, or globally across a household IP address? Usually, enforcing caps at the authenticated Amazon user account level is preferred, with a fallback to anonymous device IDs.
+
+Next, I would ask about the time window for the cap. Does the frequency limit apply strictly within a single three-hour football broadcast, or does it span a full twenty-four hour day or entire week of live sports programming? For live events, in-game frequency capping is the most critical constraint to avoid viewer fatigue.
+
+I would also clarify the taxonomy and depth of competitive separation. How are product categories structured, and can an advertiser request brand-level separation, parent company separation, or specific competitor blacklists?
+
+Finally, I would ask about latency constraints. Because this check sits directly in the ad decision path, the lookup and validation of frequency rules must complete in under five milliseconds.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Frequency Capping & Competitive Separation</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Ad Decision Request</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">User & Slot Context</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">User Ad History</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Redis Sliding Bitmaps</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Category Conflict Map</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">In-Memory Graph</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Pod Builder Engine</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Slot Conflict Resolver</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Filtered Ad Pod</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Compliant Playlist</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the system must record every ad impression delivered to a specific viewer account, tracking which creative, brand, and product category was shown along with the timestamp.
+
+When an ad decision is being prepared for an upcoming break, the service must query the viewer's recent ad history and filter out any candidate ads that have already reached their frequency threshold.
+
+The service must also inspect the candidate ads chosen for a multi-slot ad pod and evaluate them against our competitive separation matrix, verifying that no two ads belong to the same restricted category.
+
+In addition, it must verify pod-to-pod separation rules, preventing a car ad placed in the final slot of one commercial break from being followed by another car ad in the first slot of the subsequent break.
+
+It must also support customizable frequency policies configured by advertisers, such as maximum three impressions per game and at least thirty minutes of separation between showings.
+
+### 5. Non-Functional Requirements
+For non-functional requirements, the entire lookup and validation process must execute in under five milliseconds to keep the ad decisioning pipeline within its overall budget.
+
+The system must handle high write throughput, recording millions of ad impression events per minute during commercial breaks without data loss or significant lag.
+
+Data consistency must be strong enough within a user's session to ensure that an ad shown sixty seconds ago is immediately reflected in the user's history before the next break is assembled.
+
+The storage footprint must remain optimized and cost-effective, pruning expired viewer history as soon as the live sporting event concludes.
+
+### 6. Core Entities & Data Modeling
+The first core entity is the Viewer Impression History, which maps a user identifier to a list of recently watched creative IDs, brand IDs, and timestamps.
+
+Next is the Brand Entity, capturing the advertiser ID, parent company ID, and assigned industry classification code such as Automotive, Insurance, or Fast Food.
+
+We also have the Competitive Separation Rule entity, defining which industry categories or specific brand pairs cannot be displayed within the same pod or within a given time window.
+
+Then there is the Ad Pod Slot Specification, describing the ordered positions within a commercial break and any positional restrictions such as first-in-pod or last-in-pod preferences.
+
+Finally, the Frequency Cap Policy entity defines the maximum allowable exposures per user across specific time intervals.
+
+### 7. API & Interface Design
+The service provides an internal gRPC method called ValidateAndFilterCandidates, where the ad decision engine submits a user ID, break duration, and a list of candidate ads, receiving back a filtered list of eligible creatives.
+
+Another gRPC method named CommitPodSchedule temporarily reserves the selected ads for a viewer session to prevent race conditions while the manifest is being assembled.
+
+There is also an asynchronous ingestion endpoint that consumes verified impression beacons from Kafka to permanently record completed impressions in the user's history.
+
+Additionally, a configuration API allows operations teams and advertisers to update brand category taxonomies and competitive separation pairs dynamically.
+
+### 8. End-to-End Data Flow
+The data flow starts when the ad decision engine receives a request to populate a commercial break for a specific viewer.
+
+The decision engine calls the Frequency Capping Service via gRPC, passing the viewer ID and the pool of potential winning ad creatives.
+
+The service performs an in-memory lookup against a distributed Redis cluster using the user ID as the key, retrieving the compact list of creative and brand IDs the user has seen during this broadcast.
+
+Any candidate that breaches frequency caps is discarded, and the remaining candidates are evaluated by a pod layout algorithm that checks for category collisions against our pre-loaded competitive separation matrix.
+
+Once a valid, collision-free ad pod is composed, the tentative selection is returned to the decision engine, and upon playback confirmation, an impression beacon updates the viewer's history in Redis.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture utilizes an ultra-fast in-memory caching tier combined with an asynchronous stream processing pipeline.
+
+The core lookup engine runs as a stateless Go or C++ microservice deployed in Kubernetes, capable of evaluating complex separation matrices against user history in microseconds.
+
+User history is stored in an in-memory Redis cluster partitioned by user ID, utilizing compact data structures such as Redis Hashes and Sorted Sets with automatic TTL expiration tied to the event duration.
+
+The competitive category separation graph is relatively static and small, so it is cached directly in the local memory of each service instance and updated via background publish-subscribe channels.
+
+Impression events emitted from video players or edge manifest generators flow through Apache Kafka into a stream ingestion worker that writes confirmed views into the Redis cache asynchronously.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, achieving sub-five-millisecond response times at massive scale requires minimizing serialization overhead and network hops. We store each user's viewing history in Redis using compact bitsets or sorted sets containing only 64-bit integer hashes of creative IDs and category codes rather than full JSON blobs.
+
+To handle race conditions where back-to-back ad requests for the same user occur within seconds, the service implements short-lived optimistic reservations in Redis with a ten-second TTL, preventing duplicate ad selections while the manifest is being stitched.
+
+To maintain high availability and prevent cache outages from halting the live broadcast, the service employs a graceful degradation strategy: if the Redis user history lookup times out, the service relaxes personal frequency caps while continuing to enforce strict competitive category separation within the current pod.
+
+Storage optimization is maintained by setting an automatic four-hour time-to-live on all in-game user viewing records, ensuring that memory across the Redis cluster is automatically recycled as soon as the live football game concludes.
+
+---
+
+## System Design 5: Server-Side Ad Impression Tracking and Viewability Beacon Collector
+**Domain Category:** Telemetry & Measurement
+
+### 1. Complete Problem Statement
+Design a highly resilient, large-scale ad impression tracking and viewability beacon collection pipeline for Prime Video live events. The system must ingest, validate, deduplicate, and process hundreds of millions of tracking pings emitted by edge manifest servers and client video players during commercial breaks, guaranteeing exactly-once attribution and audit-ready billing records for advertisers.
+
+### 2. Clarifying Questions & Scope Definition
+When beginning this design, I would first clarify whether beacons originate from client video players, edge manifest servers, or both. In live broadcasting, a hybrid approach is common: edge servers emit delivery beacons when segments are served, while client video players emit start, midpoint, and completion viewability beacons as the viewer watches the screen.
+
+Next, I would ask about the expected peak request rate. If fifteen million viewers transition from content to an ad break at the exact same second, we could experience a sudden surge of tens of millions of HTTP beacon requests within a five-second window.
+
+I would also clarify the data freshness requirements for billing and analytics dashboards. Do advertisers expect real-time spend dashboards within seconds, or is an hourly reconciliation pipeline acceptable for final billing audits?
+
+Finally, I would ask about compliance standards, such as Media Rating Council viewability guidelines and fraud detection checks like filtering out bot traffic and duplicate pings.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Ad Impression & Viewability Beacon Pipeline</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Edge Beacon Ingest</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Global CloudFront Fleet</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Ingest Gateway</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Validation & Sig Verify</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Apache Kafka</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Partitioned Event Log</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Flink Deduplicator</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">RocksDB State Store</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">ClickHouse / Druid</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Audit-Ready Analytics</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the beacon collector must accept incoming HTTP GET and POST tracking requests from both edge manifest generators and client video playback SDKs.
+
+It must decrypt and validate cryptographically signed beacon payloads to verify that the tracking event originated from a legitimate Prime Video session and has not been forged or altered.
+
+The system must track multiple lifecycle milestones for each ad playback, including impression start, first quartile, midpoint, third quartile, complete view, and any user mute or pause interactions.
+
+It must perform real-time deduplication to ensure that network retries or player bugs do not register duplicate billable impressions for the same viewing event.
+
+Finally, it must deliver enriched, aggregated impression metrics to real-time advertiser reporting dashboards and write immutable raw logs to long-term storage for financial auditing.
+
+### 5. Non-Functional Requirements
+On the non-functional side, high throughput ingestion is the primary challenge, requiring the system to absorb surges of over twenty million requests per minute without dropping a single valid beacon.
+
+The ingestion endpoint must respond with an HTTP 200 or 204 status within fifteen milliseconds to release client connections and prevent connection pooling bottlenecks.
+
+Data durability must be 99.999999999 percent, as every verified impression represents contractual advertising revenue that cannot be lost.
+
+The system must guarantee exactly-once processing semantics for all financial and billing aggregations, even in the event of worker node restarts or network partitions.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Tracking Beacon Event, which contains the unique beacon token, session ID, creative ID, campaign ID, timestamp, milestone type, and device metadata.
+
+Next is the Signed Beacon Token, which holds encrypted payload data containing the auction ID, clearing price, viewer hash, and expiration timestamp generated during ad selection.
+
+We also have the Verified Impression Record, representing an authenticated, deduplicated impression event ready for billing and attribution calculation.
+
+Another entity is the Viewability Session, tracking the sequential progression of milestones for a specific ad display from start to completion.
+
+Finally, the Advertiser Billing Aggregate entity maintains accumulated billable impression counts and dollar amounts grouped by campaign and time interval.
+
+### 7. API & Interface Design
+The public ingestion API exposes lightweight HTTP endpoints such as /beacon/v1/track, accepting signed query parameters or compact JSON payloads from clients and edge servers.
+
+The endpoint immediately responds with an HTTP 204 No Content header upon successfully queuing the event, minimizing round-trip overhead.
+
+Internally, stream processing workers use an event schema defined in Apache Avro or Protocol Buffers to serialize beacon records before publishing to Kafka.
+
+A private GraphQL or REST reporting API allows advertiser portals and operations dashboards to query aggregated metrics like impression counts, completion rates, and effective cost-per-mille in real time.
+
+### 8. End-to-End Data Flow
+The data flow begins when a viewer's video player reaches an ad playback milestone or an edge server dispatches an ad chunk, triggering an HTTP tracking ping to our edge CDN.
+
+The CDN terminates the TLS connection and routes the request to an API Gateway fleet deployed across regional AWS points of presence.
+
+The gateway performs cryptographic signature verification on the beacon token, adds a server reception timestamp, and writes the raw event directly into a regionally partitioned Apache Kafka topic.
+
+Apache Flink stream processing applications consume events from Kafka, using keyed state backed by RocksDB to deduplicate incoming beacons against the unique auction and token identifier within a ten-minute sliding window.
+
+Deduplicated impression events are simultaneously streamed to an OLAP database like ClickHouse or Apache Pinot for instant dashboard queries and archived into Amazon S3 for permanent audit trails.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture consists of an edge ingestion layer, a distributed message buffering bus, a stateful stream processing cluster, and analytical data stores.
+
+The edge layer utilizes Amazon CloudFront and an Auto Scaling group of lightweight Rust or Go ingest proxies behind Network Load Balancers to handle massive concurrent socket connections.
+
+The message bus is built on high-throughput Apache Kafka clusters, partitioned by user ID or session ID to ensure all events for a single viewer session are processed sequentially by the same consumer group.
+
+The stream processing layer is powered by Apache Flink, which manages in-memory deduplication state, sessionizes ad milestone progressions, and generates real-time metric aggregations.
+
+The persistent storage tier pairs Amazon S3 parquet data lakes with ClickHouse for sub-second analytical queries across billions of daily historical impressions.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Taking a deep dive into the non-functional requirements, ensuring exactly-once processing amidst massive traffic bursts requires robust stream processing architecture. Flink achieves exactly-once semantics by combining Kafka offset tracking with distributed asynchronous checkpointing to Amazon S3 using the Chandy-Lamport algorithm.
+
+To handle the immense deduplication workload without exhausting memory, Flink uses RocksDB-backed state stores keyed on the composite token of session ID and creative ID, configured with a fifteen-minute state time-to-live that safely catches all realistic client retry attempts.
+
+To insulate our ingestion pipeline from unexpected traffic spikes during thrilling game overtimes, the ingest gateway performs zero complex business logic or synchronous database writes. Its sole responsibility is signature validation and appending bytes to the Kafka log, allowing each gateway instance to sustain over fifty thousand requests per second.
+
+In the event of a downstream analytics database slowdown, Kafka acts as an elastic buffer holding hours of raw beacon telemetry, guaranteeing that no advertiser impressions are lost while the downstream analytical engines recover.
+
+---
+
+## System Design 6: Autonomous Live Broadcast Incident Remediation Agent using Model Context Protocol
+**Domain Category:** AI Agents & Autonomous Operations
+
+### 1. Complete Problem Statement
+Design an autonomous AI operations agent powered by large language models and the Model Context Protocol (MCP) to monitor live broadcast advertising pipelines during events like Thursday Night Football. The agent must detect real-time stream anomalies, diagnose root causes across microservices, and safely execute approved remediation actions like traffic shifting or restarting stuck transcoders without human delay.
+
+### 2. Clarifying Questions & Scope Definition
+To properly scope this autonomous operations agent, I would first ask about the boundaries of autonomy. What actions is the agent permitted to execute completely autonomously, and which actions require human engineer confirmation via an emergency Slack or pager interface? High-risk actions like restarting an entire database cluster should require human approval, while low-risk actions like rerouting traffic or restarting a single stuck worker can be autonomous.
+
+Next, I would ask about the telemetry sources available to the agent. Does the system have access to distributed OpenTelemetry traces, real-time CloudWatch metrics, application logs, and live video quality monitors? The richer the context, the better the agent's reasoning.
+
+I would also clarify the latency requirement for incident detection and action execution. In a live sporting event, an undetected ad glitch lasting two minutes can cost millions of dollars, so the agent must detect and remediate anomalies within sixty seconds.
+
+Finally, I would ask how MCP servers are structured across the organization and what security sandboxing is in place to prevent hallucinated or dangerous command executions.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Autonomous Broadcast Incident AI Agent (MCP)</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Telemetry Stream</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Metrics, Logs & Traces</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Anomaly Detector</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Dynamic Threshold Alert</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">LLM Reasoning Core</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Claude / Bedrock Agent</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">MCP Tool Orchestrator</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Safe Action Execution</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Broadcast Infrastructure</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Auto-Remediated State</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the autonomous agent must continuously ingest real-time operational telemetry, including manifest error rates, SSAI latency spikes, ad auction timeouts, and video frame drop counts.
+
+When an anomaly is flagged, the agent must inspect the event context, formulate a hypothesis, and use MCP tool interfaces to query relevant microservice logs and distributed traces.
+
+The agent must synthesize the gathered evidence to pinpoint the root cause, such as a failing transcoder instance, a misconfigured third-party DSP endpoint, or a saturated database connection pool.
+
+It must then look up pre-approved operational runbooks, select the appropriate remediation strategy, and execute the corrective actions through dedicated MCP tool connectors.
+
+Finally, it must verify that the remediation successfully resolved the issue, generate a structured incident summary, and notify on-call engineers in the broadcast operations channel.
+
+### 5. Non-Functional Requirements
+On the non-functional side, safety and determinism are paramount: the agent must operate within strict guardrails to ensure that an LLM hallucination cannot trigger catastrophic configuration changes or accidental stream shutdowns.
+
+The entire detection, diagnosis, and remediation loop must complete in under sixty seconds to prevent viewers from experiencing prolonged stream disruptions during commercial breaks.
+
+Auditability is critical, requiring that every step of the agent's thought process, tool invocations, parameters, and system responses be immutably logged for post-incident review.
+
+The agent infrastructure must maintain high availability and run independently from the broadcast data path so that operational failures in the ad pipeline do not bring down the monitoring agent.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Incident Context, capturing the alert timestamp, affected broadcast property, severity level, impacted viewers, and initial anomaly telemetry.
+
+Next is the MCP Tool Definition, specifying available operational commands like query_logs, inspect_traces, restart_service_pod, and divert_traffic, along with strict JSON schemas for input parameters.
+
+We also have the Reasoning Trace entity, which stores the LLM's step-by-step chain of thought, hypothesis validations, tool call arguments, and tool outputs.
+
+Another entity is the Remediation Action Plan, outlining the selected runbook steps, safety classification, authorization requirements, and rollback criteria.
+
+Finally, the Post-Incident Summary entity encapsulates the timeline, root cause diagnosis, actions taken, and verification metrics formatted for human review.
+
+### 7. API & Interface Design
+The agent interacts with underlying infrastructure through standardized Model Context Protocol (MCP) server endpoints running over secure JSON-RPC or gRPC connections.
+
+It provides a query API for on-call engineers to inspect current agent reasoning or manually prompt the agent with questions like What caused the latency spike in US-East during the halftime break?
+
+There is an inbound webhook API that receives high-priority anomaly alerts from CloudWatch, Prometheus, and video quality monitoring systems to wake the agent.
+
+The agent also exposes an interactive Slack or Teams bot integration API where it posts diagnostic updates and provides one-click approval buttons for actions requiring human confirmation.
+
+### 8. End-to-End Data Flow
+The data flow begins when an anomaly detection engine identifies that the SSAI manifest generation latency has exceeded eighty milliseconds for three consecutive intervals.
+
+The anomaly detector dispatches a high-priority alert payload to the Autonomous Agent Core via an event queue.
+
+The agent initializes an incident context and invokes an MCP telemetry tool to pull recent error logs and distributed traces from OpenSearch and AWS X-Ray.
+
+The LLM analyzes the logs, identifies that an external DSP is hanging on TCP connections and causing worker thread exhaustion, and decides to isolate the offending endpoint.
+
+The agent invokes the MCP Traffic Controller tool to disable bidding for that specific partner, verifies through follow-up telemetry that manifest latencies have dropped back to twenty milliseconds, and posts an incident debrief to Slack.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture combines event-driven telemetry ingest, an LLM orchestration layer running on Amazon Bedrock, and a fleet of secure MCP tool servers.
+
+Alerts from Prometheus and AWS CloudWatch are pushed into an Amazon SQS queue that feeds the Agent Orchestrator service built with Python and LangGraph.
+
+The orchestrator leverages Claude 3.5 Sonnet or Amazon Bedrock foundation models with custom system prompts that enforce structured thinking and safety policies.
+
+The agent communicates with internal systems strictly through a dedicated MCP Gateway that hosts isolated MCP servers for AWS Kubernetes control, CloudFront CDN management, and database telemetry.
+
+A dedicated Policy Guardrail layer intercepts every tool call emitted by the LLM, validating that arguments adhere to whitelisted ranges and safety rules before forwarding them to production infrastructure.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, ensuring operational safety during live sports broadcasts requires multiple layers of defense-in-depth. We enforce a strict Tiered Autonomy Matrix where low-risk actions like shifting traffic away from an unhealthy container or clearing a local cache are executed autonomously, while high-risk actions like scaling down core clusters or changing global routing require human confirmation via Slack within a two-minute window.
+
+To prevent infinite execution loops or erratic behavior, the agent is bounded by a maximum tool recursion depth of five steps and a strict ninety-second overall execution deadline.
+
+Every MCP tool call is validated against a deterministic JSON schema validator, rejecting any malformed or unexpected parameters before they reach operational APIs.
+
+Furthermore, every remediation action has an automatic rollback mechanism: if key metrics do not show measurable improvement within thirty seconds of executing an action, the agent automatically reverts the change and immediately escalates the incident to human on-call leads.
+
+---
+
+## System Design 7: Real-Time Video Scene and Brand Safety Classification Pipeline for Live Sports
+**Domain Category:** Multimodal AI & Computer Vision
+
+### 1. Complete Problem Statement
+Design a real-time computer vision and multimodal AI pipeline that analyzes incoming live sports video frames and audio transcripts to classify game scenes (such as player injuries, fights, or controversial referee reviews) within five hundred milliseconds. The system must prevent brand-sensitive advertisements (like airline or insurance ads) from running alongside tragic or violent live broadcast moments.
+
+### 2. Clarifying Questions & Scope Definition
+To clarify the system requirements, I would first ask about the frame rate and sampling frequency needed for video analysis. Analyzing thirty frames per second with heavy vision models is computationally prohibitive, so we should establish whether sampling one or two keyframes per second combined with live audio transcripts provides sufficient accuracy.
+
+Next, I would ask about the exact latency SLA from frame capture to brand safety classification. If an ad break cue occurs immediately following a severe player injury, the classification tag must be published within five hundred milliseconds so the ad decision engine can block sensitive advertisers.
+
+I would also clarify the taxonomy of sensitive events. Does the model need to distinguish between sports celebration tackles versus real violent brawls, and does it need to detect text overlays like Breaking News banners using optical character recognition?
+
+Finally, I would ask about infrastructure constraints, such as the availability of GPU clusters at broadcast ingest points and fallback behavior if the AI pipeline experiences backpressure.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Real-Time Video Scene & Brand Safety AI</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Live Video Feed</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Frame & Audio Extractor</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Multimodal AI Model</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Vision + Whisper OCR</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Brand Safety Classifier</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Safety & Context Scores</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Low-Latency Event Bus</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Sub-50ms Redis State</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Ad Decision Engine</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Contextual Ad Filter</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the system must continuously ingest the live broadcast video stream, decoding keyframes at regular intervals and extracting the concurrent closed-caption and commentator audio track.
+
+The pipeline must pass extracted frames and audio tokens through a multimodal AI model to classify the current emotional tone, scene activity, and presence of sensitive content like medical emergencies or aggressive altercations.
+
+It must generate normalized brand safety risk scores across standard industry categories such as violence, injury, tragedy, and political controversy.
+
+The service must publish updated safety tags into a sub-millisecond in-memory cache accessible to the ad decision engine before every commercial break.
+
+It must also provide an operational dashboard displaying live model confidence scores, detected video snippets, and manual override controls for broadcast compliance monitors.
+
+### 5. Non-Functional Requirements
+In terms of non-functional requirements, the end-to-end processing latency from video ingestion to tag publication must stay strictly under five hundred milliseconds to ensure tags are available before ad selection begins.
+
+The system must maintain high classification precision to avoid false alarms that unnecessarily block high-paying premium advertisers during normal game play.
+
+Availability must reach 99.99 percent throughout the live event, with the pipeline deployed across redundant GPU instances to survive hardware failures.
+
+Scalability must support parallel processing of dozens of concurrent live broadcast feeds across different sports, camera angles, and localized language commentary tracks.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Video Frame Sample, encapsulating the raw image bytes, timestamp, camera angle, and stream identifier.
+
+Next is the Audio Transcript Segment, containing transcribed commentator speech, crowd noise volume levels, and closed-caption text for the corresponding time window.
+
+We also have the Scene Classification Result entity, storing confidence scores for categories like normal game play, celebration, injury, fight, or weather delay.
+
+Another entity is the Advertiser Brand Safety Profile, which defines which specific scene categories an advertiser refuses to appear alongside.
+
+Finally, the Live Context State entity represents the active global safety score applied to the current broadcast timestamp, used by ad selection filters.
+
+### 7. API & Interface Design
+The service provides a low-latency gRPC query interface called GetCurrentBroadcastContext, allowing ad decision servers to retrieve active brand safety tags in under two milliseconds.
+
+There is a streaming ingestion API that consumes raw MPEG-TS or HLS video streams directly from broadcast encoders via low-latency SRT or RTMP protocols.
+
+An internal event stream emits classified scene events into an Amazon Kinesis or Kafka topic whenever the safety score transitions above or below critical thresholds.
+
+A management API allows compliance operators to register new sensitive keyword dictionaries, adjust model sensitivity thresholds, and trigger manual scene overrides in real time.
+
+### 8. End-to-End Data Flow
+The data flow begins as the live broadcast feed enters a video ingest worker that samples two keyframes per second and pipes the audio stream through an automated speech recognition model.
+
+The video frames and transcribed text are packaged into a multimodal tensor payload and submitted to a specialized Vision-Language model hosted on GPU inference clusters.
+
+The model evaluates visual context, player body posture, on-screen medical graphics, and commentator sentiment, computing a composite brand safety risk index.
+
+If an injury or sensitive incident is detected, the safety index spikes, and the worker immediately writes an updated safety state into a regional Redis cluster within fifty milliseconds.
+
+When an upstream SCTE-35 ad break cue arrives moments later, the ad decision engine queries Redis, reads the high-risk safety tag, and automatically excludes sensitive advertisers from winning slots in that break.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture consists of a GPU-accelerated video decoding tier, a multimodal inference cluster, an in-memory broadcast state cache, and integration hooks into the ad serving plane.
+
+Video streams are ingested using FFmpeg workers running on AWS EC2 instances equipped with hardware video decoders to minimize CPU overhead.
+
+Inference is executed across an Amazon SageMaker or custom Kubernetes GPU fleet running optimized TensorRT-LLM or vLLM deployments of multimodal models like CLIP and lightweight vision-language architectures.
+
+Classified scene metadata is written directly to a distributed Redis cluster using Redis Strings with microsecond read latency.
+
+The ad decision engine reads this Redis state synchronously on every bid evaluation, filtering candidate ad creatives against advertiser brand safety matrices before finalizing the ad pod.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, achieving sub-five-hundred-millisecond end-to-end latency while running deep neural networks requires aggressive pipeline optimization. Instead of processing full-resolution 4K or 1080p frames, the ingest worker downsamples frames to 384x384 pixels, which preserves all semantic information needed for scene classification while reducing inference compute by over eighty percent.
+
+We employ a two-tiered hierarchical inference architecture: a lightweight, ultra-fast convolutional model runs continuously on every frame taking twenty milliseconds, and only when that model detects anomalous visual patterns does the pipeline invoke the larger multimodal vision-language model for comprehensive reasoning.
+
+To guarantee high availability without interrupting live ad serving, the system fails open with respect to ad delivery but fails closed with respect to sensitive categories: if the AI classification pipeline encounters an unexpected crash or timeout, the ad server defaults to showing neutral, brand-safe promotional content rather than risking unvetted placements.
+
+Redundant GPU worker nodes are deployed in an active-active configuration across multiple availability zones, ensuring instant failover with zero dropped frames if an underlying EC2 host degrades.
+
+---
+
+## System Design 8: Generative AI Prompt Engineering and Evaluation Platform (CI/CD for LLMs)
+**Domain Category:** AI Infrastructure & CI/CD
+
+### 1. Complete Problem Statement
+Design a continuous integration and evaluation platform for prompt engineering and LLM tools across Amazon Advertising. The system must automatically benchmark, regression-test, and score new prompt versions, agent workflows, and model upgrades against golden datasets of live sports advertising scenarios, verifying response quality, latency, cost, and safety before production deployment.
+
+### 2. Clarifying Questions & Scope Definition
+When framing this platform, I would first ask about the types of AI tasks being evaluated. Are we testing operational incident diagnosis prompts, dynamic ad copy generation, or natural language reporting queries? Each use case requires different evaluation metrics, such as factual precision, schema compliance, or creative tone.
+
+Next, I would ask about the evaluation methodology. Do we rely on programmatic heuristic assertions, semantic vector similarity, or an LLM-as-a-judge architecture where an advanced model like Claude 3.5 Sonnet evaluates candidate responses against predefined rubric guidelines?
+
+I would also clarify the scale of the evaluation suite. How many test cases exist in a typical regression run, and what is the target turnaround time for a pull-request test build? If a suite has ten thousand test cases, running them sequentially through foundation models will be slow and costly, so parallel execution and caching are necessary.
+
+Finally, I would ask about integration with existing developer workflows, such as GitHub Actions, AWS CodePipeline, and internal model registries.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Prompt Engineering & LLM CI/CD Platform</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Prompt PR Commit</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">GitHub / Git Hook</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Eval Orchestrator</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Parallel Test Runner</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Model Inference Fleet</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Amazon Bedrock API</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">LLM-as-a-Judge</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Rubric Scoring Engine</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">CI/CD Gate & Report</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Pass/Fail Deployment</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the platform must allow prompt engineers and developers to version-control prompts, tool schemas, and model configurations in Git alongside application code.
+
+When a pull request is submitted, the evaluation engine must trigger automated test runs across curated datasets of live broadcast scenarios, edge cases, and adversarial safety prompts.
+
+The system must execute model inference in parallel across target foundation models hosted on Amazon Bedrock or SageMaker, recording outputs, latency, and token consumption.
+
+It must evaluate the responses using automated graders, checking strict JSON schema conformity, factual accuracy against reference ground truths, and qualitative quality via an LLM judge.
+
+Finally, it must generate a comprehensive diff report comparing the new prompt's performance against the production baseline, automatically blocking merges if quality degrades or safety guardrails are violated.
+
+### 5. Non-Functional Requirements
+From a non-functional perspective, evaluation suite execution must be fast and scalable, completing a standard hundred-case regression suite in under three minutes to prevent developer bottlenecks.
+
+The evaluation results must be deterministic and reproducible, minimizing scoring variance from LLM judges through calibrated prompt rubrics and zero-temperature configurations.
+
+Cost efficiency is essential, requiring intelligent caching of unchanged test case evaluations to prevent unnecessary model inference expenses during frequent CI runs.
+
+The system must maintain high security, ensuring that test prompts containing proprietary ad business logic and customer data never leak into public model training sets.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Prompt Template, defining the parameterized system prompt, user prompt template, model hyperparameters, and associated tool specifications.
+
+Next is the Golden Dataset, consisting of curated test inputs, expected output characteristics, reference reasoning traces, and safety boundary cases.
+
+We also have the Evaluation Run entity, tracking the commit hash, author, target model identifier, execution timestamp, and aggregate pass-fail status.
+
+Another entity is the Grader Rubric, which defines scoring criteria such as correctness, conciseness, hallucination penalty, and schema adherence on a one-to-five scale.
+
+Finally, the Benchmark Comparison Report entity captures side-by-side performance deltas between the baseline prompt and the candidate prompt.
+
+### 7. API & Interface Design
+The platform provides a CLI and REST API for triggering evaluation runs, allowing developers to execute test suites locally or from CI/CD pipelines with simple commands.
+
+There is a web-based playground API that allows engineers to experiment interactively with prompts, inspect live model outputs, and compare responses across different model versions side by side.
+
+An internal webhook receiver integrates with GitHub Actions, posting detailed markdown summary comments directly on developer pull requests showing metric changes.
+
+A telemetry API records production prompt invocations and user feedback ratings, automatically identifying underperforming production examples to add to future golden test suites.
+
+### 8. End-to-End Data Flow
+The data flow begins when an engineer commits a change to a prompt template or agent tool schema in Git, triggering a GitHub Actions workflow.
+
+The CI runner calls the Evaluation Platform API, passing the updated prompt definitions and the target test suite tag.
+
+The Evaluation Orchestrator spins up parallel worker tasks that retrieve test cases from the database and dispatch prompt requests to Amazon Bedrock endpoints.
+
+As model outputs arrive, automated schema validators check structural validity, while an LLM-as-a-Judge worker evaluates qualitative metrics against established scoring rubrics.
+
+The platform aggregates the scores, computes statistical significance compared to the baseline, updates the pull request status to pass or fail, and archives the run results for historical tracking.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture features a version-controlled repository, an asynchronous test execution worker pool, an inference gateway, and an analytical reporting layer.
+
+The core service is built with Python and FastAPI, utilizing Celery or AWS SQS with ECS Fargate tasks to distribute parallel inference jobs across multiple worker nodes.
+
+The inference gateway manages rate-limiting, retries, and credential management for foundational models accessible via Amazon Bedrock and internal SageMaker endpoints.
+
+Evaluation results, token usage metrics, and raw model transcripts are persisted in PostgreSQL, with full-text search and embedding comparisons powered by pgvector.
+
+A modern Next.js and React dashboard provides visual analytics, showing historical accuracy trends, latency distributions, and regression alerts across all advertising AI tools.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, mitigating evaluation variance in LLM-as-a-judge pipelines is crucial for reliable CI/CD gates. We accomplish this by configuring the judge model with a temperature of zero and utilizing chain-of-thought grading rubrics that require the judge to output structured reasoning before issuing an integer score.
+
+To keep evaluation fast and cost-effective, the orchestrator implements content-addressable semantic caching: if a test input and prompt template have not changed across commits, the system reuses the cached evaluation output instead of calling the model API again.
+
+To guard against prompt regressions in production, the platform runs shadow evaluations on a small percentage of live production traffic, verifying that the new prompt performs reliably in real-world conditions before a full rollout.
+
+Finally, the platform enforces strict safety guardrails using automated jailbreak and adversarial test batteries, guaranteeing that no prompt modification can bypass corporate brand safety policies or leak internal data.
+
+---
+
+## System Design 9: Live Event Commercial Break Prediction and Auto-Cue Signaling System
+**Domain Category:** Computer Vision & Broadcast Automation
+
+### 1. Complete Problem Statement
+Design a predictive AI auto-cue signaling platform that analyzes real-time live sports video, game clock OCR, audio energy, and play-by-play telemetry to predict incoming commercial breaks ten to thirty seconds before they occur. The system must pre-warm ad auctions and prepare SSAI manifest pipelines ahead of unscheduled broadcast timeouts, eliminating latency spikes at the start of breaks.
+
+### 2. Clarifying Questions & Scope Definition
+To properly design this predictive signaling system, I would first ask about the sports properties we are covering. Sports like football and basketball have structured timeouts, two-minute warnings, and quarter breaks, whereas soccer has continuous forty-five-minute halves with almost no unscheduled breaks. Focusing on football and basketball gives us clear visual and telemetry markers.
+
+Next, I would ask what data sources are available in real time. Do we have access to direct official league data feeds with sub-second latency, or are we solely relying on video frame OCR, commentator audio energy, and referee whistle detection? A multimodal fusion of both official data feeds and video OCR yields the highest reliability.
+
+I would also clarify the tolerance for false positives. If the system predicts an ad break that does not happen, what is the cost? Pre-warming caches has a minor compute cost, but prematurely stitching ads into a live stream would ruin the viewer experience, so predictive signals should only pre-warm auctions, not trigger hard cuts.
+
+Finally, I would ask about the latency budget for the prediction pipeline: the system must process incoming video and telemetry and broadcast the prediction event in under two seconds.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Live Commercial Break Prediction Engine</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Live Video & Audio Feed</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Multi-Modal Ingest</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Game Clock OCR & Audio</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Feature Extractor</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">ML Break Predictor</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Temporal Transformer</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Pre-Warm Signal Bus</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Redis Pub/Sub</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">SSAI & Auction Fleet</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Pre-Fetched Ad Pods</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the system must ingest the live broadcast feed and apply Optical Character Recognition (OCR) to the scorebug graphics to continuously extract the game clock, shot clock, quarter, and score.
+
+It must simultaneously monitor commentator audio levels and audio frequency signatures to detect sudden drops in crowd noise, referee whistle blasts, and broadcast theme music transitions.
+
+The system must ingest official live sports telemetry APIs, correlating game stoppage events like timeouts, fouls, injuries, and commercial break announcements.
+
+It must feed these multimodal features into a temporal machine learning model to estimate the probability and timing of an impending commercial break within the next thirty seconds.
+
+When the probability exceeds a calibrated threshold, the system must broadcast an Early Ad Warning signal to pre-warm ad auctions and prepare personalized manifests across edge servers.
+
+### 5. Non-Functional Requirements
+On the non-functional side, prediction latency is critical: the feature extraction and inference pipeline must evaluate conditions continuously with a processing lag of less than one second.
+
+High prediction recall is essential, aiming to anticipate at least ninety-five percent of scheduled and unscheduled commercial breaks ahead of the official SCTE-35 cue.
+
+The system must maintain high resilience, gracefully continuing operation using video OCR alone if upstream official sports telemetry feeds experience network dropouts.
+
+Resource utilization must be optimized to allow the service to monitor dozens of concurrent live games simultaneously without requiring excessive GPU hardware.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Live Game Snapshot, capturing the broadcast identifier, game timestamp, score, remaining quarter time, down and distance, and team timeout counts.
+
+Next is the Audio-Visual Feature Vector, containing extracted audio energy levels, music transition probabilities, referee whistle detections, and clock motion status.
+
+We also have the Break Prediction Event, specifying the predicted break start window, expected break duration, confidence score, and contributing feature signals.
+
+Another entity is the Official Telemetry Event, representing structured play-by-play updates received from sports data partners like Sportradar or Genius Sports.
+
+Finally, the Pre-Warm Command entity defines the instruction sent to downstream ad servers to begin pre-fetching ad pods for viewers assigned to this broadcast.
+
+### 7. API & Interface Design
+The system exposes an internal WebSocket and SSE stream called /live/v1/break-predictions, allowing ad servers and manifest engines to subscribe to real-time break probability updates.
+
+There is a low-latency gRPC method named QueryBreakProbability that returns the current prediction score and estimated seconds until the next break on demand.
+
+An administrative REST API enables broadcast operations leads to adjust model confidence thresholds or trigger manual pre-warm signals during high-stakes broadcast moments.
+
+A telemetry ingestion endpoint accepts real-time play-by-play JSON payloads from sports league data providers over persistent HTTP/2 connections.
+
+### 8. End-to-End Data Flow
+The data flow begins when the live broadcast video stream enters an edge ingestion node that extracts audio tracks and crops the scorebug graphic area from incoming frames.
+
+A lightweight OCR pipeline reads the game clock digits every five hundred milliseconds, while an audio signal processor computes spectral noise energy to detect referee whistles and commercial jingles.
+
+Simultaneously, live play-by-play events from the sports data partner arrive via WebSockets, indicating a coach's timeout or television commercial stoppage.
+
+These signals are fused into a feature vector and evaluated by a Temporal Convolutional Network or LSTM model running inference every second.
+
+When the model predicts an ad break with greater than eighty-five percent confidence, it dispatches an Early Warning event to a Redis Pub/Sub channel, prompting the SSAI fleet to initiate background ad auctions twenty seconds before the actual commercial starts.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture combines computer vision workers, an audio analysis engine, a stream fusion layer, and an event distribution network.
+
+Video frame processing is handled by lightweight C++ workers leveraging OpenCV and optimized Tesseract or custom ONNX OCR models running on CPU-optimized AWS EC2 instances.
+
+Audio analysis runs concurrently using digital signal processing routines to track Root Mean Square energy levels and acoustic pattern fingerprints.
+
+Feature fusion and inference are orchestrated by a Python and FastAPI service utilizing TorchScript models to evaluate state sequences in under fifteen milliseconds.
+
+The output prediction signals are broadcast across global AWS regions using Amazon ElastiCache Redis Pub/Sub, directly notifying regional SSAI and auction workers.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, ensuring rock-solid prediction reliability requires resilient multi-modal sensor fusion. Relying solely on official league data is risky because stadium operators often experience network delays of two to five seconds, whereas relying solely on video OCR can fail if the television network changes its graphic overlay layout mid-season.
+
+Our system solves this by implementing a Bayesian fusion layer that dynamically weights visual OCR, audio spectral features, and official data feeds: if official telemetry drops, the system automatically increases the weight of video clock stoppage and referee whistle detections.
+
+To prevent wasteful compute usage, the prediction signal operates in two distinct stages: a low-confidence threshold of sixty percent triggers background auction pre-fetching for top advertiser tiers, while only the official SCTE-35 cue triggers the actual live video splice.
+
+This ensures that even if an anticipated timeout is canceled or overturned by a challenge, zero incorrect ad insertions occur, yet whenever a break does proceed, the ad pod is already fully calculated and instantly available at the edge.
+
+---
+
+## System Design 10: Distributed In-Memory Ad Manifest Manipulation Service at CDN Edge
+**Domain Category:** Edge Computing & CDN Infrastructure
+
+### 1. Complete Problem Statement
+Design a globally distributed in-memory manifest manipulation service deployed at the CDN edge using AWS CloudFront and Lambda@Edge. The system must intercept client HLS and DASH manifest requests, look up personalized ad pods from local edge caches, and rewrite live playlists in under ten milliseconds, providing instantaneous response times for millions of concurrent sports viewers.
+
+### 2. Clarifying Questions & Scope Definition
+To clarify this edge architecture, I would first ask about the computational limits of our edge environment. AWS Lambda@Edge and CloudFront Functions have strict execution time limits and memory constraints, so we need to determine whether playlist manipulation runs within lightweight CloudFront Functions or regional containerized edge points of presence.
+
+Next, I would ask about playlist caching behavior. In live HLS video streaming, client players request a refreshed media playlist every two seconds. Since the underlying video chunks change with every live segment, we need to know whether the manifest manipulation logic is executed on every single poll or if personalized playlists can be short-term cached at the edge.
+
+I would also clarify how personalized ad decisions are propagated to the edge. Does the edge worker pull ad decisions synchronously from a central ad server, or are ad decisions pre-pushed to distributed edge key-value stores like CloudFront KeyValueStore or DynamoDB Global Tables?
+
+Finally, I would ask how the system handles failover if the edge ad cache misses or becomes unavailable during a live broadcast.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Edge Manifest Manipulation Service</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Client Video Player</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Polls Playlist (2s)</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">CloudFront Edge Worker</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Lambda@Edge / Envoy</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Local Edge Cache</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Ad Pod Key-Value Store</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Manifest Stitcher</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">In-Memory Playlist Rewrite</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Personalized HLS/DASH</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Sub-10ms Response</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the edge manifest service must intercept incoming HTTP GET requests for live HLS m3u8 and DASH mpd playlist files originating from viewers' video players.
+
+The service must parse the client's session cookie or JWT token to extract the viewer's anonymous identifier, device profile, and stream quality level.
+
+It must fetch the baseline live manifest from the origin live video packager and check whether an active SCTE-35 ad break tag is present in the stream.
+
+If an ad break is active, the edge worker must retrieve the pre-computed personalized ad pod for that viewer from its local edge cache and stitch the ad segment URIs into the playlist between EXT-X-DISCONTINUITY tags.
+
+Finally, it must return the customized, valid manifest to the player with appropriate HTTP caching and cross-origin resource sharing headers.
+
+### 5. Non-Functional Requirements
+From a non-functional perspective, execution latency is the most critical requirement: the entire manifest interception and rewrite must complete in under ten milliseconds at the P99 percentile.
+
+The service must scale linearly to support over twenty million manifest requests per second globally during peak Thursday Night Football commercial breaks.
+
+Availability must be 99.999 percent, ensuring that edge worker errors never cause video stream playback failure for viewers.
+
+Edge memory usage must remain exceptionally compact, fitting all necessary session state and manifest parsing buffers within strict serverless memory limits.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Edge Manifest Request, containing the client IP address, user-agent, requested stream variant, sequence number, and session token.
+
+Next is the Base Live Playlist, representing the raw, un-personalized live video manifest containing the latest camera chunks and SCTE-35 splice markers.
+
+We also have the Edge Cached Ad Pod, which stores the pre-selected ad segment URLs, bitrate variants, duration, and tracking beacon IDs for a specific viewer session.
+
+Another entity is the Edge Manifest Template, providing a pre-parsed memory representation of the playlist to avoid repetitive string parsing.
+
+Finally, the Signed Playback Token entity validates that the client is authorized to stream the requested live sports property.
+
+### 7. API & Interface Design
+The service exposes standard HTTP media playlist endpoints such as /live/tnf/variant_1080p.m3u8, which are requested directly by native video player engines.
+
+Internally, edge workers communicate with regional ad decisioning hubs using low-overhead HTTP/2 or gRPC calls to replenish edge ad pod caches ahead of commercial breaks.
+
+There is also an edge invalidation and purge API that allows broadcast operations to instantly update or remove corrupted ad segment URLs across all global edge points of presence.
+
+A lightweight metrics aggregation API emits edge latency histograms, cache hit ratios, and manifest rewrite error counts to Amazon CloudWatch in near real time.
+
+### 8. End-to-End Data Flow
+The data flow begins when a viewer's video player sends a request to the nearest CloudFront edge location to fetch the latest two-second video playlist.
+
+A CloudFront edge worker intercepts the request before it hits the origin cache and retrieves the latest base live manifest generated by AWS Elemental MediaPackage.
+
+The edge worker scans the manifest for ad break cue tags; if none are found, the base manifest is returned immediately to the player.
+
+If an ad cue is detected, the worker queries its local in-memory edge key-value store using the viewer's session ID to retrieve the personalized ad pod segments.
+
+The worker splices the ad segment URLs into the playlist text buffer, adjusts media sequence numbers and discontinuity markers, and delivers the personalized manifest back to the viewer in under seven milliseconds.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture is distributed across hundreds of global CDN edge points of presence backed by regional origin infrastructure.
+
+The edge layer utilizes AWS CloudFront and Lambda@Edge or regional Envoy proxy nodes running optimized WebAssembly or Rust manifest parsing modules.
+
+Personalized ad decisions are pushed from central ad servers to Amazon CloudFront KeyValueStore and regional ElastiCache clusters ahead of scheduled ad breaks.
+
+Origin live video packagers deliver pristine live HLS and DASH streams into CloudFront origin shield caches, ensuring edge workers always have access to low-latency base manifests.
+
+Edge health monitoring services continuously evaluate manifest delivery latencies, automatically bypassing ad insertion and serving the raw broadcast feed if any edge node exhibits processing delays.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, meeting the ultra-fast ten-millisecond execution budget requires avoiding traditional string concatenation and regular expression parsing. Our edge manifest engine is implemented in high-performance Rust compiled to WebAssembly, utilizing zero-copy string slice manipulation to rewrite playlist lines directly in memory buffers.
+
+To prevent edge cache stampedes when millions of viewers request manifests simultaneously, base live manifests are cached at the edge for one second, while personalized ad segments are pre-populated in local edge memory thirty seconds before the commercial break begins.
+
+If an edge worker encounters a cache miss for a viewer's personalized ad pod, it does not hold up the manifest request with a slow synchronous network call. Instead, it immediately falls back to injecting a universal, pre-cached default sponsor ad, maintaining sub-ten-millisecond responsiveness.
+
+All edge workers are stateless and fully isolated: memory buffers are recycled immediately after the HTTP response is written, ensuring stable memory footprints and zero garbage collection pauses during multi-hour live broadcasts.
+
+---
+
+## System Design 11: Real-Time Distributed Telemetry and Anomaly Detection for Live Sports
+**Domain Category:** Telemetry & Observability
+
+### 1. Complete Problem Statement
+Design a real-time distributed telemetry, health monitoring, and anomaly detection platform for Prime Video live events advertising. The system must ingest over fifty million metrics per second across global edge CDNs, manifest generators, ad decision servers, and player SDKs, detecting microservice degradations and stream stalls within five seconds of onset.
+
+### 2. Clarifying Questions & Scope Definition
+When clarifying this design, I would first ask about the resolution and aggregation windows required. Are engineers looking at one-second raw metric histograms during live broadcasts, or is a five-second rolling window sufficient to detect anomalies without triggering false alarms from transient network blips? A five-second rolling aggregation strikes the ideal balance.
+
+Next, I would ask about metric dimensions and cardinality. How many distinct dimensions, such as device type, geographic market, ISP, CDN vendor, and operating system, are tagged on each metric? High cardinality requires specialized time-series storage to avoid memory exhaustion.
+
+I would also clarify the alerting mechanism. Do we use static threshold alarms, or do we need unsupervised machine learning algorithms that learn baseline traffic patterns and dynamically adjust alert thresholds for different times of day and game events? Dynamic baselines are essential because traffic naturally surges during halftimes.
+
+Finally, I would ask about retention policies: we need high-resolution data for the duration of the game, followed by downsampled retention for long-term capacity planning.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Live Telemetry & Anomaly Detection Platform</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Global Metric Collectors</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Edge & Player Agents</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Kafka Message Bus</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">High-Throughput Partitioning</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Flink Stream Aggregator</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">5-Second Rolling Windows</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Isolation Forest ML</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Dynamic Anomaly Detector</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Live Operations Dashboard</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Automated Alert Dispatch</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the platform must collect real-time telemetry from thousands of microservice instances, edge manifest proxies, and millions of active client video players.
+
+The system must aggregate high-frequency metrics like HTTP error rates, P99 manifest latency, ad playback buffer underruns, and auction timeout counts across customizable dimensional slices.
+
+It must feed aggregated time-series streams into an anomaly detection engine that identifies unexpected departures from historical and contextual baselines.
+
+When a severe metric anomaly is detected, the service must trigger automated alert events, notify broadcast incident channels, and wake automated remediation agents.
+
+It must also power real-time live event operations dashboards with sub-second query rendering speeds, allowing engineers to visualize health metrics across all fifty live broadcast event types simultaneously.
+
+### 5. Non-Functional Requirements
+On the non-functional side, ingestion throughput is massive, requiring the platform to comfortably absorb fifty million metric points per second during major live sporting events.
+
+End-to-end alert latency must be under five seconds from the moment an issue occurs in production to the moment an alarm fires in the broadcast operations center.
+
+The monitoring system must be strictly decoupled from the live streaming and ad delivery path so that an outage in the telemetry pipeline never affects broadcast playback.
+
+System availability must be at least 99.99 percent, ensuring that operations teams never fly blind during high-stakes live games.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Raw Telemetry Data Point, which includes the metric name, floating-point value, high-precision timestamp, and key-value dimension tags.
+
+Next is the Aggregated Metric Window, representing the pre-computed count, sum, average, min, max, and P50 through P99 percentiles for a specific five-second time bucket.
+
+We also have the Anomaly Alert Entity, capturing the anomalous metric identifier, observed deviation score, expected baseline value, affected dimension slice, and timestamp.
+
+Another entity is the Broadcast Event Context, defining the active live game, participating teams, current broadcast stage, and concurrent viewer count.
+
+Finally, the Alert Subscription Rule entity governs escalation paths, pager rotations, and automated remediation webhook targets for different severity tiers.
+
+### 7. API & Interface Design
+The ingestion fleet exposes a high-performance gRPC and UDP metric submission API used by server-side daemons to stream telemetry with minimal CPU overhead.
+
+For client video players, a lightweight HTTP batch ingestion endpoint accepts compressed arrays of playback telemetry events every five seconds.
+
+An internal query API provides sub-second time-series data retrieval for operational dashboards using optimized PromQL-like or SQL interfaces.
+
+A webhook notification API delivers structured anomaly payloads to PagerDuty, Slack, and automated MCP remediation agents whenever critical thresholds are breached.
+
+### 8. End-to-End Data Flow
+The data flow begins when edge proxies, ad auction nodes, and player video engines record operational performance metrics and emit them to local collector daemons.
+
+The collector daemons batch and compress the telemetry points, streaming them into a globally distributed Apache Kafka cluster partitioned by metric name and region.
+
+Apache Flink stream processing workers consume the raw metrics, maintaining stateful sliding windows that compute percentile distributions and error rates every five seconds.
+
+The aggregated summaries are forwarded to an online anomaly detection worker running Isolation Forest and seasonal Holt-Winters forecasting algorithms.
+
+If the observed error rate or latency exceeds the dynamic baseline threshold, an anomaly alert is dispatched to the incident response bus, while all aggregates are written to Apache Druid or M3DB for live dashboard rendering.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture is organized into an edge collection layer, a streaming ingest bus, a stream analytics processing engine, and a time-series storage tier.
+
+Telemetry collection utilizes lightweight OpenTelemetry sidecars and vector daemons deployed across all Kubernetes nodes and edge instances.
+
+The ingestion tier relies on clustered Apache Kafka topics managed across multiple AWS availability zones with automatic partition balancing.
+
+Stream processing and anomaly scoring are handled by Apache Flink jobs running on Amazon EMR, paired with Python-based anomaly microservices.
+
+Persistent analytical queries are served by a distributed Apache Druid or ClickHouse cluster optimized for real-time aggregations across high-cardinality dimensions, backed by Amazon S3 for deep storage.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, achieving a five-second alert detection latency at fifty million metrics per second requires aggressive localized pre-aggregation. Rather than sending individual data points across the network, client and server agents compute T-Digest sketches and histograms locally over one-second intervals, cutting total network ingress volume by over ninety percent.
+
+To eliminate false alarms during natural broadcast transitions like sudden halftime viewership drops, the anomaly detection engine does not rely on static thresholds. Instead, it utilizes contextual awareness by factoring in live game state: an ad request surge that would normally trigger an alarm is recognized as standard behavior when the game enters a commercial break.
+
+High-cardinality dimensions are protected against memory explosion using Count-Min Sketch and HyperLogLog probabilistic data structures within Flink memory, allowing the system to monitor billions of unique user-device combinations with bounded RAM.
+
+The telemetry infrastructure is deployed in dedicated AWS accounts isolated from production ad serving, guaranteeing that network storms or resource exhaustion in production cannot degrade monitoring visibility.
+
+---
+
+## System Design 12: AI-Powered Dynamic Ad Creative Personalization and Contextual Overlay Synthesis
+**Domain Category:** GenAI & Creative Personalization
+
+### 1. Complete Problem Statement
+Design a real-time Generative AI and dynamic creative optimization system for Prime Video live events. The platform must dynamically synthesize customized, contextual video overlay graphics and L-bar advertisements tailored to viewer demographics and live game events (such as celebrating a local team touchdown) within three seconds of a game trigger.
+
+### 2. Clarifying Questions & Scope Definition
+To properly frame this creative synthesis system, I would first ask whether we are generating full-motion video files from scratch using diffusion models, or dynamically compositing pre-rendered brand assets with personalized text, live game scores, and local retail offers. Generating full generative video in real time is computationally impractical, whereas dynamic graphical compositing with generative LLM copy and localized templates is feasible and broadcast-grade.
+
+Next, I would ask about the delivery format. Are personalized overlays rendered server-side into the video stream, or are they rendered on client devices as interactive HTML5 and graphics overlays? Client-rendered interactive graphics provide greater personalization, lower cloud compute costs, and enable click-to-buy features.
+
+I would also clarify the latency SLA from the triggering game event to overlay display. When a touchdown occurs, the contextual celebration ad must appear on screen within three to five seconds to capitalize on viewer excitement.
+
+Finally, I would ask about advertiser brand safety and approval workflows: all brand logos, color palettes, and generative copy templates must be pre-approved by advertisers before the game begins.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Dynamic Creative Personalization & Overlays</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Live Game Trigger</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Touchdown / Home Run</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Contextual Ad Engine</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Template & Rule Matcher</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">GenAI Copy Synthesizer</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Bedrock Fast LLM</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Asset Compositor</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Pre-Approved Brand Layers</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Client Overlay SDK</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Sub-3s Interactive Display</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the system must listen to real-time game event triggers from official sports data feeds, identifying major moments like touchdowns, home runs, or buzzer-beater shots.
+
+It must select an appropriate pre-approved advertiser creative template matching the live context and the target viewer's location and brand affinity.
+
+The system must invoke a generative AI copy synthesizer to generate snappy, contextual ad text tailored to the specific game situation and the viewer's local retail availability.
+
+It must assemble the finalized graphic overlay payload, combining brand vector graphics, generative copy, dynamic game scores, and interactive shopping links into a lightweight render package.
+
+Finally, it must push the overlay instruction payload to viewers' video players, instructing the player SDK to display the graphic overlay at the exact specified presentation timestamp.
+
+### 5. Non-Functional Requirements
+In terms of non-functional requirements, the end-to-end latency from game event trigger to player overlay display must be under three seconds to maintain emotional relevance.
+
+The system must scale to deliver millions of personalized overlay variations simultaneously across different viewer cohorts without overwhelming client video players.
+
+Visual quality and brand safety must be 100 percent compliant with advertiser guidelines, ensuring zero brand logo distortions or inappropriate generated text.
+
+The client rendering engine must be exceptionally lightweight, consuming less than five percent of device CPU and zero noticeable impact on live video playback smoothness.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Game Trigger Event, capturing the event type, team identifier, player name, current score, and game clock timestamp.
+
+Next is the Advertiser Creative Template, defining acceptable layout zones, typography rules, brand color palettes, approved logo assets, and call-to-action buttons.
+
+We also have the Viewer Personalization Profile, which includes the user's favorite team, geographical market, Prime delivery address eligibility, and past shopping preferences.
+
+Another entity is the Synthesized Overlay Package, containing the resolved image URLs, dynamic text strings, display animation coordinates, and interactive click targets.
+
+Finally, the Overlay Delivery Telemetry entity logs whether the overlay was successfully rendered on the client device and any user engagement interactions.
+
+### 7. API & Interface Design
+The service exposes a real-time event trigger API called /triggers/v1/game-event that receives verified sports milestones from the live sports telemetry ingestion engine.
+
+Video player clients maintain an active WebSocket or Server-Sent Events connection to /live/v1/overlay-stream to receive real-time overlay render instructions.
+
+There is a campaign configuration API for advertisers to upload approved SVG and PNG brand assets, specify copy generation guardrails, and set target audience filters.
+
+A tracking API accepts viewability and interaction beacons from the client video player whenever a user views, clicks, or dismisses an interactive overlay.
+
+### 8. End-to-End Data Flow
+The data flow begins when a player scores a touchdown, prompting the sports telemetry engine to publish a Touchdown Event to an Amazon Kinesis stream.
+
+The Contextual Ad Engine consumes the event and queries an in-memory cache to identify all advertisers who purchased situational touchdown sponsorships for that team.
+
+For each viewer cohort, the engine calls a lightweight LLM on Amazon Bedrock using pre-compiled prompt templates with strict output constraints to generate localized celebration ad copy in two hundred milliseconds.
+
+The synthesized copy and pre-cached brand asset URLs are packaged into a compact JSON render instruction.
+
+The instruction is pushed over persistent WebSocket connections to client video players, where the player's graphic layer renders an animated L-bar overlay synchronized with the live celebration.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture combines a situational trigger listener, an AI copy generation pipeline, an asset distribution layer, and a client-side rendering SDK.
+
+The trigger listener is a low-latency Go microservice that filters and normalizes live sports telemetry feeds.
+
+Generative copy synthesis is handled by Python microservices deployed in AWS Lambda that invoke Amazon Bedrock with Claude 3.5 Haiku or optimized local models to guarantee sub-second text generation.
+
+Static brand assets including high-resolution vector logos and product imagery are pre-cached across Amazon CloudFront global edge caches prior to game kickoff.
+
+Client video players integrate a lightweight WebAssembly and Canvas rendering SDK embedded in the Prime Video player, capable of drawing smooth graphics directly over the video canvas without interrupting stream playback.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, hitting the three-second delivery SLA while leveraging generative AI requires aggressive pre-generation and speculative synthesis. Rather than waiting for the touchdown to occur to start generating ad copy, our system uses speculative generation: as soon as a team enters the red zone, the LLM pre-generates celebratory copy for potential touchdown scenarios across top players, caching the candidates in Redis.
+
+When the touchdown actually happens, the system executes an instantaneous cache lookup taking five milliseconds instead of waiting for a live LLM call, easily beating the three-second broadcast SLA.
+
+To guarantee absolute brand safety and eliminate model hallucinations, the LLM does not generate freeform text; it operates within strict slot-filling grammar constraints where only verified player names, scores, and pre-approved marketing slogans can be populated.
+
+On client devices, the overlay SDK operates in an isolated worker thread using offscreen canvas rendering, guaranteeing that graphics computations can never steal CPU cycles from the core video decoding pipeline and cause frame drops.
+
+---
+
+## System Design 13: Global Ad Campaign Inventory Forecasting and Reservation Engine for Live Sports
+**Domain Category:** Inventory Management & Forecasting
+
+### 1. Complete Problem Statement
+Design an enterprise-scale ad campaign inventory forecasting and reservation engine for Amazon's live sports portfolio (including Thursday Night Football, NBA, and NASCAR). The system must forecast available ad impressions across hundreds of millions of projected viewer segments months in advance, allowing sales teams to reserve guaranteed high-value sponsorships while preventing inventory overselling or under-delivery.
+
+### 2. Clarifying Questions & Scope Definition
+When clarifying this system, I would first ask about the time horizon and update frequency of the forecasting model. Are sales teams running ad-hoc what-if inventory scenarios months in advance during upfront advertising negotiations, or does the system need to continuously recalibrate available inventory in real time as game dates approach and team standings change? Both long-term upfront planning and daily recalibration are required.
+
+Next, I would ask about the granularity of audience targeting. Are advertisers reserving broad national broadcast slots, or are they booking hyper-specific demographic slices such as males aged twenty-five to forty-nine living in Chicago streaming on 4K connected televisions? Finer audience slices increase dimensionality and require sophisticated overlap modeling.
+
+I would also clarify the reservation mechanics and consistency model. When a sales executive places a hold on fifty million impressions, how is that capacity locked to prevent another salesperson from selling the exact same audience capacity concurrently? Strong consistency or transactional locking is critical for inventory reservations.
+
+Finally, I would ask how the engine handles uncertain game outcomes like playoff series that may end in four games or stretch to seven games.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Ad Inventory Forecasting & Reservation</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Historical Viewership Logs</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Multi-Season S3 Data</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">ML Forecasting Engine</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Time-Series & Team Form</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Multi-Dimensional HyperCube</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Audience Overlap Matrix</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Reservation Service</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">ACID Allocation Locks</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Sales Portal & Ad Server</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Guaranteed Booking</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the forecasting engine must ingest historical viewership logs, team popularity indices, matchup rivalries, seasonal broadcast ratings, and television scheduling data to predict audience reach for future live events.
+
+It must construct a multi-dimensional inventory model that projects available ad impressions broken down by geographic market, demographic cohort, device category, and commercial break slot.
+
+The system must support interactive what-if scenario simulations for sales teams, calculating real-time availability and pricing when complex targeting criteria and exclusion rules are applied.
+
+It must enforce guaranteed reservation holds, atomically deducting reserved capacity from the available pool and issuing contractual allocation tokens.
+
+Finally, it must track actual pacing as games air, comparing actual delivered impressions against reserved commitments and automatically suggesting inventory reallocation if a blowout causes viewership to trail projections.
+
+### 5. Non-Functional Requirements
+From a non-functional perspective, sales availability queries must execute in under two seconds to support smooth, interactive booking experiences on sales portals.
+
+The inventory reservation engine must guarantee strict serializability and strong data consistency, ensuring that zero double-booking or overselling occurs even when hundreds of sales agents book simultaneously.
+
+The machine learning forecasting pipeline must process terabytes of historical viewing data and retrain seasonal models on a daily basis.
+
+The system must scale to manage inventory portfolios spanning thousands of live sports broadcasts, hundreds of thousands of targeting combinations, and billions of potential ad impressions.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Live Broadcast Fixture, defining the scheduled date, teams, venue, expected start time, and historical rating category.
+
+Next is the Audience Segment Forecast, storing predicted concurrent viewer counts, impression capacity, and demographic probability distributions for that fixture.
+
+We also have the Ad Campaign Reservation, capturing the advertiser ID, contract value, requested audience targeting attributes, reserved impression count, and reservation status.
+
+Another entity is the Inventory Hypercube, representing the pre-computed multi-dimensional capacity index across audience slices.
+
+Finally, the Delivery Reconciliation Record tracks the variance between promised reservation numbers and real-world verified impressions after game completion.
+
+### 7. API & Interface Design
+The service provides a RESTful query API called /inventory/v1/availability that takes targeting criteria, event IDs, and requested impression counts, returning real-time availability numbers and price quotes.
+
+A transactional booking API called /inventory/v1/reserve allows authorized sales platforms to place hard holds and permanent reservations on specific inventory blocks.
+
+There is a batch forecasting API that triggers retraining of machine learning models and recalculation of seasonal capacity cubes upon receiving updated league schedules.
+
+An internal pacing feedback API consumes real-time delivery telemetry from the impression collector to reconcile reserved balances against actual views in real time.
+
+### 8. End-to-End Data Flow
+The data flow begins as data engineering pipelines ingest years of historical streaming logs from Amazon S3 alongside team rankings, television ratings, and holiday calendars.
+
+A machine learning training cluster runs gradient boosted trees and deep time-series forecasting models to generate audience size and composition predictions for upcoming games.
+
+These predictions are transformed into a compressed multi-dimensional inventory hypercube stored in memory and distributed databases.
+
+When a sales executive queries availability for a target campaign, the query service traverses the hypercube, applying set-intersection mathematics to determine available unreserved capacity.
+
+When the booking is confirmed, the reservation service initiates a distributed transaction that decrements available inventory, records the contract in PostgreSQL, and publishes an allocation update to the ad serving plane.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture is split into an offline forecasting and model training pipeline, an in-memory inventory indexing tier, and an online transactional reservation service.
+
+Offline forecasting is orchestrated using Apache Airflow and Amazon EMR, processing petabytes of historical viewer logs to output daily forecasted capacity files.
+
+The inventory availability engine is implemented in Java and Spring Boot, utilizing high-performance in-memory bitmap indexing techniques such as Roaring Bitmaps to calculate set intersections across millions of viewer profiles in milliseconds.
+
+Transactional bookings are managed by a dedicated Reservation Service backed by Amazon Aurora PostgreSQL with serializable transaction isolation to eliminate race conditions.
+
+Real-time inventory states and campaign commitments are pushed to downstream ad decision servers via event streams to govern live bid eligibility during game broadcasts.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, resolving complex audience overlap calculations across millions of potential targeting combinations in under two seconds is mathematically challenging. If one advertiser buys sports fans in Texas on mobile and another buys automotive intenders in the US South, their audience pools overlap significantly.
+
+We solve this using Roaring Bitmaps and Maximum Flow Graph modeling: instead of evaluating individual users, the system represents demographic and behavioral cohorts as pre-computed bitsets, allowing union and intersection operations to execute in single-digit milliseconds using CPU vector instructions.
+
+To prevent inventory overselling during high-volume upfront upfront sales seasons, the reservation service uses two-phase locking with short-lived fifteen-minute soft holds: an inventory slice is locked while a sales proposal is being prepared, and automatically released back to the general pool if the contract is not finalized within the window.
+
+To manage the uncertainty of playoff series (where games five, six, and seven are conditional), the forecasting engine assigns probability weights to each potential game, allowing sales teams to sell conditional options contracts that automatically activate only if the series extends.
+
+---
+
+## System Design 14: High-Throughput Stream Ingestion and ETL Pipeline for Viewer Ad Telemetry
+**Domain Category:** Data Engineering & Stream Processing
+
+### 1. Complete Problem Statement
+Design a fault-tolerant, high-throughput stream ingestion and ETL pipeline for Prime Video ad telemetry. The system must process over one hundred million event records per minute during live commercial breaks, performing real-time schema validation, enrichment with viewer and campaign metadata, multi-stage sessionization, and loading into real-time analytical and batch storage destinations.
+
+### 2. Clarifying Questions & Scope Definition
+To properly scope this streaming ETL pipeline, I would first ask about the variety and schema stability of incoming telemetry events. Are we processing a homogeneous event stream of standard ad impression beacons, or do we handle diverse schemas including video quality metrics, audio synchronization logs, interactive shopping clicks, and player error events? A unified Avro schema with evolution support is vital.
+
+Next, I would ask about data delivery semantics and ordering guarantees. Does the downstream consumer require strict chronological ordering per viewer session, or is at-least-once delivery with idempotent downstream upserts sufficient? At-least-once delivery with partition-keyed ordering per viewer is standard.
+
+I would also clarify the maximum acceptable processing lag. How quickly must incoming raw telemetry events appear in downstream analytics databases for operational dashboards? Real-time operational dashboards typically require end-to-end data latency under ten seconds.
+
+Finally, I would ask about disaster recovery and data replay capabilities in case a bug in an ETL job corrupts downstream state.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">High-Throughput Ad Telemetry ETL Pipeline</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Raw Event Ingestion</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Edge Envoy Fleet</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Kafka Event Buffer</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Partitioned by Session</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Apache Flink ETL</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Enrichment & Sessionize</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Real-Time Store</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">ClickHouse / Pinot</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Cold Data Lake</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">S3 Parquet via Iceberg</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the ETL pipeline must ingest raw telemetry event streams arriving from edge proxy servers, manifest stitching workers, and client video player SDKs.
+
+It must validate each incoming record against centralized schema registries, quarantining malformed or corrupt payloads into a dead-letter queue for inspection.
+
+The pipeline must enrich raw events with broadcast metadata, advertiser campaign attributes, and geographic lookup information by joining against real-time reference data caches.
+
+It must sessionize related telemetry events across the playback lifecycle, combining ad request, bid win, impression start, quartile milestones, and completion into unified session records.
+
+Finally, it must sink processed data simultaneously to an online analytical processing database for sub-second dashboard queries and to a cloud data lake in columnar formats for historical training and audits.
+
+### 5. Non-Functional Requirements
+On the non-functional side, extreme throughput is the defining challenge, requiring the system to sustain sustained ingestion loads of over two million events per second with bursts exceeding five million during commercial breaks.
+
+End-to-end data freshness must be under ten seconds from event generation at the edge to queryability in operational dashboards.
+
+Data durability must be 99.999999999 percent, with multi-datacenter replication ensuring zero data loss even during severe cloud availability zone outages.
+
+The pipeline must support full backpressure management, gracefully buffering traffic during downstream database slowdowns without crashing upstream workers.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Raw Telemetry Event, containing the raw JSON or Protobuf payload, client IP, user agent, ingest timestamp, and event type.
+
+Next is the Enriched Ad Record, which adds campaign IDs, brand taxonomy codes, game broadcast IDs, team names, and normalized geographic identifiers.
+
+We also have the Sessionized Ad Lifecycle Entity, aggregating all milestone beacons for a single commercial impression into an end-to-end viewing session record.
+
+Another entity is the Dead Letter Queue Record, capturing rejected payloads along with validation error codes and stack traces.
+
+Finally, the Partition Manifest entity tracks committed streaming offsets, checkpoint files, and written Parquet file metadata in the data lake.
+
+### 7. API & Interface Design
+The ingestion layer exposes an internal streaming endpoint accepting batched, snappy-compressed Protocol Buffer records from edge proxies.
+
+A Schema Registry API manages Avro and Protobuf schemas, providing version enforcement and backward compatibility checks for all producers and consumers.
+
+Downstream analytics users interact with the system through standard SQL query APIs exposed by Apache Pinot or ClickHouse.
+
+An operational control API allows data engineers to trigger pipeline replays from specific Kafka offsets, pause specific partition consumers, and inspect dead-letter queues.
+
+### 8. End-to-End Data Flow
+The data flow begins when client video players and edge manifest servers emit telemetry batches to our edge ingestion fleet via HTTP/2.
+
+The ingestion nodes validate the format against the Schema Registry and append the raw events into an Apache Kafka topic partitioned by the hash of the viewer session ID.
+
+Apache Flink consumer applications read events from Kafka, performing real-time lookups against a local RocksDB cache populated with campaign and broadcast metadata to enrich each record.
+
+Flink's stateful operators group related events by impression ID across a fifteen-minute sliding window, emitting a fully reconciled session record when playback completes.
+
+Enriched and sessionized records are written in micro-batches to ClickHouse for live operational dashboards and simultaneously committed to Amazon S3 in Apache Iceberg Parquet tables for long-term machine learning and business intelligence.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture utilizes a decoupled streaming ingest layer, a stateful stream processing tier, and a bifurcated storage destination pattern.
+
+The ingestion gateway runs as an Auto Scaling fleet of Go microservices behind AWS Network Load Balancers, capable of scaling out dynamically based on live event schedules.
+
+The messaging backbone consists of multi-cluster Apache Kafka deployed on AWS with NVMe storage to sustain massive write I/O.
+
+Stream processing is powered by Apache Flink running on Kubernetes, utilizing RocksDB state backends and asynchronous checkpoints saved to Amazon S3.
+
+The storage tier splits data into a hot path powered by ClickHouse for real-time operations and a cold path powered by Apache Iceberg on Amazon S3 for petabyte-scale historical analytics.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, maintaining sub-ten-second data freshness during sudden five-million-event-per-second surges requires eliminating all external synchronous network lookups in the stream processing path. Flink workers never query external relational databases to enrich telemetry; instead, they maintain localized in-memory broadcast state tables that continuously mirror campaign metadata from low-volume Kafka change-data-capture topics.
+
+To prevent consumer lag from spiraling during game halftimes, Kafka partitions are provisioned with significant headroom: each live event is allocated hundreds of dedicated partitions, allowing Flink to scale out worker tasks across dozens of compute nodes.
+
+Durability is protected through Flink's implementation of the Chandy-Lamport checkpointing algorithm, persisting consistent distributed snapshots to Amazon S3 every thirty seconds.
+
+If an unexpected worker crash occurs, Flink automatically recovers from the latest clean checkpoint, rewinds Kafka consumer offsets, and resumes processing without dropping a single impression record or introducing duplicate financial metrics.
+
+---
+
+## System Design 15: Resilient Multi-Region Ad Server Fallback and Slate Content Delivery Architecture
+**Domain Category:** High Availability & Disaster Recovery
+
+### 1. Complete Problem Statement
+Design a fault-tolerant multi-region ad serving and failover architecture for Prime Video live events. The system must guarantee broadcast continuity during major cloud infrastructure outages, network partitions, or ad decision server crashes, automatically failing over to local edge caches and fallback slate reels within fifty milliseconds so that viewers never see a black screen or video stutter.
+
+### 2. Clarifying Questions & Scope Definition
+When clarifying this disaster recovery architecture, my first question is about the definition of failure: what exact conditions trigger an automated failover? We should establish thresholds such as a region experiencing more than two percent timeout errors over a five-second window, or complete loss of connectivity to an entire AWS availability zone or region.
+
+Next, I would ask about the fallback content hierarchy. When ad decisioning fails, what should be displayed to the viewer? The typical fallback priority is first to show a pre-cached house ad or Prime Video original promo, and if that is unavailable, to seamlessly transition to a localized broadcast slate reel with ambient stadium audio.
+
+I would also clarify the data synchronization model between active regions. Do all regions operate in an active-active configuration sharing live campaign pacing state, or is there an active-passive setup with asynchronous state replication? An active-active multi-region deployment is necessary for broadcast resilience.
+
+Finally, I would ask about traffic rerouting mechanisms: how do we shift millions of viewer connections between regions without overwhelming the failover region?
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Multi-Region Ad Server Fallback Architecture</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Global Anycast Route 53</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Latency-Based Health Routing</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Primary Region Cluster</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Active Ad Decisioning</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Circuit Breaker Proxy</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">50ms Hard Timeout Guard</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Secondary Region Cluster</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Active-Active Mirror</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Edge Slate Engine</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Local Pre-Warmed Video Reel</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the architecture must support active-active ad serving across multiple geographically distributed cloud regions such as US-East and US-West.
+
+It must continuously monitor the health of all regional microservices, network links, and dependent ad decision components using high-frequency synthetic probes and real-time error rate trackers.
+
+If a primary region degrades, edge manifest stitchers must automatically reroute requests to an alternate healthy region without disrupting ongoing video playback.
+
+If an ad decision service in any region fails to return a response within a strict fifty-millisecond deadline, an automated circuit breaker must intercept the request and inject a pre-transcoded fallback advertisement.
+
+If the entire ad serving infrastructure becomes completely unreachable, the edge manifest engine must instantly stitch a local, pre-warmed broadcast slate video reel to maintain broadcast continuity.
+
+### 5. Non-Functional Requirements
+From a non-functional perspective, failover switching must execute in under fifty milliseconds to ensure that video player buffers never stall and live playback remains completely uninterrupted.
+
+Overall system availability must reach 99.999 percent, ensuring fewer than five minutes of total downtime per year across all live sports programming.
+
+The architecture must handle catastrophic regional cloud outages, allowing the entire global viewership load to be absorbed by surviving regions without cascading failure.
+
+Video quality and audio loudness of fallback ads and slates must perfectly match the surrounding live football broadcast to comply with CALM Act broadcast loudness regulations.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Regional Health Status, tracking error rates, P99 response latencies, and circuit breaker trip states across all active serving regions.
+
+Next is the Fallback Content Manifest, which specifies pre-transcoded video segment URLs for house promos and broadcast slates across all required bitrate and resolution ladders.
+
+We also have the Global Routing Policy, defining Anycast IP mappings, DNS failover thresholds, and weighted traffic distribution percentages across regions.
+
+Another entity is the Cross-Region State Replication Log, synchronizing campaign spend balances and frequency capping updates between regions.
+
+Finally, the Disaster Recovery Incident Event entity logs failover triggers, affected viewer percentages, and duration of fallback operation for post-mortem analysis.
+
+### 7. API & Interface Design
+The global traffic management layer leverages AWS Route 53 and CloudFront origin request policies with health check endpoints like /health/v1/deep-check returning service status in five milliseconds.
+
+Internal edge proxies communicate with regional ad servers via an internal gRPC client that implements aggressive deadlines, exponential backoff, and automatic connection retries.
+
+A centralized configuration API allows incident commanders to execute manual regional traffic shifts or activate emergency slate mode with a single administrative command.
+
+A broadcast telemetry API publishes real-time failover state changes and circuit breaker engagement metrics to operations center video walls.
+
+### 8. End-to-End Data Flow
+The data flow begins when a viewer's edge manifest proxy attempts to request an ad decision from the primary regional cluster in US-East.
+
+The edge proxy's internal circuit breaker monitors the connection with a strict thirty-five millisecond timeout.
+
+If US-East responds normally, the ad pod is stitched and returned to the viewer as expected.
+
+If the connection times out or returns HTTP 5xx errors, the circuit breaker trips instantly, and the edge proxy attempts a secondary request to the US-West cluster over dedicated internal AWS backbone fibers.
+
+If the secondary region is also unresponsive, the proxy immediately retrieves a pre-cached slate video segment from local edge memory, stitches the slate into the HLS playlist, and returns the valid manifest in under ten milliseconds.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture is designed as a three-tiered defense-in-depth model spanning global edge points of presence, active-active regional clusters, and a cross-region replication layer.
+
+The first tier is the CDN edge running on AWS CloudFront, where local workers store pre-warmed fallback video slates directly in memory.
+
+The second tier comprises independent, fully functional ad serving stacks deployed in multiple AWS regions, each equipped with dedicated Envoy gateways, Kubernetes worker fleets, and local Redis caches.
+
+The third tier is a cross-region synchronization mesh utilizing Amazon DynamoDB Global Tables and Apache Kafka MirrorMaker 2 to replicate critical campaign budget balances and frequency data asynchronously.
+
+Global traffic routing is orchestrated using AWS Global Accelerator and Route 53 Application Recovery Controller, providing deterministic regional failover in seconds.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, preventing cascading failures during a sudden regional failover requires strict load shedding and capacity reservation. When US-East drops and its entire traffic volume shifts to US-West, the receiving region can experience a doubling of load within seconds.
+
+To protect against this, our regional clusters are provisioned with fifty percent idle headroom during live sports events, and regional proxies implement priority-based load shedding: if CPU utilization exceeds eighty percent, the server sheds non-essential tasks like complex real-time bidding and serves local house ads instead.
+
+To guarantee zero broadcast disruption, fallback video slates are pre-transcoded into identical HLS and DASH segment profiles matching the exact framerate, GOP size, and audio bitrate of the live sports stream, pre-loading them into edge caches hours before the game.
+
+This ensures that when an emergency fallback occurs, the video player experiences seamless playback with zero audio pops, buffering spinners, or visual artifacts, maintaining the broadcast-grade illusion of uninterrupted coverage.
+
+---
+
+## System Design 16: AI-Augmented Root Cause Analysis and Broadcast Runbook Assistant
+**Domain Category:** AI Operations & Incident Response
+
+### 1. Complete Problem Statement
+Design an AI-augmented Root Cause Analysis (RCA) and operational runbook automation assistant for on-call engineers supporting Amazon Advertising live events. During high-severity production incidents, the system must synthesize distributed telemetry, error logs, and recent code deployments, diagnosing the primary root cause in under ninety seconds and proposing executable, safety-checked remediation commands.
+
+### 2. Clarifying Questions & Scope Definition
+To clarify the scope of this AI assistant, I would first ask about the role of the human engineer. Is the assistant designed as an interactive pair-debugging partner in a chat room like Slack, or does it operate headlessly in the background generating automated incident reports? An interactive conversational assistant in Slack that can both answer questions and suggest one-click actions is the most practical and trusted pattern.
+
+Next, I would ask what systems the assistant can query during its diagnostic phase. Can it search git commit histories, AWS CloudTrail deployment events, Kubernetes pod logs, and distributed trace graphs? Broad access across logs, metrics, deployments, and architectural knowledge is essential for accurate diagnosis.
+
+I would also clarify the latency requirement for root cause diagnosis. In a live sporting event, the assistant should provide an initial diagnostic hypothesis within sixty to ninety seconds of an incident declaration.
+
+Finally, I would ask how the assistant verifies the safety of proposed commands to ensure it never suggests destructive actions like dropping a production table or terminating an active cluster.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">AI Root Cause Analysis & Runbook Assistant</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Incident Declaration</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">PagerDuty / Alert Trigger</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Context Collector</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Logs, Traces & Git Diffs</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">LLM Reasoning Agent</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">RCA Diagnostic Engine</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Runbook Matcher</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Pre-Approved Safe Fixes</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Interactive Chatbot</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Slack Incident Command</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the assistant must automatically wake whenever a high-severity incident is declared via PagerDuty or an alert in the broadcast operations channel.
+
+It must immediately pull recent operational context from the affected time window, including spike metrics, error logs from OpenSearch, distributed trace spans from AWS X-Ray, and recent deployments from AWS CodePipeline.
+
+The system must run diagnostic reasoning models to correlate anomalies, identifying patterns like a memory leak introduced in the latest release or an exhausted connection pool caused by a slow database dependency.
+
+It must search our internal repository of standard operating runbooks, selecting the appropriate procedure and presenting the diagnostic summary along with executable remediation scripts in Slack.
+
+Finally, upon incident resolution, it must draft a comprehensive post-mortem report detailing the timeline, contributing factors, impact assessment, and recommended prevention items.
+
+### 5. Non-Functional Requirements
+From a non-functional perspective, time to diagnosis is paramount: the assistant must deliver its initial root-cause hypothesis and runbook recommendation within ninety seconds of incident activation.
+
+Accuracy is critical, requiring the assistant to ground its reasoning strictly in verified telemetry and facts, with zero tolerance for hallucinated log entries or nonexistent service names.
+
+Security and access control must be strictly enforced, ensuring that all proposed runbook commands adhere to least-privilege principles and require two-person authorization for destructive actions.
+
+The assistant platform must be highly available and isolated from the systems it monitors, ensuring it remains fully operational even during major infrastructure outages.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Incident Investigation Session, tracking the incident ticket ID, severity level, affected broadcast service, start timestamp, and assigned incident commander.
+
+Next is the Telemetry Evidence Bundle, containing collected error stack traces, latency graphs, top offending endpoints, and correlated deployment diffs.
+
+We also have the Root Cause Hypothesis entity, storing the diagnosed failure mode, confidence score, supporting evidence links, and identified culprit service.
+
+Another entity is the Runbook Action Step, defining the specific command line instruction or API call, expected output, safety classification, and rollback instructions.
+
+Finally, the Post-Incident Review Document captures the complete chronological timeline, root cause summary, and action items formatted for engineering review.
+
+### 7. API & Interface Design
+The assistant provides a conversational Slack integration API that listens to commands like @incident-bot diagnose or @incident-bot run step 2 in war room channels.
+
+There is a diagnostic ingestion API that accepts incident trigger webhooks from PagerDuty and CloudWatch alarms, initializing investigation sessions automatically.
+
+An internal Tool Execution API allows the assistant to execute read-only diagnostic queries against Prometheus, OpenSearch, and Kubernetes clusters via secure MCP servers.
+
+A post-mortem publishing API pushes generated markdown incident reports directly into internal wiki systems like Confluence or GitHub issues for team review.
+
+### 8. End-to-End Data Flow
+The data flow begins when an on-call engineer or automated alarm triggers a P1 incident for SSAI manifest errors during an NBA broadcast.
+
+The incident bot initializes a new investigation session and fans out parallel queries to OpenSearch for 5xx error logs, AWS X-Ray for slow trace spans, and GitHub for commits deployed in the last two hours.
+
+The gathered logs, trace graphs, and deployment diffs are compiled into a structured prompt context and submitted to an advanced reasoning model on Amazon Bedrock.
+
+The model correlates a sudden spike in database connection timeouts with a configuration change deployed thirty minutes earlier that reduced maximum connection pool size.
+
+The assistant posts a concise diagnosis in the incident Slack channel along with a pre-validated runbook command to roll back the configuration change, waiting for the engineer's one-click approval to execute.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture combines a conversational interface, an autonomous agent orchestration engine, a multi-source data retrieval pipeline, and a secure tool execution environment.
+
+The user interface is powered by a Slack Bolt application running in AWS Lambda, providing real-time chat interactions and interactive action buttons.
+
+The orchestration core is implemented with Python and LangGraph, utilizing retrieval-augmented generation and chain-of-thought prompt architectures powered by Claude 3.5 Sonnet on Amazon Bedrock.
+
+Data retrieval connectors query internal observability backends using pre-authenticated IAM roles and read-only endpoints.
+
+Command execution is managed by a secure, sandboxed execution service that verifies engineer permissions, enforces two-person approval for high-risk commands, and records full audit logs for every executed action.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, ensuring factual accuracy and eliminating hallucinations in high-pressure incident rooms requires strict evidence-grounded prompting techniques. The assistant's reasoning engine is instructed to never speculate; every diagnostic claim must cite a specific log line, metric graph timestamp, or commit hash included in the evidence bundle.
+
+To complete comprehensive diagnostic investigations within ninety seconds, the data retrieval pipeline executes all log, trace, and git queries concurrently using asynchronous Python coroutines, assembling the full evidence bundle in under twenty seconds.
+
+Command safety is enforced through a deterministic Command Validation Proxy: the assistant cannot generate arbitrary shell commands; it can only select from a strict whitelist of pre-approved parameterized runbook scripts that have been vetted by security teams.
+
+All Slack interactions, generated diagnoses, human approvals, and command execution outputs are immutably archived in Amazon S3 with Write-Once-Read-Many policies, providing an audit trail for compliance and post-incident reviews.
+
+---
+
+## System Design 17: Real-Time Interactive Shopping and Click-to-Buy Ad Overlay Service
+**Domain Category:** Interactive Commerce & Live Advertising
+
+### 1. Complete Problem Statement
+Design a low-latency, scalable interactive shopping and click-to-buy ad overlay platform for Prime Video live sports streams. The system must display synchronized, interactive product cards (such as team jerseys or showcased sponsor items) directly over the video stream, allowing millions of concurrent viewers to browse, scan QR codes, or complete one-click purchases via their Amazon accounts without interrupting game playback.
+
+### 2. Clarifying Questions & Scope Definition
+When clarifying this interactive commerce system, I would first ask about the purchasing flow on different devices. On mobile devices and smart TVs, the experience differs: mobile users can tap directly on the screen to purchase, while living room smart TV users typically prefer scanning a personalized on-screen QR code with their mobile phone or using their television remote for one-click checkout.
+
+Next, I would ask about inventory reservation and cart integration. Does tapping Buy Now immediately charge the customer's default Amazon 1-Click payment method and ship to their primary address, or does it add the item to an Amazon shopping cart for later review? Providing both a frictionless 1-Click purchase option and an Add to Cart option caters to different user preferences.
+
+I would also ask about the scale of concurrent purchase spikes. If a high-profile player scores a spectacular goal and an exclusive limited-edition jersey overlay appears, tens of thousands of orders per second may hit the checkout service simultaneously.
+
+Finally, I would ask about synchronization with the live video feed: the overlay must appear at the exact frame the product is mentioned by commentators.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Interactive Shopping & Click-to-Buy Platform</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Broadcast Trigger</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Product Cue & Timestamp</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Overlay Distribution</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">WebSocket & CDN Channel</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Client Render Engine</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Interactive Overlay Layer</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">QR & 1-Click Purchase</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Amazon Commerce Gateway</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Order Fulfillment Queue</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">High-Throughput Checkout</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the platform must allow broadcast producers and advertisers to schedule interactive shopping overlays tied to specific presentation timestamps or live game milestones.
+
+It must deliver lightweight product metadata packages including product titles, high-resolution imagery, pricing, customer ratings, and Prime delivery estimates to viewers' video players.
+
+The system must dynamically generate individualized on-screen QR codes encoded with signed session tokens that allow viewers to scan the TV screen and complete checkout instantly on their smartphones.
+
+It must integrate with the Amazon Commerce platform to support seamless 1-Click purchasing using the viewer's authenticated Amazon credentials.
+
+Finally, it must track interactive engagement metrics in real time, including overlay impressions, click-through rates, QR code scans, cart additions, and finalized purchases.
+
+### 5. Non-Functional Requirements
+From a non-functional perspective, the overlay display instruction must synchronize with video playback with sub-second accuracy, ensuring graphics appear precisely when the product is showcased on screen.
+
+The checkout ingestion pipeline must sustain sudden flash-sale purchase surges of over fifty thousand orders per second without dropped transactions or double billing.
+
+The on-screen interactive overlay must maintain silky-smooth sixty-frames-per-second animation performance without causing video frame drops or playback stutter on low-power streaming sticks.
+
+User data privacy and transaction security must comply with PCI-DSS standards, ensuring that payment credentials and shipping addresses are protected end-to-end.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Shoppable Ad Campaign, linking an advertiser, product ASIN, broadcast fixture, target audience segments, and active time windows.
+
+Next is the Product Catalog Snapshot, capturing the item title, hero image URL, current Amazon price, Prime badge status, and real-time inventory count.
+
+We also have the Interactive Viewer Session, mapping the user ID, device type, screen resolution, and active streaming session token.
+
+Another entity is the Personalized QR Code Token, containing an encrypted payload encoding user identity, campaign ID, and a short-lived cryptographic signature.
+
+Finally, the One-Click Purchase Order entity records the transaction ID, ASIN, quantity, billing status, and fulfillment tracking reference.
+
+### 7. API & Interface Design
+The client player SDK communicates with an overlay distribution API using WebSockets or Server-Sent Events to receive real-time overlay display and dismiss commands.
+
+A dedicated commerce API endpoint called /commerce/v1/buy-now accepts authenticated purchase requests from client devices, initiating instant 1-Click checkout.
+
+There is a dynamic QR code generator API that returns personalized, short-lived SVG QR codes encoded with cryptographic deep links to the Amazon shopping app.
+
+An advertiser analytics API provides real-time conversion reporting, displaying live impressions, scan rates, and total attributed sales volume to merchant dashboards.
+
+### 8. End-to-End Data Flow
+The data flow begins when the broadcast control room or automated computer vision system triggers a Shoppable Moment linked to a featured product ASIN.
+
+The interactive shopping engine queries an in-memory product cache to retrieve up-to-the-minute pricing, Prime shipping availability, and inventory status.
+
+The engine broadcasts an overlay activation message containing product metadata and animation parameters across persistent WebSocket connections to active player sessions.
+
+The client video player SDK renders the non-intrusive interactive card in the corner of the screen, rendering an individualized QR code for smart TV users.
+
+When a viewer taps the card or scans the QR code on their phone, the request routes to our commerce gateway, which executes a 1-Click purchase against the user's Amazon account and queues the order for fulfillment.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture combines a broadcast synchronization layer, a real-time messaging gateway, an interactive client SDK, and an elastic commerce integration plane.
+
+Broadcast cues are synchronized using SCTE-35 metadata or WebSocket notification channels powered by AWS AppSync and Amazon API Gateway.
+
+Real-time product metadata and inventory checks are served by a distributed Redis cluster that caches Amazon Retail catalog attributes to avoid hitting core catalog databases during live broadcasts.
+
+The client rendering engine is implemented as a high-performance WebAssembly and HTML5 component embedded in the Prime Video player across FireTV, iOS, Android, and web platforms.
+
+Flash checkout orders are ingested by an Auto Scaling fleet of Go microservices that write order payloads into high-throughput Amazon SQS FIFO queues, decoupling immediate user response from downstream warehouse fulfillment systems.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, handling extreme purchase spikes during high-profile live sports moments requires robust asynchronous checkout architectures. When twenty thousand viewers tap Buy Now within three seconds, attempting synchronous inventory reservation and payment processing in a single HTTP request would cause database connection exhaustion and timeouts.
+
+Instead, our commerce gateway performs instantaneous cryptographic signature verification and account validation in memory, writes the order payload to a durable partitioned Amazon SQS FIFO queue, and immediately returns a Confirmed Order status to the viewer in under eighty milliseconds.
+
+Downstream worker fleets process the queue asynchronously, executing payment authorization and inventory deduction in batches against core Amazon fulfillment services.
+
+To ensure client video playback smoothness on budget streaming sticks like Fire TV Stick Lite, the overlay rendering engine operates on a dedicated hardware-accelerated compositor layer, ensuring that even complex animated graphics and QR code updates consume less than three percent of device CPU and zero memory leaks.
+
+---
+
+## System Design 18: Distributed Rate Limiter and Traffic Throttling Service for Live Ad Break Surges
+**Domain Category:** Traffic Management & Infrastructure Resilience
+
+### 1. Complete Problem Statement
+Design a distributed, highly performant rate limiting and traffic throttling service for Amazon Advertising in live events. The system must protect core ad decisioning microservices, third-party DSP connections, and database clusters from catastrophic load surges when over fifteen million concurrent viewers enter a commercial break simultaneously, enforcing multi-tier tenant quotas and graceful degradation within one millisecond.
+
+### 2. Clarifying Questions & Scope Definition
+To clarify the design of this distributed rate limiter, I would first ask about the granularity of rate limiting. Are we limiting traffic globally per microservice, per API route, per third-party DSP partner, or per individual viewer device? In live sports advertising, multi-tier rate limiting is required: protecting downstream DSP partner connections from exceeding agreed queries-per-second limits while simultaneously protecting our own internal database clusters from being overwhelmed.
+
+Next, I would ask about the acceptable latency overhead. Because this rate limiter sits directly in the critical request path of every ad call, the rate limiting decision must execute in under one millisecond.
+
+I would also clarify the rate limiting algorithm preference. Algorithms like Token Bucket, Leaky Bucket, and Sliding Window Counter each offer different trade-offs between burst tolerance and smoothness. For ad traffic surges, a Token Bucket or Sliding Window Counter is typically ideal.
+
+Finally, I would ask how the system behaves during rate limiter infrastructure failure: the rate limiter must fail open to prevent an internal throttling glitch from halting the entire live broadcast.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Distributed Rate Limiter & Throttling Fleet</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Incoming Ad Requests</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">15M Viewer Spike</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Envoy Edge Proxy</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Local Token Bucket Cache</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Distributed Rate Limiter</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Redis Cluster Sync</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Downstream Services</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Protected Microservices</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Graceful Shedder</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Default Ad Fallback</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the rate limiting service must evaluate incoming API requests across multiple dimensions, including client IP, viewer session, API route, and downstream target partner.
+
+It must track request volumes against dynamically configured quota rules, enforcing maximum queries-per-second and burst allowances.
+
+When an entity exceeds its rate limit, the service must immediately return an HTTP 429 Too Many Requests response or trigger an internal graceful degradation pathway.
+
+It must support multi-tenant configuration, allowing operations teams to set customized quotas for different third-party DSPs and internal microservices.
+
+Finally, it must provide real-time metrics on dropped requests, quota utilization percentages, and throttling events to operational dashboards.
+
+### 5. Non-Functional Requirements
+From a non-functional perspective, decision latency must be sub-millisecond, with P99 evaluation times staying strictly under five hundred microseconds.
+
+The rate limiting tier must scale horizontally to handle aggregate throughput exceeding ten million quota evaluations per second during peak commercial break transitions.
+
+The system must adhere to a strict Fail-Open principle: if the rate limiter cluster experiences network partitions or crashes, traffic must be permitted through rather than blocked.
+
+Rate limiting accuracy must remain consistent across globally distributed regions, avoiding significant drift between regional token buckets.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Rate Limit Rule, defining the target resource key, allowable request count, time window duration, burst multiplier, and action on breach.
+
+Next is the Token Bucket State, tracking the current available token count, bucket capacity, refill rate, and timestamp of the last token replenishment.
+
+We also have the Client Quota Identifier, which represents the composite key of tenant ID, client category, and target API endpoint.
+
+Another entity is the Throttling Event Log, capturing dropped request counts, timestamps, offending client keys, and active traffic loads.
+
+Finally, the Dynamic Quota Override entity allows broadcast operations to temporarily expand or restrict specific partner quotas during live games.
+
+### 7. API & Interface Design
+The rate limiter implements an ultra-fast gRPC CheckQuota interface integrated directly into Envoy proxies via the standard external authorization and rate limit filter.
+
+An internal REST management API allows automated scaling controllers and operations engineers to update quota rules and bucket capacities in real time.
+
+There is a high-speed telemetry streaming API that publishes real-time rate limit hit metrics and drop counts to Prometheus and CloudWatch.
+
+A bulk check API allows batch services to evaluate rate limits for groups of ad opportunities in a single round-trip call.
+
+### 8. End-to-End Data Flow
+The data flow begins when an incoming ad manifest request reaches an Envoy edge proxy fronting the ad decisioning infrastructure.
+
+The Envoy proxy invokes the local in-memory rate limiting filter via gRPC, passing the client key, target service name, and request weight.
+
+The rate limiter evaluates the key against its local token bucket cache, deducting tokens if available and returning an OK status in under three hundred microseconds.
+
+If the local token bucket is exhausted, the service checks whether global quota headroom exists by querying a clustered Redis instance using atomic Lua scripts.
+
+If the quota is exceeded, the rate limiter returns a THROTTLED response, prompting the edge proxy to immediately bypass complex auction processing and serve a pre-cached default sponsor ad.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture employs a hierarchical two-tier rate limiting model consisting of local in-process token buckets on Envoy proxies backed by a distributed Redis cluster.
+
+The first tier operates locally within each Envoy proxy instance using thread-safe in-memory token buckets, resolving over ninety percent of rate checks without making any network calls.
+
+The second tier consists of a dedicated Rate Limiting cluster running high-performance C++ or Go workers connected to an Amazon ElastiCache Redis cluster using Redis Cluster sharding.
+
+Redis manages shared global quotas across instances using optimized Lua scripts that execute atomic sliding window evaluations in microseconds.
+
+Dynamic quota rules and tenant configurations are stored in Amazon DynamoDB and synchronized to edge worker memory using change-data-capture streams.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, achieving sub-millisecond evaluation at ten million requests per second requires eliminating Redis network round-trips for the majority of requests. We achieve this using Local Token Batching: instead of incrementing a central Redis counter on every single ad request, each local proxy node reserves a batch of tokens (e.g., five hundred tokens) from Redis asynchronously and satisfies individual incoming requests from its local memory.
+
+Only when the local token pool falls below a safety threshold does the proxy reach out to Redis for another batch, reducing network traffic to Redis by over ninety-five percent.
+
+To guarantee broadcast availability, the system implements a hard Fail-Open circuit breaker: if the rate limiting service fails to respond within eight hundred microseconds, the Envoy proxy automatically assumes the request is allowed and passes it through.
+
+Furthermore, during extreme surges, the rate limiter does not simply discard excess requests; it routes throttled requests to a low-overhead Graceful Degradation Lane, ensuring that even if real-time auctions cannot run, viewers still receive a high-quality default house commercial rather than a playback error.
+
+---
+
+## System Design 19: Real-Time Sports Live Data Ingestion and Context-Aware Ad Triggering Engine
+**Domain Category:** Real-Time Telemetry & Contextual Advertising
+
+### 1. Complete Problem Statement
+Design a real-time live sports telemetry ingestion and contextual ad triggering engine for Prime Video live events. The system must ingest official live play-by-play data feeds with sub-second latency, maintain an in-memory game state machine, and evaluate complex situational ad targeting rules (such as triggering a pizza delivery ad immediately following a team touchdown) within fifty milliseconds of event occurrence.
+
+### 2. Clarifying Questions & Scope Definition
+When beginning this design, I would first ask about the ingestion latency of upstream sports data providers. Feeds from partners like Sportradar, Genius Sports, or the NFL Next Gen Stats arrive over push WebSockets or HTTP/2 streams; we should clarify the expected network latency and how we handle out-of-order or corrected play events (such as a touchdown that is subsequently overturned by referee review).
+
+Next, I would ask about the rule complexity. Are contextual targeting rules simple condition matches like event == 'touchdown', or do they involve complex stateful aggregations such as team scored three consecutive times, score differential < 7 points, and quarter == 4? The rule engine must support stateful pattern matching.
+
+I would also clarify the output target: does this engine trigger instant on-screen graphics overlays, prepare the upcoming commercial break ad pod, or both? Triggering both interactive overlays and priming upcoming commercial breaks is the standard live sports requirement.
+
+Finally, I would ask about high availability and multi-provider failover: if the primary sports feed drops, the system must seamlessly fail over to a backup provider without missing critical game events.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Sports Telemetry Ingest & Contextual Ad Trigger</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Official Sports Feed</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Sportradar / NFL Next Gen</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">State Machine Ingest</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Out-of-Order Play Handler</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Contextual Rule Engine</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Complex Event Processing</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Ad Opportunity Bus</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Sub-50ms Event Trigger</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">SSAI & Overlay Fleet</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Contextual Ad Activation</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the engine must establish persistent, redundant streaming connections to official sports data providers to ingest real-time play-by-play events, player tracking coordinates, and game clock updates.
+
+It must maintain an authoritative, in-memory live game state machine tracking score, quarter, possession, field position, player stats, and historical game momentum.
+
+The service must execute a Complex Event Processing (CEP) engine that continuously evaluates incoming game events against active advertiser contextual targeting rules.
+
+When a rule condition is met, the system must formulate a Contextual Ad Opportunity and broadcast it to downstream ad decision engines and video overlay systems within fifty milliseconds.
+
+It must also gracefully handle referee reviews and score corrections, emitting compensation events if a play that triggered an ad action is subsequently nullified.
+
+### 5. Non-Functional Requirements
+On the non-functional side, end-to-end processing latency is the most critical constraint: the time from receiving a sports play payload to publishing the triggered ad opportunity must be under fifty milliseconds.
+
+System reliability must reach 99.999 percent throughout live broadcasts, with zero downtime during gameplay.
+
+The engine must ensure deterministic state management, handling duplicate play reports and network jitter without corrupting the live game state.
+
+Scalability must support parallel ingestion and rule evaluation across hundreds of concurrent live sporting events worldwide.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Official Sports Telemetry Message, containing the play ID, game ID, play type, participating players, game clock, score, and play description.
+
+Next is the Live Game State Machine, tracking the current quarter, active possession, down and distance, penalty status, and recent momentum metrics.
+
+We also have the Contextual Targeting Rule, specifying trigger conditions, advertiser ID, campaign priority, maximum trigger frequency, and target creative IDs.
+
+Another entity is the Triggered Ad Opportunity, defining the activated campaign, target audience segment, eligible ad slots, and contextual metadata tags.
+
+Finally, the Play Reconciliation Event entity captures retroactive play reversals and adjustments issued by league officials.
+
+### 7. API & Interface Design
+The ingestion fleet implements persistent WebSocket and SSE client connectors that maintain authenticated streaming sessions with external sports data providers.
+
+The engine exposes an internal gRPC service called /gamestate/v1/query that allows ad decision servers to query current game context in under two milliseconds.
+
+A rule management REST API allows advertising operations teams to create, test, and activate contextual targeting campaigns before and during the live game.
+
+A real-time trigger publication stream publishes activated ad opportunities into an Amazon Kinesis or Apache Kafka topic for consumption by the ad serving plane.
+
+### 8. End-to-End Data Flow
+The data flow begins when an official sports radar sensor records a touchdown and pushes a structured JSON play payload over a persistent WebSocket connection to our ingest proxy.
+
+The ingest proxy validates the message sequence number, normalizes the provider-specific format into a standard Amazon Sports schema, and passes it to the Game State Engine.
+
+The state engine updates the in-memory game state machine and feeds the new event into an embedded Esper or Flink Complex Event Processing rule engine.
+
+The rule engine matches the touchdown event against active campaigns, identifying that a food delivery brand has purchased a Touchdown Celebration sponsorship.
+
+The engine generates an Ad Opportunity event enriched with the scoring player's name and team colors, publishing it to Redis Pub/Sub within thirty milliseconds to activate on-screen overlays and prime the upcoming commercial break.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture combines a high-reliability feed ingestion tier, an in-memory stateful processing core, a rule evaluation engine, and an event distribution bus.
+
+Feed ingestion is handled by redundant Go microservices running across multiple availability zones, each maintaining independent connections to primary and secondary sports data vendors.
+
+The game state machine and Complex Event Processing engine are implemented using Apache Flink CEP or embedded in-memory rule engines running within Kubernetes worker pods.
+
+Game state is persisted in an in-memory Redis cluster with active replication, ensuring instantaneous state retrieval for concurrent ad requests.
+
+Triggered opportunities are broadcast via Redis Pub/Sub and Amazon Kinesis to regional SSAI manifest engines and client overlay distribution gateways.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, achieving sub-fifty-millisecond trigger latency requires running the rule evaluation engine entirely in local memory without blocking disk or database I/O. The incoming telemetry stream is processed using zero-allocation memory buffers in Go, parsing JSON payloads into pre-allocated memory structs in single-digit microseconds.
+
+To handle feed failures and network latency spikes from third-party sports data providers, the ingest tier employs an Active-Active Multi-Provider Arbiter: it connects to two independent sports data feeds simultaneously, using monotonically increasing play sequence numbers and timestamps to process the fastest arriving packet while discarding duplicate or slower updates.
+
+To handle referee video reviews that overturn scoring plays, the system maintains a ten-second Reversibility Window: if a touchdown is overturned by a referee challenge within thirty seconds, the engine emits a Compensating Event that cancels any pending commercial break prioritization and adjusts downstream billing logs.
+
+All contextual rules are compiled into abstract syntax trees in memory ahead of game kickoff, allowing millions of rule evaluations to execute across game events in microseconds.
+
+---
+
+## System Design 20: Edge-Assisted Audience Cohort Segmentation and Real-Time Profile Cache
+**Domain Category:** Targeting & Edge Architecture
+
+### 1. Complete Problem Statement
+Design an edge-assisted audience cohort segmentation and real-time viewer profile caching platform for Prime Video advertising. The system must maintain and evaluate targeting segments (such as demographic cohorts, behavioral interests, and geographic locations) for over one hundred million viewers, delivering compact targeting tokens to edge SSAI workers in under two milliseconds while preserving viewer privacy.
+
+### 2. Clarifying Questions & Scope Definition
+When clarifying this edge targeting system, I would first ask about the size and format of viewer targeting profiles. Can a viewer's profile be represented as a compact bitmap or array of integer segment IDs, or does it require rich, unstructured key-value attributes? Storing profiles as compact bitsets or integer arrays is ideal because it minimizes edge memory footprint and network payload sizes.
+
+Next, I would ask how frequently audience profiles are updated. Are segment memberships recalculated offline in daily batch jobs, or do they update in real time based on immediate browsing and shopping actions across Amazon? A hybrid approach is standard: broad demographic segments update daily, while immediate in-stream actions update in real time.
+
+I would also clarify privacy and compliance boundaries. How do we ensure that Personally Identifiable Information (PII) is never pushed to CDN edge caches, and how do we enforce regional privacy laws like GDPR and CCPA? Anonymous hashed tokens and anonymized cohort IDs ensure full privacy compliance.
+
+Finally, I would ask about cache miss behavior at the edge: if a viewer profile is not in the local edge cache, how quickly can the system fetch it without delaying manifest delivery?
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Edge Audience Cohort Segmentation Platform</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Batch Data Lake & DPo</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Offline Segment Builder</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Real-Time Event Stream</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Immediate Behavioral Updates</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Global Profile Store</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">DynamoDB Global Tables</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Edge Cache Sync</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">CloudFront KeyValueStore</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">SSAI Manifest Stitcher</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Sub-2ms Token Lookup</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the platform must ingest offline audience segment computations from Amazon's enterprise data lake alongside real-time behavioral events from the streaming app and Amazon retail platform.
+
+It must compile each viewer's active targeting profile into a compact, privacy-preserving token containing hashed cohort IDs, interest tags, and geographic codes.
+
+The system must distribute these compact profiles to CDN edge points of presence worldwide, caching them close to viewers' playback devices.
+
+When an edge SSAI manifest stitcher processes an ad break for a viewer, the profile cache must return the viewer's active targeting tokens in under two milliseconds.
+
+It must also provide an administrative interface for audience planners to create new cohort definitions, test segment reach, and invalidate outdated profile caches dynamically.
+
+### 5. Non-Functional Requirements
+From a non-functional perspective, lookup latency at the edge must be sub-two-millisecond at the P99 percentile to prevent slowing down manifest generation.
+
+The edge caching layer must support over one hundred million active viewer profiles while keeping memory usage cost-effective.
+
+Privacy by design is essential: zero unencrypted PII, cleartext names, or raw email addresses can ever be stored in edge caches or transmitted across public networks.
+
+Data freshness must allow newly updated behavioral segments to propagate to global edge caches within five minutes of calculation.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Audience Segment Definition, specifying the segment ID, name, classification category, expiration policy, and targeting criteria.
+
+Next is the Compact Viewer Profile, containing the anonymized user hash, an array of 32-bit integer segment IDs, and a regional market code.
+
+We also have the Real-Time Behavioral Signal, capturing immediate in-app actions such as sports genre browsing, search queries, or retail product interactions.
+
+Another entity is the Edge Cache Partition, representing the localized key-value store instance running within a specific CloudFront point of presence.
+
+Finally, the Privacy Consent State entity records the viewer's active privacy preferences and advertising opt-out status.
+
+### 7. API & Interface Design
+The edge manifest stitcher accesses the profile cache using a local in-memory C++ or Rust API called GetViewerTargetingTokens(user_hash) that returns the segment array in microseconds.
+
+An internal profile synchronization API accepts batched profile delta updates from central processing pipelines via secure gRPC channels.
+
+There is a segmentation management REST API that allows marketing teams to define new rule-based cohorts and query estimated segment sizes.
+
+A privacy synchronization endpoint consumes global consent updates, instantly purging or anonymizing edge profiles whenever a user opts out of personalized advertising.
+
+### 8. End-to-End Data Flow
+The data flow begins in Amazon's data lake, where batch machine learning jobs process customer viewing history and retail signals to assign users to demographic and interest cohorts.
+
+These cohort assignments are compiled into compact binary vectors and written to Amazon DynamoDB Global Tables.
+
+Concurrently, a real-time streaming pipeline consumes immediate behavioral events from Kafka, updating the active segment bitset in DynamoDB.
+
+DynamoDB Streams publish profile delta changes to an edge synchronization worker that pushes updated compact tokens to CloudFront KeyValueStore and regional ElastiCache nodes.
+
+When a viewer requests a live game manifest, the edge worker hashes the user ID from the session cookie, queries the local edge cache, and passes the retrieved targeting tokens to the ad decision engine in under one millisecond.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture is split into a centralized segmentation engine, a global database distribution tier, and a distributed edge cache layer.
+
+The centralized segmentation engine is built on Apache Spark and Amazon EMR for batch processing, paired with Apache Flink for real-time behavioral updates.
+
+Central profile storage is anchored by Amazon DynamoDB Global Tables, providing multi-region active-active replication with sub-ten-millisecond cross-region propagation.
+
+Edge caching utilizes Amazon CloudFront KeyValueStore integrated directly into CloudFront edge locations, complemented by regional Redis clusters at major edge hubs.
+
+Privacy enforcement is built into the ingestion gateway, ensuring all profiles are cryptographically anonymized using one-way salted hashes before leaving central data centers.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, storing one hundred million viewer profiles at hundreds of edge locations without incurring massive memory costs requires extreme data compaction. Instead of storing profiles as JSON strings, our platform encodes audience segment memberships as a compressed Roaring Bitmap, packing hundreds of segment memberships into less than one hundred bytes per user.
+
+This compact representation allows millions of profiles to reside in memory at each edge location with a tiny memory footprint.
+
+To achieve sub-two-millisecond lookup latency, the edge manifest worker reads directly from CloudFront KeyValueStore, an in-memory key-value engine co-located with CloudFront servers that delivers single-digit microsecond read latencies.
+
+If an edge cache miss occurs, the worker does not stall the live video manifest request: it immediately returns a default broad demographic profile (e.g., General Sports Enthusiast based on geographic IP), while asynchronously triggering a background fetch to warm the edge cache for the next commercial break.
+
+---
+
+## System Design 21: Scalable Model Serving Architecture for Real-Time Ad CTR and CVR Prediction
+**Domain Category:** Machine Learning & Model Serving
+
+### 1. Complete Problem Statement
+Design a high-throughput, ultra-low latency machine learning model serving architecture for real-time Click-Through Rate (CTR) and Conversion Rate (CVR) prediction in Amazon Advertising. The system must evaluate thousands of candidate ad creatives against complex viewer and contextual features, returning calibrated probability scores within eight milliseconds to power live sports ad auctions.
+
+### 2. Clarifying Questions & Scope Definition
+When clarifying this ML serving system, I would first ask about the model architecture and size. Are we serving a deep neural network such as a Deep & Cross Network (DCN) or Deep Interest Network (DIN), or a gradient boosted decision tree? In modern advertising, a two-stage hybrid approach is common: a lightweight retrieval filter followed by a deep neural ranking model running on optimized hardware.
+
+Next, I would ask about the candidate set size per ad request. How many candidate ads must be scored per auction? If an ad request requires scoring five hundred candidate ads, scoring them sequentially will breach our eight-millisecond SLA, so batched vectorized scoring and GPU or AWS Inferentia acceleration are required.
+
+I would also clarify the feature store architecture: how are dense user embeddings and real-time contextual features fetched and joined before inference without introducing network latency bottlenecks?
+
+Finally, I would ask how model updates are deployed: we need zero-downtime hot swapping of model weights during live games as models are continuously updated with intraday feedback.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Real-Time CTR/CVR Model Serving Fleet</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Ad Auction Request</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">500 Candidate Ads</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Low-Latency Feature Store</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Redis / Feast In-Memory</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Triton Inference Server</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">TensorRT / AWS Inferentia</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Calibrated CTR/CVR</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Sub-8ms Batch Scoring</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Auction Ranker Engine</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">eCPM Value Selection</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the serving system must accept a scoring request containing the viewer context, live broadcast attributes, and a candidate list of hundreds of eligible ad creatives.
+
+It must retrieve real-time and pre-computed features from an in-memory feature store, including user historical engagement rates, advertiser category affinities, and live game contextual tags.
+
+The system must assemble feature tensors and feed them into deep neural ranking models compiled for hardware acceleration.
+
+It must output calibrated Click-Through Rate and Conversion Rate probabilities for every candidate ad within eight milliseconds.
+
+Finally, it must log inference features and predictions to an asynchronous event stream to support model evaluation, continuous training pipelines, and data drift monitoring.
+
+### 5. Non-Functional Requirements
+From a non-functional perspective, P99 inference latency must not exceed eight milliseconds, as this scoring step is a critical component of the overall forty-millisecond auction SLA.
+
+The serving cluster must sustain over five hundred thousand inference requests per second during peak commercial break transitions across live sporting events.
+
+Model availability must be 99.999 percent, with graceful fallback to heuristic scoring if an inference worker experiences hardware degradation.
+
+The architecture must support dynamic model hot-swapping without dropping active requests or causing memory thrashing.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Scoring Request, containing the auction ID, viewer identifier, slot duration, and candidate creative IDs.
+
+Next is the Feature Vector Bundle, combining static user features, dynamic real-time contextual features, and creative embedding tensors.
+
+We also have the Deep Ranking Model Artifact, representing the compiled TensorRT or AWS Neuron model binary, neural network weights, and preprocessing metadata.
+
+Another entity is the Calibrated Prediction Output, capturing the estimated CTR, estimated CVR, and uncertainty interval for each candidate.
+
+Finally, the Model Performance Telemetry entity tracks prediction latency distributions, throughput, GPU utilization, and feature drift metrics.
+
+### 7. API & Interface Design
+The model serving layer implements an ultra-fast internal gRPC endpoint called /v1/models/ad_ranker:predict utilizing Protocol Buffers for minimal serialization overhead.
+
+The request payload accepts the user feature key and an array of creative identifiers, returning an array of floating-point probabilities.
+
+An internal model management API allows MLOps engineers to deploy new model versions, initiate canary traffic splits, and rollback versions instantly.
+
+A feature ingestion API continuously streams real-time interaction features into the feature store from upstream Kafka click and impression topics.
+
+### 8. End-to-End Data Flow
+The data flow begins when the ad auction engine identifies a pool of eligible candidate creatives and dispatches a scoring request to the nearest model serving pod.
+
+The serving worker queries an in-memory Redis feature store using the user ID, retrieving the user's dense embedding vector and recent category interaction counts in under one millisecond.
+
+The worker concatenates the user features, creative features, and live game context into a batched input tensor.
+
+The tensor is dispatched to an NVIDIA GPU or AWS Inferentia chip running Triton Inference Server, which executes the deep ranking model across all candidate ads in parallel.
+
+The model outputs raw logits, which are passed through a calibration function to produce true probabilities, and the ranked candidate scores are returned to the auction engine in under six milliseconds.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture combines a high-speed feature retrieval layer, a distributed model inference fleet, and an asynchronous telemetry feedback loop.
+
+Feature retrieval is anchored by an in-memory Redis cluster or Feast feature store deployed locally within each AWS region to ensure microsecond read latencies.
+
+The inference fleet utilizes Triton Inference Server running on GPU-accelerated EC2 instances or AWS Inferentia2 instances, managed within an Auto Scaling Amazon EKS cluster.
+
+Models are trained offline using PyTorch and compiled into highly optimized TensorRT or AWS Neuron engines to maximize hardware throughput and minimize compute latency.
+
+Prediction logs are emitted asynchronously via Amazon Kinesis to an S3 feature store bucket, providing ground-truth training datasets for continuous model improvement.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, maintaining sub-eight-millisecond latency for batches of five hundred candidate ads requires deep architectural optimizations. We eliminate cross-network feature fetching by using Shared Memory and in-process feature caching: frequently accessed creative embeddings are held directly in the RAM of the inference host, requiring zero network calls to construct the creative half of the input tensor.
+
+To maximize hardware efficiency on GPUs, Triton Inference Server uses Dynamic Batching with a two-millisecond queuing window, grouping incoming concurrent requests together to fully saturate GPU tensor cores without breaching the latency SLA.
+
+To protect live broadcasts from inference server crashes, we implement an automated Local Heuristic Fallback: if an inference pod fails to return predictions within seven milliseconds, the auction engine immediately scores candidates using a lightweight, CPU-based logistic regression model running locally within the auction process.
+
+Model deployment utilizes Blue-Green Model Hot-Swapping inside Triton: new model weights are loaded into GPU VRAM in the background and verified with synthetic warm-up queries before live auction traffic is transitioned, guaranteeing zero dropped requests during live sports events.
+
+---
+
+## System Design 22: Real-Time Ad Fraud, Bot Traffic, and Invalid Traffic Filtering Engine
+**Domain Category:** Security & Fraud Detection
+
+### 1. Complete Problem Statement
+Design a real-time Invalid Traffic (IVT) and ad fraud filtering engine for Prime Video advertising. The system must analyze billions of daily ad requests and impression beacons, detecting sophisticated botnets, headless browser emulators, click farms, and fraudulent impression generators with sub-ten-millisecond latency to ensure advertisers only pay for verified human views.
+
+### 2. Clarifying Questions & Scope Definition
+To clarify this fraud detection system, I would first ask about the types of Invalid Traffic we are targeting: are we focusing primarily on General Invalid Traffic (GIVT) like known web crawlers, data center IP ranges, and search engine bots, or Sophisticated Invalid Traffic (SIVT) like residential proxy botnets, headless browser emulators, and session hijacking? Both GIVT and SIVT detection are necessary to achieve Media Rating Council accreditation.
+
+Next, I would ask where in the request lifecycle filtering occurs. Does it filter ad requests before auctions run, filter impression beacons after playback, or both? Filtering pre-bid prevents wasted auction compute, while post-impression verification prevents billing fraud.
+
+I would also clarify the acceptable false positive rate. In live sports on Prime Video, legitimate human viewers occasionally exhibit bursty behavior (such as refreshing the stream rapidly during a game-winning play); we must ensure legitimate paying subscribers are never erroneously blocked.
+
+Finally, I would ask about telemetry signals available from the video player SDK, such as client sensor data, behavioral mouse/touch dynamics, and cryptographically attested device integrity tokens.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Real-Time IVT & Ad Fraud Filtering Engine</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Incoming Ad/Beacon</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Client Request Stream</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">GIVT Fast Filter</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">IP & User-Agent Bloom</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">SIVT ML Classifier</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Behavioral Anomaly Model</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Device Attestation</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">App & Hardware Sig</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Decision Gateway</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Legitimate Traffic Pass</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the engine must inspect every incoming ad request and impression beacon to verify device authenticity and human interaction signals.
+
+It must execute a fast-path General Invalid Traffic check against known data center IP ranges, public cloud subnets, and malicious botnet blacklists.
+
+The system must verify cryptographic device attestation tokens (such as Apple DeviceCheck, Google Play Integrity, and Fire TV hardware signatures) to confirm the app has not been tampered with or run inside an emulator.
+
+It must apply a machine learning classification model to detect Sophisticated Invalid Traffic, analyzing behavioral telemetry such as viewing patterns, session duration, and request frequency anomalies.
+
+Finally, it must tag every ad transaction as valid or invalid, preventing fraudulent impressions from being billed and updating global fraud blacklists in near real time.
+
+### 5. Non-Functional Requirements
+From a non-functional perspective, pre-bid fraud evaluation must execute in under five milliseconds to avoid delaying live ad auctions.
+
+The system must scale to inspect over twenty million ad calls per minute during peak live broadcasts without degrading throughput.
+
+The false positive rate must remain below 0.01 percent to ensure that genuine Prime Video viewers never have their streams interrupted or ads withheld.
+
+Data security and compliance must adhere strictly to privacy guidelines, hashing IP addresses and device identifiers to protect user privacy.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Traffic Inspection Event, capturing client IP, user agent, device attestation token, session ID, and playback interaction signals.
+
+Next is the Known Threat Intelligence Record, containing blacklisted IP CIDR blocks, known crawler signatures, and flagged residential proxy nodes.
+
+We also have the Device Integrity Attestation, representing the cryptographically signed hardware verification payload returned by the operating system.
+
+Another entity is the SIVT Behavioral Profile, maintaining statistical moving averages of request rates, beacon inter-arrival times, and viewing session lengths per device.
+
+Finally, the Fraud Audit Record captures the final classification verdict, risk score breakdown, and billing exclusion status for accounting reviews.
+
+### 7. API & Interface Design
+The service provides an ultra-fast internal gRPC inspection endpoint called /fraud/v1/evaluate-request that returns a pass/drop decision and risk score within three milliseconds.
+
+For post-bid impression reconciliation, an asynchronous beacon verification API /fraud/v1/verify-beacon evaluates impression tokens against recorded playback signatures.
+
+There is a threat intelligence ingestion API that continuously ingests threat feeds from commercial security partners and internal Amazon security teams.
+
+An operational reporting API allows fraud analysts to review suspicious traffic clusters, investigate novel botnet signatures, and manually adjust risk thresholds.
+
+### 8. End-to-End Data Flow
+The data flow begins when an ad request or impression beacon arrives at our edge API gateway from a client video player.
+
+The gateway extracts the client IP and device signature, immediately testing them against in-memory Bloom filters containing millions of blacklisted IP subnets and known crawler user agents.
+
+If the request passes the GIVT check, the gateway validates the cryptographic hardware attestation token using public key cryptography.
+
+The request attributes are passed to a lightweight machine learning inference service that evaluates behavioral risk features against an SIVT model.
+
+If the risk score is below the fraud threshold, the request is marked valid and forwarded to the ad decision engine; if flagged as fraudulent, the request is dropped or served a non-billable honeypot ad, and the event is logged for fraud reporting.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture employs a two-tier filtering strategy combining an edge rule evaluation layer with an asynchronous stream analytics engine.
+
+The first tier operates directly on edge proxies and API gateways using high-speed in-memory Bloom filters and Redis lookups to eliminate over ninety percent of GIVT traffic in microseconds.
+
+The second tier consists of a cluster of Go microservices running on Kubernetes that execute cryptographic token validation and evaluate lightweight XGBoost models for SIVT detection.
+
+An asynchronous stream processing pipeline built on Apache Flink continuously monitors global traffic patterns across Kafka topics, identifying distributed residential proxy botnets that individual request inspections cannot detect.
+
+Detected botnet signatures and suspicious IP clusters are automatically compiled into new filter rules and propagated back to edge Bloom filters in under sixty seconds.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, maintaining sub-five-millisecond evaluation latency across millions of requests requires avoiding heavy database queries on the critical path. We store all known malicious IP ranges and crawler signatures in compact In-Memory Bloom Filters and Radix Trees deployed locally in the memory of each API gateway, allowing IP subnet checks to execute in less than one hundred microseconds.
+
+To combat sophisticated residential proxy networks where bots hijack real home internet connections, the system evaluates Beacon Inter-Arrival Timing: automated bots typically emit tracking beacons with unnatural, millisecond-precise intervals, whereas real human viewing devices exhibit realistic network jitter and clock drift.
+
+To maintain absolute reliability during live sporting events, the fraud filter employs a Graceful Degradation Bypass: if the ML inference cluster experiences unexpected latency spikes above four milliseconds, the system automatically bypasses the complex SIVT model and falls back to fast GIVT filtering, ensuring that live ad auctions are never stalled.
+
+All rejected impressions and associated telemetry are immutably archived in Amazon S3, providing transparent, audit-ready evidence for advertiser billing reconciliations and Media Rating Council compliance audits.
+
+---
+
+## System Design 23: AI-Powered Synthetic Voiceover and Multilingual Dubbing Pipeline for Live Sports Ads
+**Domain Category:** Generative AI & Audio Engineering
+
+### 1. Complete Problem Statement
+Design an automated AI synthetic voiceover and multilingual dubbing pipeline for Amazon live events advertising. The system must ingest English video commercial creatives, automatically translate scripts into multiple target languages (such as Spanish, Portuguese, and French), synthesize natural localized voiceovers with voice cloning that preserves brand tone, and re-encode broadcast-compliant audio tracks in under five minutes.
+
+### 2. Clarifying Questions & Scope Definition
+When clarifying this multilingual dubbing pipeline, I would first ask about the turnaround time and workflow trigger. Is this an offline creative localization pipeline that runs when advertisers upload new ad campaigns hours or days before a broadcast, or does it need to operate in real time on live commentator audio? Running as an automated creative ingestion pipeline that completes in under five minutes upon creative upload is the industry standard.
+
+Next, I would ask about voice cloning and brand identity: do advertisers want to preserve the exact vocal timbre, pitch, and energy of the original English voice actor across Spanish and Portuguese dubs, or can we use pre-approved synthetic studio voices? Preserving the original voice actor's timbre using zero-shot voice cloning provides the most premium advertiser experience.
+
+I would also clarify audio synchronization: how does the system handle language expansion (for example, Spanish sentences often being twenty percent longer than English sentences) to ensure the dub aligns with on-screen actors' lip movements and scene cuts?
+
+Finally, I would ask about broadcast compliance: audio tracks must be normalized to -24 LKFS loudness standards to comply with television broadcast regulations.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">AI Synthetic Voiceover & Dubbing Pipeline</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Ad Creative Upload</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">English Master Video</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Audio Demux & Whisper</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Speech-to-Text & Diarize</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Contextual LLM Translate</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Duration-Constrained Text</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Voice Cloning TTS</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Neural Audio Synthesis</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Audio Mastering & Mux</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Broadcast -24 LKFS File</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the platform must allow advertisers and operations teams to upload master video commercial files with an original audio track.
+
+The system must separate the audio track into speech vocals and background music or sound effects using automated audio source separation algorithms.
+
+It must transcribe the vocal track with precise word-level timestamps using automated speech recognition models.
+
+The system must translate the transcribed script into target languages using an LLM instructed to match the exact syllable count and timing of the original speech.
+
+It must synthesize the translated script using a neural text-to-speech model that clones the original speaker's vocal characteristics, mix the new vocal track with the original background music, normalize audio loudness to broadcast standards, and mux the new audio back into the video file.
+
+### 5. Non-Functional Requirements
+From a non-functional perspective, end-to-end processing time for a thirty-second commercial creative must be under five minutes across three target languages.
+
+Audio quality must meet broadcast standards, exhibiting zero metallic artifacts, robotic distortions, or unnatural pronunciation of brand names.
+
+Timing synchronization must ensure that translated speech segments stay within one hundred milliseconds of the original scene cuts and speaker appearances.
+
+The pipeline must scale elastically to process hundreds of commercial creative submissions concurrently ahead of major global sporting events like the Olympics or World Cup.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Creative Localization Job, tracking the master video asset ID, source language, target languages, submission timestamp, and processing status.
+
+Next is the Audio Track Stem, representing separated audio streams including isolated dialogue, ambient sound effects, and background musical score.
+
+We also have the Time-Aligned Transcript, containing source text segments, word-level start and end timestamps, and speaker diarization labels.
+
+Another entity is the Translated Script Segment, capturing the localized text, target language code, maximum allowable duration, and syllable pacing constraints.
+
+Finally, the Mastered Localized Creative entity links the finalized multi-track video asset, transcoded bitrate variants, and loudness compliance certification.
+
+### 7. API & Interface Design
+The service provides an asynchronous REST API endpoint /creatives/v1/localize where advertisers submit creative video URLs and select target localization languages.
+
+An internal webhook notification service dispatches progress updates and completion events to the campaign management portal when localized assets are ready.
+
+There is a review and approval API allowing brand managers to listen to generated audio tracks, inspect transcript side-by-side diffs, and request manual text adjustments.
+
+A streaming monitoring API emits pipeline processing metrics, GPU utilization stats, and audio quality scores to internal engineering dashboards.
+
+### 8. End-to-End Data Flow
+The data flow begins when an advertiser uploads a master commercial to Amazon S3, triggering an AWS Step Functions workflow via an Amazon S3 Event Notification.
+
+The workflow invokes a GPU worker that uses an audio separation model like Demucs to split the soundtrack into dialogue and background stems.
+
+An automated speech recognition model (such as Whisper) transcribes the dialogue stem, producing a timestamped transcript.
+
+The transcript is fed into an LLM on Amazon Bedrock with a custom system prompt that translates the copy into target languages while strictly respecting original segment durations.
+
+The translated text and original voice sample are passed to a neural voice cloning TTS model running on GPU inference nodes.
+
+The synthesized vocal track is dynamically time-stretched to align with scene timestamps, mixed with the background music stem, normalized to -24 LKFS using an automated audio mastering filter, and multiplexed back into the video container.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture is designed as an asynchronous, distributed media processing pipeline orchestrated by AWS Step Functions and AWS Batch.
+
+Storage is anchored by Amazon S3 for raw media assets, intermediate audio stems, and finalized localized video packages.
+
+Compute workloads are distributed across an Auto Scaling cluster of GPU-enabled EC2 instances running specialized Docker containers for audio separation, speech recognition, and neural voice synthesis.
+
+Translation and duration matching are powered by foundation models accessible through Amazon Bedrock.
+
+Asset metadata, processing status, and approval audit logs are persisted in Amazon Aurora PostgreSQL, with finalized creative URLs registered in the Publisher Ad Server creative catalog.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, solving the Language Expansion Problem (where translated Spanish text takes longer to speak than the original English) without causing video desynchronization requires a combination of constrained LLM prompting and intelligent audio time-stretching. During the translation phase, our LLM prompt explicitly specifies the target syllable count and maximum duration in milliseconds for each sentence, enforcing conciseness while preserving marketing punchiness.
+
+If the synthesized audio is still slightly longer than the allotted video window, the mastering pipeline applies a Phase Vocoder time-compression algorithm that speeds up speech by up to ten percent without changing voice pitch or creating unnatural audio distortion.
+
+To guarantee that brand names and slogans are pronounced correctly across languages, the system maintains a Brand Pronunciation Dictionary containing phonetic IPA representations that override standard phonetic rules.
+
+Broadcast loudness compliance is strictly enforced: every mastered audio file passes through an automated ITU-R BS.1770-4 loudness filter that normalizes dialogue to -24 LKFS and limits peak audio to -2 dBFS, guaranteeing that ads never violate federal broadcast loudness standards.
+
+---
+
+## System Design 24: Distributed Global Counter and Aggregator for Live Video Concurrent Stream Metrics
+**Domain Category:** Distributed Systems & Telemetry
+
+### 1. Complete Problem Statement
+Design a distributed, highly available global counter and metric aggregation service for Prime Video live events. The system must accurately track concurrent viewer counts, active stream sessions, and aggregate ad impression velocity across tens of millions of simultaneous viewers globally, updating real-time operations dashboards and ad pacing systems every two seconds with sub-one-percent error.
+
+### 2. Clarifying Questions & Scope Definition
+To clarify this distributed counting system, I would first ask about the consistency requirements: is an approximate count with bounded error (e.g., within 0.5% of true count) acceptable, or does the system require exact atomic counting across every single viewer connection? For real-time operational monitoring and ad pacing, an approximate count with sub-one-percent error generated using probabilistic algorithms is fully acceptable and vastly more scalable.
+
+Next, I would ask about heartbeat reporting frequency. How often do client video players emit heartbeat pings indicating they are still actively streaming? A standard streaming pattern is for clients to emit a heartbeat ping every thirty or sixty seconds.
+
+I would also clarify the dimensions across which metrics must be aggregated: do we need concurrent stream counts broken down by device type, geographic region, ISP, and video bitrate ladder? Multi-dimensional aggregation requires a scalable roll-up architecture.
+
+Finally, I would ask how the system handles client heartbeat dropouts when viewers abruptly close their apps or lose internet connectivity.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Distributed Global Streaming Counter</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Player Heartbeat Pings</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">30s Periodic Pings</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Edge Ingestion Nodes</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Local HyperLogLog Bins</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Regional Aggregators</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Kafka / Flink Merge</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Global Metric Store</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Central Redis Cluster</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Live Operations Wall</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">2-Second Metric Refresh</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the service must ingest periodic heartbeat telemetry pings from tens of millions of active Prime Video streaming clients.
+
+It must maintain an accurate count of active concurrent viewers globally, broken down by live broadcast event, sport type, and country.
+
+The system must support multi-dimensional grouping, providing concurrent viewer counts sliced by client device category, video resolution variant, and network carrier.
+
+It must automatically evict inactive viewer sessions if a client fails to emit a heartbeat within an expected timeout window (such as ninety seconds).
+
+Finally, it must publish aggregated concurrent stream metrics every two seconds to real-time operations dashboards, capacity management systems, and ad pacing engines.
+
+### 5. Non-Functional Requirements
+From a non-functional perspective, metric aggregation and dashboard refresh latency must be under two seconds from the close of each aggregation window.
+
+The system must scale to handle over one million heartbeat pings per second during major live sporting events like Thursday Night Football.
+
+System availability must reach 99.999 percent, ensuring that operations teams never lose visibility into broadcast audience scale.
+
+Counting accuracy must stay within a 0.5 percent error margin compared to ground-truth log reconciliation.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Player Heartbeat Ping, containing the session ID, user ID, broadcast ID, device type, stream bitrate, and client timestamp.
+
+Next is the Regional HyperLogLog Register, storing probabilistic cardinality sketches for active viewers within a specific cloud region.
+
+We also have the Aggregated Stream Metric Record, capturing the timestamp, broadcast ID, total concurrent streams, and dimensional breakdown.
+
+Another entity is the Viewer Session Leaser, tracking the last seen heartbeat timestamp and session expiration deadline for each active stream.
+
+Finally, the Broadcast Audience Summary entity represents the global consolidated audience metrics delivered to executive dashboards and advertiser reporting portals.
+
+### 7. API & Interface Design
+The ingestion fleet exposes an ultra-lightweight HTTP/2 endpoint /heartbeat/v1/ping that accepts compressed JSON or binary heartbeat beacons from player SDKs.
+
+The ping endpoint immediately responds with an HTTP 204 No Content status to release client connections instantly.
+
+An internal query API provides real-time metric retrieval for operations dashboards, accepting filters like broadcast_id and dimensions.
+
+A streaming subscription API allows internal services like ad pacing engines to subscribe to real-time viewer count updates via gRPC or Server-Sent Events.
+
+### 8. End-to-End Data Flow
+The data flow begins as millions of Prime Video player applications emit a compact heartbeat beacon every thirty seconds to the nearest edge location.
+
+Edge ingestion proxies validate the beacon and extract the unique viewer session ID and dimension tags.
+
+Instead of writing to a central database, edge proxies insert the session ID into local HyperLogLog data structures maintained in regional Redis clusters.
+
+Every two seconds, regional aggregation workers extract the regional HyperLogLog sketches and publish them to a centralized Kafka topic.
+
+A global aggregation service merges the regional sketches using HyperLogLog union operations, calculates the global concurrent viewer count, and writes the consolidated metrics into an in-memory Redis store for instant dashboard consumption.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture utilizes a hierarchical distributed aggregation model combining edge ingestion nodes, regional sketch registers, and a centralized union coordinator.
+
+The edge layer comprises an Auto Scaling fleet of Go microservices fronted by AWS Network Load Balancers across multiple global regions.
+
+Regional state management is handled by Amazon ElastiCache for Redis, utilizing Redis HyperLogLog commands (PFADD and PFMERGE) that consume less than one kilobyte of memory per register while providing 0.81 percent standard error.
+
+Data transport between regions utilizes Apache Kafka with MirrorMaker 2 replication for cross-region sketch synchronization.
+
+The global aggregation engine is a lightweight microservice that merges regional sketches every two seconds, updating Amazon Managed Grafana and CloudWatch dashboards in real time.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, maintaining real-time global counts across thirty million concurrent viewers without massive database write contention is achieved through Probabilistic Data Structures. Storing thirty million individual session keys in a traditional database would require gigabytes of RAM and millions of write transactions per second.
+
+By using HyperLogLog registers, our system represents thirty million unique sessions in just twelve kilobytes of memory per dimension slice, allowing millions of unique viewers to be counted using sub-microsecond bitwise operations.
+
+Furthermore, because HyperLogLog sketches are mathematically unionable without loss of precision, regional clusters can merge their local registers independently and transmit tiny twelve-kilobyte sketches to the global aggregator, reducing cross-region network bandwidth by over 99.9 percent.
+
+To handle sudden client dropouts gracefully without artificial lag, the system implements a Sliding Window Decay: heartbeat registrations are divided into three ten-second sub-buckets, and only sessions that have emitted a heartbeat within the last three consecutive buckets are included in the active tally, ensuring instantaneous detection of viewer drop-offs.
+
+---
+
+## System Design 25: Secure Multi-Tenant Publisher Ad Server Integration Gateway
+**Domain Category:** API Gateway & Partner Integration
+
+### 1. Complete Problem Statement
+Design a secure, multi-tenant Publisher Ad Server (PAS) integration gateway for Prime Video live events. The system must bridge Prime Video's live broadcast infrastructure with third-party supply-side platforms, external programmatic ad exchanges, and premium sports leagues, enforcing strict tenant isolation, cryptographic payload verification, and rate limiting with sub-fifteen-millisecond latency.
+
+### 2. Clarifying Questions & Scope Definition
+When clarifying this integration gateway, I would first ask about the protocols and standards supported: does the gateway communicate primarily via OpenRTB standards, proprietary Publisher Ad Server APIs, or customized gRPC channels? Supporting both OpenRTB 2.5/3.0 over HTTP/2 and internal gRPC is standard for modern publisher gateways.
+
+Next, I would ask about tenant isolation requirements. Are third-party partners sharing a multi-tenant compute cluster with logical software isolation, or do high-priority leagues and enterprise partners require dedicated, sandboxed compute resources to prevent noisy neighbor interference? Logical software isolation backed by separate connection pools and CPU quotas is typical.
+
+I would also clarify security and authentication mechanisms: do partner connections use mutual TLS (mTLS) with client certificates, OAuth 2.0 bearer tokens, or HMAC request signatures? Requiring mTLS combined with short-lived HMAC request signatures ensures zero unauthorized access.
+
+Finally, I would ask about payload transformation overhead: how does the gateway translate external partner ad response formats into internal Prime Video manifest schemas without adding latency?
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Publisher Ad Server Integration Gateway</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">External Partner DSP/SSP</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">OpenRTB over mTLS</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Gateway Edge Proxy</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">mTLS & HMAC Verify</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Tenant Sandbox Engine</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Rate Limiting & Quotas</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Protocol Normalizer</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">OpenRTB to Protobuf</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Prime Video Ad Bus</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Internal Ad Decisioning</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the gateway must terminate secure external connections from third-party advertising partners, supply-side platforms, and sports league systems.
+
+It must authenticate each incoming request using mutual TLS and verify that the partner is authorized to bid on the specific live broadcast property.
+
+The system must enforce strict multi-tenant governance, ensuring that one partner cannot exceed their contracted query-per-second allocation or impact the performance of other partners.
+
+It must parse and validate partner bid responses against industry-standard OpenRTB schemas, sanitizing creative URLs and tracking pixels to prevent malicious script injection.
+
+Finally, it must normalize partner response payloads into internal Protocol Buffer schemas and route them to internal ad decisioning services within fifteen milliseconds.
+
+### 5. Non-Functional Requirements
+From a non-functional perspective, gateway processing overhead must be under fifteen milliseconds at the P99 percentile, including TLS handshake termination, schema validation, and protocol translation.
+
+The gateway must handle aggregate partner traffic exceeding five hundred thousand requests per second during peak live sports commercial breaks.
+
+Security must be broadcast-grade, with zero possibility of cross-tenant data leakage or unauthorized access to proprietary viewer targeting segments.
+
+System availability must reach 99.999 percent, providing redundant active-active gateway fleets across multiple cloud availability zones.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Partner Tenant Profile, specifying partner ID, authorized league properties, public key certificates, contracted QPS limits, and timeout SLAs.
+
+Next is the Inbound Partner Request, containing the encrypted OpenRTB bid opportunity, tracking cookies, device context, and digital signature.
+
+We also have the Tenant Rate Limit Quota, tracking real-time query consumption, concurrent connection counts, and burst allowances per partner.
+
+Another entity is the Normalized Internal Ad Bid, representing the sanitized, schema-validated bid payload formatted in Protocol Buffers.
+
+Finally, the Gateway Security Audit Log records all authentication failures, malformed payloads, and rate-limit violations for security analysis.
+
+### 7. API & Interface Design
+The gateway exposes public-facing HTTPS endpoints adhering to OpenRTB 2.5 and 3.0 specifications, such as POST /v1/openrtb2/auction.
+
+Mutual TLS (mTLS) is enforced at the network edge, requiring partners to present valid X.509 client certificates issued by trusted certificate authorities.
+
+An internal gRPC client forwards normalized bid opportunities to internal ad decisioning services over high-speed virtual private cloud networks.
+
+A tenant administration API allows operations teams to onboard new partners, configure endpoint routing rules, and adjust partner timeout budgets dynamically.
+
+### 8. End-to-End Data Flow
+The data flow begins when an external demand partner sends an OpenRTB bid response over an established mutual TLS connection to our gateway.
+
+The gateway edge proxy validates the partner's client certificate and verifies the cryptographic signature of the request payload.
+
+The tenant governance filter checks whether the partner is within their contracted queries-per-second limit; if exceeded, the request is throttled with an immediate HTTP 429 response.
+
+A high-performance C++ parser validates the OpenRTB JSON payload against strict schema rules, sanitizes creative markup, and translates the data into an internal Protobuf structure.
+
+The normalized bid is dispatched over internal gRPC channels to the live ad decisioning engine, completing the entire gateway processing cycle in under nine milliseconds.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture consists of an edge security termination tier, a tenant isolation and throttling engine, a protocol translation layer, and internal routing proxies.
+
+The edge security layer utilizes an Auto Scaling fleet of Envoy proxies deployed behind AWS Network Load Balancers, handling hardware-accelerated mTLS termination.
+
+Tenant governance and quota management are powered by high-speed in-memory rate limiting modules integrated directly into Envoy worker threads.
+
+Protocol translation and validation are executed by high-performance Go or C++ microservices running in Kubernetes clusters.
+
+Internal service routing leverages AWS PrivateLink and internal service meshes to deliver normalized bid payloads directly to ad decision workers without traversing the public internet.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, achieving sub-fifteen-millisecond gateway latency while performing complete TLS termination and schema validation requires eliminating expensive handshake overheads. We accomplish this by enforcing Persistent HTTP/2 Connections with TCP keep-alive, allowing partners to reuse pre-authenticated TLS sessions across millions of sequential bid transactions without repeating the cryptographic handshake.
+
+To prevent a rogue or misconfigured partner from causing a Noisy Neighbor outage that degrades other bidders during a live game, the gateway enforces Strict Per-Tenant Connection Isolation: each partner is assigned a dedicated thread pool and socket queue, ensuring that thread exhaustion from one partner cannot impact another.
+
+Security validation of creative markup is performed using high-speed Abstract Syntax Tree sanitizers that strip unsafe JavaScript, iframe tags, and unauthorized tracking pixels, preventing malicious code injection into the Prime Video player SDK.
+
+All gateway instances are stateless and deployed across multiple availability zones in an active-active setup: if an individual gateway node fails, Network Load Balancers reroute partner traffic to healthy instances in sub-millisecond time.
+
+---
+
+## System Design 26: Automated Live Broadcast Readiness and Chaos Engineering Platform
+**Domain Category:** Chaos Engineering & Operational Excellence
+
+### 1. Complete Problem Statement
+Design an automated live broadcast readiness and chaos engineering platform for Amazon Advertising. The system must run pre-flight operational validation drills, simulated viewer traffic surges (fifteen million virtual viewers), and automated chaos experiments (injecting network latency, killing broker pods, and dropping third-party DSP connections) forty-eight hours before live sporting events to certify broadcast readiness.
+
+### 2. Clarifying Questions & Scope Definition
+To clarify this chaos engineering platform, I would first ask about the test environment: do chaos drills and pre-flight validation runs execute in an isolated staging environment that mirrors production, or do we run controlled chaos experiments directly in production during dark windows ahead of the live broadcast? Running pre-flight chaos tests in production during dark hours with synthetic traffic provides the only true guarantee of production readiness.
+
+Next, I would ask about safety blast radius controls: how does the system ensure that chaos experiments are immediately aborted if an experiment begins impacting legitimate viewers or live production streams? Automated kill switches tied to real-time production health alarms are mandatory.
+
+I would also clarify the scale of traffic simulation: can the load generation engine simulate realistic client behavior, including video player manifest polling, heartbeat beacons, ad break requests, and random playback dropouts? The load generation must realistically simulate fifteen million concurrent video players.
+
+Finally, I would ask about reporting: does the platform generate an automated Broadcast Readiness Certificate that leadership must sign off on before kickoff?
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Broadcast Readiness & Chaos Platform</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Pre-Flight Schedule</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">48h Before Kickoff</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Synthetic Traffic Fleet</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">15M Simulated Players</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Chaos Injection Engine</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Latency & Pod Faults</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Health & Safety Monitor</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Automated Kill Switch</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Readiness Certification</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Executive Sign-Off</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the platform must allow broadcast reliability engineers to schedule automated pre-flight readiness drills forty-eight hours prior to scheduled live events.
+
+It must deploy a distributed synthetic load generation fleet capable of simulating up to fifteen million concurrent video players polling manifests and firing impression beacons.
+
+The system must execute automated chaos injection scenarios, including simulating cross-region network partitions, dropping ad auction DSP connections, terminating Kafka broker nodes, and injecting Redis latency.
+
+It must continuously monitor core service health metrics during the drill, verifying that automated failover mechanisms, circuit breakers, and fallback slates activate correctly.
+
+Finally, it must generate a structured Broadcast Readiness Scorecard highlighting any architectural weaknesses, SLA breaches, or capacity bottlenecks requiring remediation before the game airs.
+
+### 5. Non-Functional Requirements
+From a non-functional perspective, safety is paramount: the platform must feature an instantaneous automated Kill Switch that aborts all chaos injections within five hundred milliseconds if any production health threshold is breached.
+
+The synthetic load generator must scale elastically across thousands of cloud instances to generate millions of requests per second without becoming a bottleneck itself.
+
+Test repeatability is essential, ensuring that identical chaos drill scenarios can be executed consistently before every Thursday Night Football and NBA broadcast throughout the season.
+
+The platform must maintain comprehensive audit logging, recording all injected failure parameters, system responses, and recovery timelines for compliance review.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Broadcast Readiness Drill, tracking the target sporting event, scheduled drill window, participating microservices, and overall pass/fail status.
+
+Next is the Chaos Experiment Specification, defining the fault injection type, target service, duration, latency injection values, and expected failover behavior.
+
+We also have the Synthetic Viewer Scenario, defining playback behaviors, manifest polling frequencies, ad interaction patterns, and device distribution ratios.
+
+Another entity is the Automated Safety Policy, capturing the critical health metric thresholds that trigger an immediate emergency experiment abort.
+
+Finally, the Broadcast Readiness Scorecard entity encapsulates test results, latency percentiles under failure, failover recovery times, and certified capacity headroom.
+
+### 7. API & Interface Design
+The platform provides an orchestration REST API /readiness/v1/drills allowing engineers to trigger, monitor, and abort pre-flight validation runs.
+
+There is a chaos injection API used by agent controllers to command chaos agents running inside Kubernetes clusters and AWS infrastructure.
+
+A synthetic traffic control API allows test orchestrators to dynamically ramp traffic from zero to fifteen million simulated viewers following realistic viewership curves.
+
+A reporting API exports structured markdown and PDF readiness certificates to Slack channels and internal broadcast operational wiki pages.
+
+### 8. End-to-End Data Flow
+The data flow begins forty-eight hours before kickoff when the readiness platform initiates an automated pre-flight certification drill during an off-peak broadcast window.
+
+The orchestrator spins up an Auto Scaling fleet of synthetic player agents across multiple AWS regions, ramping synthetic viewer traffic to fifteen million simulated streams.
+
+Simultaneously, the chaos injection engine commands AWS Fault Injection Service and Kubernetes chaos daemons to inject thirty milliseconds of artificial network latency into the primary ad decisioning cluster.
+
+The platform monitors edge SSAI proxies, observing that the circuit breaker trips within fifty milliseconds and successfully diverts manifest requests to secondary regional clusters without dropped requests.
+
+Upon completing all planned failure scenarios, the platform winds down synthetic traffic, removes all chaos injections, compiles metric logs, and publishes a certified readiness report to the engineering lead.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture combines a centralized drill orchestrator, a distributed synthetic load generation engine, a multi-layer chaos injection framework, and an automated safety monitoring system.
+
+The drill orchestrator is built with Python and Temporal workflows, coordinating long-running multi-stage validation drills with deterministic state tracking.
+
+Synthetic traffic generation is powered by distributed Locust or custom Go load generators running across thousands of AWS Fargate tasks.
+
+Chaos injection is managed through integration with AWS Fault Injection Service (FIS) and Chaos Mesh deployed within production Amazon EKS clusters.
+
+Safety monitoring is anchored by an independent Prometheus and CloudWatch agent that continuously queries live operational metrics, maintaining a direct hardware-level abort connection to all chaos daemons.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, ensuring absolute safety during chaos drills in production environments requires multi-tiered safety blast radius controls. The platform implements an Automated Emergency Abort Controller: an independent monitor checks production error rates every second, and if errors rise above 0.1 percent, it immediately triggers an emergency abort, rolling back all injected faults and resetting routing rules in under five hundred milliseconds.
+
+To ensure realistic traffic simulation during drills, synthetic player agents do not simply generate repetitive HTTP requests; they execute full stateful video player simulations, including HLS manifest sequence tracking, bitrate switching based on simulated network jitter, and realistic beacon timing.
+
+Chaos drills evaluate both technical failover and operational human readiness: the platform automatically triggers real PagerDuty alarms to test on-call engineer response times and verifies that automated runbook assistants correctly diagnose injected faults.
+
+A broadcast event is only certified for air once the system demonstrates that every single failure scenario—from a total loss of a cloud availability zone to the failure of top external DSPs—recovers automatically without a single viewer observing a frozen video stream.
+
+---
+
+## System Design 27: Privacy-Preserving Clean Room Infrastructure for Live Sports Advertisers
+**Domain Category:** Data Privacy & Clean Rooms
+
+### 1. Complete Problem Statement
+Design a privacy-preserving data clean room infrastructure for Amazon Advertising in live sports. The system must allow major brand advertisers (such as automotive and consumer goods companies) to run joint measurement, attribution, and audience overlap queries against Amazon's live sports viewership data without exposing raw Personally Identifiable Information (PII) or proprietary customer records to either party.
+
+### 2. Clarifying Questions & Scope Definition
+When clarifying this clean room architecture, I would first ask about the computational privacy techniques required: are we relying on cryptographic secure multi-party computation (SMPC), differential privacy with mathematical noise injection, or hardware-enforced trusted execution environments (like AWS Nitro Enclaves)? A combination of AWS Clean Rooms with Nitro Enclaves and differential privacy is the industry standard for enterprise advertising.
+
+Next, I would ask about the supported query types: do advertisers need to run arbitrary SQL queries, or are queries restricted to pre-approved measurement templates such as reach and frequency analysis, multi-touch attribution, and audience overlap intersection? Restricting clean room operations to vetted analytical query templates prevents data exfiltration attacks.
+
+I would also clarify the scale of datasets: how many millions of viewer records and advertiser transaction rows are joined during a typical clean room query? Datasets often span hundreds of millions of records, requiring distributed analytical processing.
+
+Finally, I would ask about query execution latency: while real-time ad serving requires milliseconds, clean room analytical queries typically run in batch mode with acceptable turnaround times of minutes to hours.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Privacy-Preserving Data Clean Room</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Advertiser CRM Data</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Hashed Customer Records</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Amazon Sports Data</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Verified Viewer Sessions</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">AWS Nitro Enclave</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Isolated Hardware Sandbox</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Differential Privacy</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Mathematical Noise Guard</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Attribution Report</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Privacy-Safe Aggregates</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the clean room must allow enterprise advertisers to securely upload anonymized customer datasets, including purchase histories and CRM records.
+
+It must ingest Amazon's live sports viewership logs, including ad impressions delivered during events like Thursday Night Football.
+
+The system must perform privacy-safe cryptographic matching across datasets using pseudonymized identifiers like hashed emails or unified ID tokens.
+
+It must execute joint analytical computations inside an isolated sandbox, evaluating campaign reach, incremental sales lift, and multi-touch attribution models.
+
+Finally, it must apply differential privacy algorithms to query outputs, ensuring that all published reports contain only aggregate statistics and mathematically prevent the reconstruction of individual user data.
+
+### 5. Non-Functional Requirements
+From a non-functional perspective, data security is the paramount requirement: zero cleartext PII or raw customer identifiers can ever be visible to Amazon employees or the external advertiser.
+
+The system must scale to join and analyze datasets containing hundreds of millions of rows within fifteen minutes for a standard measurement query.
+
+Regulatory compliance must satisfy global privacy frameworks including GDPR, CCPA, and COPPA, with full cryptographic audit logging of all executed queries.
+
+System availability must be 99.9 percent, providing reliable analytical reporting portals for enterprise marketing teams.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Clean Room Collaboration, defining the participating advertiser, approved live sports campaigns, allowed query templates, and data governance policies.
+
+Next is the Anonymized Advertiser Dataset, containing one-way salted hashes of customer identifiers and associated offline transaction records.
+
+We also have the Live Event Viewership Ledger, representing verified ad impression logs linked to anonymized viewer tokens.
+
+Another entity is the Analytical Query Specification, defining the SQL computation template, aggregation metrics, group-by dimensions, and privacy budget limits.
+
+Finally, the Aggregated Attribution Report captures the resulting incremental lift percentages, matched audience sizes, and statistical confidence intervals.
+
+### 7. API & Interface Design
+The clean room platform provides an authenticated REST API /cleanroom/v1/collaborations for configuring clean room partnerships and linking data tables.
+
+An analytical query submission API /cleanroom/v1/queries allows authorized data scientists to submit measurement jobs against approved templates.
+
+There is a data ingestion API supporting encrypted batch uploads directly to dedicated Amazon S3 buckets protected with customer-managed KMS keys.
+
+A reporting API allows advertiser business intelligence tools to download finalized, privacy-vetted analytical summaries and lift graphs.
+
+### 8. End-to-End Data Flow
+The data flow begins when an advertiser uploads an encrypted dataset of recent car purchases to their dedicated Amazon S3 bucket, using a customer-managed KMS key.
+
+Amazon Advertising writes verified live sports ad impression logs to an isolated S3 storage bucket.
+
+The clean room orchestrator launches a distributed computing job inside an AWS Nitro Enclave, a hardware-isolated compute sandbox with no external network access or interactive shell.
+
+The enclave loads both datasets into memory, decrypts them using ephemeral keys negotiated via cryptographic attestation, and performs a private join on hashed identifiers.
+
+The analytical aggregation is computed, mathematical noise is injected via a differential privacy algorithm to satisfy the privacy budget, and the final aggregate report is exported to the advertiser portal.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture leverages AWS Clean Rooms, AWS Nitro Enclaves, and Apache Spark running in isolated Amazon EMR clusters.
+
+Data storage is strictly segregated: advertiser data and Amazon viewership data reside in separate, dedicated S3 buckets with independent KMS encryption keys.
+
+Compute isolation is enforced by AWS Nitro Enclaves, ensuring that memory contents cannot be accessed even by users with root administrative privileges on the host system.
+
+Differential privacy enforcement is handled by an automated privacy layer that tracks cumulative privacy loss (epsilon budget) across queries and automatically rejects queries that could compromise anonymity.
+
+An immutable audit ledger built on Amazon QLDB or cryptographically signed logs records every query template, input hash, and execution timestamp for legal compliance.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, guaranteeing mathematical privacy against linkage and reconstruction attacks requires rigorous Differential Privacy and Query Template Whitelisting. The clean room strictly prohibits arbitrary SQL queries like SELECT * FROM users; instead, advertisers can only execute pre-approved parameterized templates that enforce minimum aggregation thresholds (e.g., any cohort smaller than one hundred individuals is automatically suppressed).
+
+To protect against differential reconstruction attacks (where an attacker submits multiple overlapping queries to isolate a single individual's behavior), the system enforces a strict Epsilon Privacy Budget: each executed query consumes a portion of the collaboration's privacy budget, and once the budget is exhausted, no further queries can be executed on that dataset.
+
+Hardware-level isolation via AWS Nitro Enclaves provides cryptographic attestation: before any data is decrypted, the KMS key policy verifies the SHA-384 measurement hash of the enclave's running code, ensuring that not a single line of unvetted software can run inside the environment.
+
+This architecture provides mathematically provable privacy guarantees, enabling Fortune 500 advertisers to measure multi-million-dollar live sports advertising campaigns with complete confidence in regulatory compliance.
+
+---
+
+## System Design 28: Intelligent Dynamic Bitrate Ad Transcoding and Audio Normalization Pipeline
+**Domain Category:** Video Engineering & Transcoding
+
+### 1. Complete Problem Statement
+Design an intelligent, automated video transcoding and audio normalization pipeline for Prime Video advertising. The system must ingest raw advertiser commercial video submissions, automatically transcode them into dozens of Adaptive Bitrate (ABR) profiles matching live broadcast video ladders, normalize audio loudness to -24 LKFS broadcast standards, and package segments in under ten minutes with zero visual artifacts.
+
+### 2. Clarifying Questions & Scope Definition
+To properly scope this transcoding pipeline, I would first ask about the input and output video formats: what codecs and containers do advertisers submit, and what streaming packaging formats are required? Advertisers typically submit high-bitrate ProRes or H.264 MP4 files, and the pipeline must transcode them into H.264 (AVC), H.265 (HEVC), and AV1 formats packaged into fragmented MP4 (fMP4) for both HLS and DASH streaming.
+
+Next, I would ask about segment alignment: why is segment alignment so critical in live ad insertion? In live SSAI, ad video segments must match the exact duration (e.g., exactly two seconds), GOP (Group of Pictures) size, and keyframe intervals of the surrounding live football broadcast; any mismatch causes client video players to stutter or lose audio sync.
+
+I would also clarify the turnaround SLA: how quickly must a newly uploaded ad creative be validated, transcoded, and certified for broadcast? A turnaround time of under ten minutes enables rapid advertiser turnaround during live tournament broadcasts.
+
+Finally, I would ask about automated quality control: the system must automatically inspect transcoded video for dropped frames, blockiness, color banding, and audio clipping.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">ABR Ad Transcoding & Audio Normalization</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Advertiser Creative Upload</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">ProRes / H.264 Master</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Audio Normalizer</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">ITU BS.1770 -24 LKFS</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Distributed Transcoder</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">AWS Elemental / FFmpeg</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Automated Video QC</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">VMAF & Segment Alignment</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">CDN Edge Distribution</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Broadcast-Ready ABR</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the platform must accept master video commercial uploads from advertisers and automated campaign management systems via secure S3 upload portals.
+
+It must inspect the source file to verify resolution, framerate, color space, and audio channel configurations, rejecting corrupted or non-compliant source files immediately.
+
+The system must normalize the audio track to strict broadcast standards (-24 LKFS loudness target and -2 dBFS true peak limit) to ensure commercial breaks do not play louder than the surrounding sports game.
+
+It must transcode the video into a complete Adaptive Bitrate (ABR) ladder spanning resolutions from 360p up to 4K HDR across multiple codecs including H.264, HEVC, and AV1.
+
+Finally, it must segment the transcoded streams into frame-accurate, aligned video chunks with closed captions, generating HLS and DASH manifests and publishing assets to global CDN origins in under ten minutes.
+
+### 5. Non-Functional Requirements
+From a non-functional perspective, end-to-end processing time for a thirty-second commercial must not exceed ten minutes from upload completion to global CDN availability.
+
+Transcoded video quality must achieve a Video Multi-Method Assessment Fusion (VMAF) score of at least ninety-three across all bitrate tiers, guaranteeing pristine broadcast visual fidelity.
+
+GOP and segment boundary alignment must be 100 percent deterministic, ensuring that ad segments splice seamlessly into live broadcast streams with zero playback buffering.
+
+The transcoding cluster must scale elastically to handle sudden surges of hundreds of commercial creative submissions ahead of major sporting event kickoffs.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Creative Transcoding Job, tracking the master asset ID, submission timestamp, priority level, target ABR profile, and processing pipeline state.
+
+Next is the Source Media Inspection Profile, recording the source codec, container, framerate, aspect ratio, audio channels, and measured input loudness.
+
+We also have the ABR Ladder Specification, defining the target resolutions, bitrates, frame rates, codec profiles, and segment durations for each streaming tier.
+
+Another entity is the Quality Control (QC) Report, capturing the automated VMAF scores, audio peak levels, dropped frame counts, and compliance certifications.
+
+Finally, the Broadcast-Ready Creative Package entity maps all generated video chunks, audio segments, closed caption tracks, and CDN origin URLs.
+
+### 7. API & Interface Design
+The service provides an asynchronous creative submission API /transcode/v1/jobs where advertisers upload video files and initiate transcoding workflows.
+
+There is a job status query API /transcode/v1/jobs/{job_id} that provides real-time progress percentages, intermediate QC metrics, and error logs.
+
+A webhook notification service dispatches automated completion events to the ad server creative repository when assets are certified for broadcast.
+
+An administrative API allows broadcast video engineers to update ABR ladder configurations, adjust VMAF quality thresholds, and inspect failed transcoding logs.
+
+### 8. End-to-End Data Flow
+The data flow begins when an advertiser uploads a master commercial file to an Amazon S3 drop bucket, triggering an S3 ObjectCreated event.
+
+The event triggers an AWS Step Functions workflow that spins up a validation worker to inspect the container and codec headers using FFprobe.
+
+The audio track is extracted and passed through an automated audio normalization worker that applies an ITU-R BS.1770 filter to adjust loudness to exactly -24 LKFS.
+
+The normalized audio and video master are dispatched to a distributed transcoding cluster powered by AWS Elemental MediaConvert or containerized FFmpeg workers on EKS.
+
+The cluster transcodes the video into all target ABR variants simultaneously, packages segments into two-second aligned fMP4 chunks, computes VMAF quality scores, and replicates finalized files across global S3 origin buckets in under eight minutes.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture is designed as an event-driven, distributed media processing pipeline orchestrated by AWS Step Functions and AWS Batch.
+
+Storage is anchored by Amazon S3, utilizing S3 Intelligent-Tiering and multi-region replication to distribute finalized media chunks to CDN origins worldwide.
+
+Transcoding compute is managed by an Auto Scaling cluster of GPU-accelerated EC2 instances (utilizing NVIDIA NVENC hardware encoders) managed by Kubernetes and AWS Batch.
+
+Audio normalization and quality control checks are performed by lightweight C++ workers leveraging libavfilter and libvmaf libraries.
+
+The creative catalog and job tracking state are maintained in Amazon Aurora PostgreSQL, integrated with Amazon CloudWatch for end-to-end pipeline observability.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, achieving seamless live video splicing during Thursday Night Football requires strict Segment Boundary and GOP Alignment. If a live football broadcast utilizes two-second segments with a sixty-frame Group of Pictures (GOP) closed at every keyframe, any stitched ad segment must mirror this exact GOP cadence; even a single missing frame or open GOP boundary causes video player decoders to stutter or crash.
+
+Our transcoding engine enforces Closed GOP encoding with fixed IDR keyframe intervals placed at exact two-second timestamps, guaranteeing that ad segments can be spliced into live playlists without any video decoder reinitialization.
+
+Audio compliance with the Commercial Advertisement Loudness Mitigation (CALM) Act is guaranteed through a two-pass loudness normalization algorithm: the first pass measures integrated loudness across the entire commercial, and the second pass applies linear gain adjustments to hit -24 LKFS with a hard limiter at -2 dBFS, eliminating jarring volume jumps when transitioning between the game and commercial breaks.
+
+Automated Visual Quality Control is enforced by computing VMAF scores against the master asset: if any transcoded rendition scores below ninety-two, the pipeline automatically flags the asset for human review and boosts encoding bitrate, ensuring viewers never see pixelation or macroblocking during live sports broadcasts.
+
+---
+
+## System Design 29: Real-Time Chat Sentiment and Contextual Ad Insertion for Interactive Streams
+**Domain Category:** NLP & Interactive Live Streaming
+
+### 1. Complete Problem Statement
+Design a real-time chat sentiment analysis and contextual ad insertion engine for Prime Video interactive live sports streams. The system must ingest over one million live fan chat messages per minute, analyze crowd sentiment and trending player topics using streaming NLP models, and dynamically select contextual sponsor advertisements within three seconds of a viral fan reaction.
+
+### 2. Clarifying Questions & Scope Definition
+When clarifying this chat analysis and advertising system, I would first ask about chat volume and velocity: during dramatic game moments (such as a game-winning goal), chat velocity can spike from tens of thousands to over one million messages per minute; how do we handle this ingestion surge without dropping messages? The chat ingestion pipeline must be decoupled from the NLP analysis tier using partitioned streaming buffers.
+
+Next, I would ask about the nature of sentiment analysis: are we classifying broad emotional valence (positive celebration versus negative disappointment), or are we extracting specific named entities like player names, team hashtags, and product mentions? Named Entity Recognition (NER) combined with sentiment classification is essential to link viewer reactions to specific commercial sponsors.
+
+I would also clarify the advertising output: does the system trigger interactive in-chat sponsor banners, on-screen graphical overlays, or prioritize upcoming video ad pods? In-chat sponsored cards and synchronized on-screen lower-third overlays are the primary monetization channels.
+
+Finally, I would ask about content moderation: the system must strictly filter profanity, toxic comments, and harassment before aggregating sentiment signals.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Real-Time Chat Sentiment & Contextual Ad Engine</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Live Fan Chat Stream</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">1M Messages / Min</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Profanity & Toxicity Filter</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Sub-10ms Fast Gate</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Streaming NLP Model</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Sentiment & Entity Extractor</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Trending Topic Aggregator</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Flink 5-Second Window</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Contextual Sponsor Card</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Sub-3s Interactive Ad</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the engine must ingest live fan chat messages emitted by viewers participating in interactive Prime Video live event streams.
+
+It must filter incoming messages through an automated profanity and toxicity detection filter, discarding inappropriate content from public display and sentiment aggregation.
+
+The system must evaluate sanitized messages using streaming Natural Language Processing (NLP) models to extract emotional sentiment, trending player names, and key game themes.
+
+It must aggregate sentiment metrics across rolling five-second sliding windows, identifying viral fan spikes such as overwhelming excitement for a specific player's performance.
+
+Finally, it must trigger contextual sponsor messages (such as an energy drink sponsor celebrating high energy moments) in the live chat feed and display synchronized graphical overlays within three seconds of the spike.
+
+### 5. Non-Functional Requirements
+From a non-functional perspective, end-to-end processing latency from a viral chat surge to contextual ad placement must be under three seconds to capitalize on real-time viewer excitement.
+
+The chat ingestion and analysis pipeline must comfortably scale to handle over one million messages per minute during peak live sports moments.
+
+Sentiment classification accuracy must exceed eighty-five percent across informal sports slang, emojis, and multilingual text expressions.
+
+System availability must reach 99.99 percent, ensuring that chat monetization features remain active throughout the live broadcast.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Raw Chat Message, containing the user ID, broadcast ID, message text, client timestamp, and emoji reactions.
+
+Next is the Sanitized Chat Token, representing the profanity-filtered message text tagged with language codes.
+
+We also have the Extracted Sentiment Feature, capturing the positive, negative, or neutral sentiment scores and identified sports entities.
+
+Another entity is the Trending Topic Aggregate, tracking message frequency, sentiment polarity, and velocity for specific player and team keywords over rolling five-second windows.
+
+Finally, the Contextual Chat Sponsor Campaign entity defines the sponsor creative, trigger keywords, minimum sentiment threshold, and pacing limits.
+
+### 7. API & Interface Design
+The chat platform exposes an active WebSocket endpoint /chat/v1/stream used by client video players to send and receive real-time fan comments.
+
+An internal gRPC query API /sentiment/v1/current-trend allows advertising engines to fetch active sentiment scores and trending topic tags on demand.
+
+There is a campaign configuration REST API where advertisers can sponsor specific game triggers (such as high excitement or team celebrations) and configure in-chat sponsor cards.
+
+A real-time telemetry streaming API emits chat sentiment indices, message volume graphs, and ad engagement metrics to broadcast operations dashboards.
+
+### 8. End-to-End Data Flow
+The data flow begins as viewers type comments and react with emojis in the Prime Video interactive chat interface during a live game.
+
+The messages are received by an AWS AppSync or WebSocket API gateway fleet that streams raw text into an Apache Kafka topic.
+
+A lightweight toxicity filter purges offensive language, forwarding sanitized text to an Apache Flink streaming application.
+
+Flink dispatches message batches to an optimized NLP model running on GPU clusters, extracting entity mentions and sentiment scores in under twenty milliseconds.
+
+Flink aggregates the scores across five-second tumbling windows; when excitement for a star player spikes past a configured threshold, the engine matches the event with an active sponsor campaign and broadcasts an interactive sponsor card into the live chat feed in under two seconds.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture is split into a real-time messaging gateway, an automated moderation tier, a streaming NLP processing pipeline, and a contextual ad delivery system.
+
+The messaging gateway utilizes AWS AppSync and Amazon API Gateway to maintain millions of concurrent persistent WebSocket connections with client devices.
+
+Message buffering is handled by high-throughput Apache Kafka clusters partitioned by live broadcast fixture IDs.
+
+Streaming NLP and aggregation are powered by Apache Flink and lightweight DistilBERT or RoBERTa models optimized with ONNX Runtime running on GPU-accelerated Kubernetes nodes.
+
+Contextual ad dispatching is managed by a microservice that injects sponsored interactive cards directly into the WebSocket broadcast channels delivered to viewers' chat windows.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, processing one million informal chat messages per minute with deep NLP models without incurring prohibitive GPU compute costs requires a Two-Tier Cascaded Processing Architecture. Running a full transformer model on every single chat message is computationally wasteful because sports chat contains repetitive phrases and single-emoji messages (like fire or clapping emojis).
+
+Our pipeline applies a High-Speed Lexical & Emoji Filter as the first tier: messages consisting purely of standard emojis or basic excitement phrases are scored instantaneously using an in-memory dictionary taking microseconds on CPU.
+
+Only rich, multi-word textual sentences are routed to the second-tier GPU transformer model, reducing deep learning inference load by over seventy percent while maintaining high sentiment precision.
+
+To guarantee that sponsored chat cards are not spammed during continuous excitement, the contextual ad engine enforces an in-chat Frequency Cooldown: once a sponsor message is triggered, an automated five-minute cooldown is applied to that sponsor tier, preserving viewer engagement and chat authenticity.
+
+---
+
+## System Design 30: Multi-Agent Broadcast Operations Control Plane for Live Event Command Center
+**Domain Category:** Multi-Agent Systems & Operational Control
+
+### 1. Complete Problem Statement
+Design a multi-agent AI broadcast operations control plane for the Prime Video Live Event Command Center. The system must coordinate specialized AI agents (including an Ingest Monitor Agent, an SSAI Manifest Agent, an Ad Auction Agent, and an Incident Commander Agent) to autonomously monitor, diagnose, and manage advertising infrastructure across fifty concurrent live sporting events worldwide.
+
+### 2. Clarifying Questions & Scope Definition
+When clarifying this multi-agent control plane, I would first ask about the agent coordination model: do the agents operate in a hierarchical structure where a supervisor Incident Commander agent delegates tasks to specialized domain agents, or do they operate as a peer-to-peer decentralized mesh? A hierarchical supervisor model provides clear escalation paths, deterministic decision-making, and superior auditability during high-stakes live sports broadcasts.
+
+Next, I would ask how agents communicate: do they share a centralized state blackboard, exchange structured JSON messages over an event bus, or use the Model Context Protocol (MCP)? Combining Model Context Protocol for tool execution with an event-driven shared blackboard architecture allows agents to inspect shared broadcast context seamlessly.
+
+I would also clarify the human-in-the-loop governance: what level of human oversight is required for critical operational interventions? Broadcast directors must retain veto authority over high-impact actions through a real-time command dashboard.
+
+Finally, I would ask about scalability: the control plane must supervise fifty concurrent live sporting events across multiple sports, time zones, and global regions without cross-event interference.
+
+### 3. High-Level Architecture Diagram
+<div class="sys-diagram-container" style="overflow-x:auto; margin: 18px 0; background: #0f172a; border-radius: 12px; padding: 16px; border: 1px solid #334155;">
+      <svg width="1090" height="170" viewBox="0 0 1090 170" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="32" fill="#38bdf8" font-size="15" font-weight="bold" font-family="system-ui">Multi-Agent Broadcast Control Plane</text>
+        
+        <g class="node">
+          <rect x="40" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="125" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Live Telemetry Streams</text>
+          <text x="125" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">50 Concurrent Events</text>
+        </g>
+        <g class="node">
+          <rect x="250" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="335" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Specialized Domain Agents</text>
+          <text x="335" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Ingest, SSAI, Auction</text>
+        </g>
+        <g class="node">
+          <rect x="460" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="545" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Supervisor Commander Agent</text>
+          <text x="545" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Hierarchical Planner</text>
+        </g>
+        <g class="node">
+          <rect x="670" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="755" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">MCP Shared Tool Bus</text>
+          <text x="755" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Safe Operational Actions</text>
+        </g>
+        <g class="node">
+          <rect x="880" y="60" width="170" height="75" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="965" y="88" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold" font-family="system-ui">Operations Command Wall</text>
+          <text x="965" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui">Human-in-the-Loop Veto</text>
+        </g>
+        
+            <g class="arrow">
+              <line x1="210" y1="97" x2="244" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="250,97 242,92 242,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="420" y1="97" x2="454" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="460,97 452,92 452,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="630" y1="97" x2="664" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="670,97 662,92 662,102" fill="#f59e0b"/>
+            </g>
+            <g class="arrow">
+              <line x1="840" y1="97" x2="874" y2="97" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+              <polygon points="880,97 872,92 872,102" fill="#f59e0b"/>
+            </g>
+      </svg>
+    </div>
+
+### 4. Functional Requirements
+Functionally, the control plane must orchestrate multiple specialized AI agents, each dedicated to monitoring a specific domain of the live advertising stack.
+
+The Ingest Agent must monitor video transport stream integrity, SCTE-35 ad break cue points, and encoder synchronization across all broadcast feeds.
+
+The SSAI Manifest Agent must oversee manifest generation latencies, segment stitching error rates, and CDN edge cache hit ratios.
+
+The Auction Agent must monitor DSP response latencies, bid participation rates, clearing price distributions, and budget pacing health.
+
+The Supervisor Incident Commander Agent must correlate findings across domain agents, synthesize unified situational awareness, formulate holistic remediation plans, and present interactive recommendations to human broadcast directors.
+
+### 5. Non-Functional Requirements
+From a non-functional perspective, inter-agent communication and diagnostic reasoning must execute within fifteen seconds to provide immediate situational awareness during live broadcast anomalies.
+
+The multi-agent infrastructure must maintain 99.999 percent operational availability, operating independently of the underlying streaming and ad serving data path.
+
+System actions must be completely deterministic and auditable, maintaining immutable logs of all agent reasoning steps, cross-agent messages, and tool invocations.
+
+The control plane must scale to supervise fifty concurrent live sporting events simultaneously without performance degradation or state cross-talk.
+
+### 6. Core Entities & Data Modeling
+The primary core entity is the Broadcast Event State Blackboard, maintaining the live operational state, active agent assignments, and metric summaries for each live game.
+
+Next is the Specialized Agent Profile, defining the agent's role, subscribed telemetry topics, permitted MCP tools, and operational boundaries.
+
+We also have the Inter-Agent Message Entity, capturing structured communications between domain agents and the supervisor commander.
+
+Another entity is the Multi-Agent Incident Assessment, consolidating diagnosed root causes, confidence scores, and multi-domain impact analyses.
+
+Finally, the Coordinated Remediation Plan entity defines the ordered sequence of operational actions, required safety checks, and human sign-off statuses.
+
+### 7. API & Interface Design
+The control plane exposes an internal gRPC and WebSocket API /agents/v1/control-bus that facilitates structured message exchange between agents and the central blackboard.
+
+An interactive Command Center REST and WebSocket API powers the broadcast operations room video wall, streaming live agent dialogue and diagnostic visualizations.
+
+There is an MCP Gateway API that exposes standardized, sandboxed operational tools to agents using Model Context Protocol specifications.
+
+A governance API allows human broadcast commanders to pause agent autonomy, approve pending remediation plans, or issue direct overriding instructions.
+
+### 8. End-to-End Data Flow
+The data flow begins as real-time telemetry from live broadcasts streams into the central event bus across all fifty active sporting events.
+
+The SSAI Manifest Agent detects that manifest generation latency has spiked to seventy milliseconds in a specific European region.
+
+The SSAI Agent posts a structured alert to the shared blackboard, requesting correlation from other domain agents.
+
+The Auction Agent inspects its domain and reports that an external European DSP is timing out on bids, causing worker thread queuing in the manifest layer.
+
+The Supervisor Incident Commander Agent synthesizes both reports, formulates a remediation plan to trip the circuit breaker for that DSP, and presents the plan on the Command Center video wall, where the human director clicks Approve to execute the fix in five seconds.
+
+### 9. High-Level System Architecture (HLD)
+At a high level, the architecture combines an event-driven telemetry distribution tier, a multi-agent orchestration core, a Model Context Protocol tool execution mesh, and an interactive human oversight portal.
+
+Telemetry distribution is managed by Apache Kafka, streaming high-frequency metrics into domain-specific consumer groups.
+
+The multi-agent orchestration core is implemented with Python, LangGraph, and Amazon Bedrock, utilizing stateful graph workflows to coordinate agent reasoning cycles.
+
+Agent tool execution is mediated through an MCP Gateway that enforces strict role-based access control, parameter validation, and audit logging on every infrastructure command.
+
+The human interface is delivered via a modern Next.js and React operations dashboard integrated with WebSockets for real-time video wall updates and one-click incident approvals.
+
+### 10. Deep Dive into Non-Functional Requirements & Edge Cases
+Diving deep into the non-functional requirements, coordinating multiple autonomous AI agents during high-stakes live sports broadcasts without communication deadlocks or hallucinated actions requires strict Multi-Agent Governance Protocols. We organize agents in a Strict Hierarchical Tree: domain agents (Ingest, SSAI, Auction) are strictly read-only diagnostic workers that analyze telemetry and propose hypotheses; they are physically prohibited from executing infrastructure modifications directly.
+
+Only the centralized Supervisor Incident Commander Agent has the authority to assemble a remediation plan, which must pass through an automated Deterministic Policy Engine that verifies action safety against pre-approved runbooks before presenting it to human engineers.
+
+To prevent agent dialogue loops and token explosion during complex incidents, all inter-agent messages use compact, schema-validated JSON structures rather than freeform text, and multi-agent reasoning cycles are bounded by a hard three-turn limit.
+
+Every agent thought trace, cross-agent message, and human approval is cryptographically signed and stored in Amazon S3 with immutable WORM retention, providing an audit trail for post-broadcast reviews and regulatory compliance.
+
+---
