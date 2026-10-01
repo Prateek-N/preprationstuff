@@ -8,6 +8,7 @@ const SLUG_TO_CANDIDATE = {
   'ashutosh-mercor-applied-ai-prep': 'Ashutosh Rudraksh',
   'ashutosh-oscar-health-prep': 'Ashutosh Rudraksh',
   'ashutosh-oscar-prep': 'Ashutosh Rudraksh',
+  'karthik-adsgency-ai-prep': 'Karthik Ravula',
   'kiranmai-amazon-sde-prep': 'Venkata Satya Kiranmai Challagulla',
   'karthik-kalyan-fullstack-prep': 'Karthik Kalyan Kakumanu',
   'lakshmi-pranitha-wise-prep': 'Lakshmi Pranitha',

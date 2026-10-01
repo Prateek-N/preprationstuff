@@ -1,0 +1,1977 @@
+# AdsGency AI — Member of Technical Staff (Full Stack / AI Systems) Interview Master Guide
+**Candidate:** Karthik Ravula | Software Developer (3+ Years Experience: Uber, Epsilon, Dell Technologies | M.S. Data Science NYIT)
+**Target Role:** Member of Technical Staff (MTS) – Full Stack / AI Systems — AdsGency AI (Onsite San Francisco City)
+**Core Mission:** Building the autonomous multi-agent operating system for digital advertising across Google Ads, Meta Graph API, and TikTok Marketing API.
+
+---
+
+## Executive Strategy & Role Alignment
+
+This technical preparation suite is tailored specifically for **Karthik Ravula** interviewing for the **Member of Technical Staff (MTS) – Full Stack / AI Systems** role at **AdsGency AI** in San Francisco.
+
+AdsGency AI is reimagining the $800B digital advertising industry with an AI-native multi-agent layer that autonomously plans, generates, optimizes, and scales ad campaigns without human marketers. Karthik's background directly solves AdsGency's foundational technical challenges:
+
+1. **Distributed FastAPI & High-Throughput Microservices:** Engineered FastAPI microservices at **Uber** handling 580K+ monthly trip records and at **Epsilon** routing 2,000,000 daily API requests across 3 external marketing platforms with sub-50ms latency.
+
+2. **Autonomous Multi-Agent Orchestration (LangGraph / CrewAI):** Designing hierarchical supervisor-worker state machines that execute complex campaign generation workflows with loop detection, deterministic checkpoints, and safety guardrails.
+
+3. **Real-Time Streaming & Budget Pacing:** Utilizing **Apache Kafka**, **Redis** atomic Lua counters, and PostgreSQL to track live ad spend and trigger sub-500ms emergency circuit breakers against budget overruns.
+
+4. **Full-Stack Execution with Next.js & React:** Built responsive Next.js and React dashboards at **Uber** supporting 500K+ daily requests, cutting load times by 1.3 seconds and delivering live Server-Sent Events (SSE) telemetry to operators.
+
+5. **Enterprise Security & AdTech API Integrations:** Authored secure GraphQL/REST APIs with JWT and OAuth 2.0 at **Epsilon**, protecting 500K customer profiles for HIPAA/GDPR compliance, while orchestrating high-concurrency external integrations with Google Ads, Meta Graph, and TikTok APIs.
+
+
+---
+
+# Part 1: Top 20 Verbal Technical Interview Questions & Narrative Answers
+
+Every answer is crafted in an in-depth, cohesive ~300-word narrative format directly rooted in Karthik Ravula's resume accomplishments at Uber, Epsilon, and Dell Technologies, with core technologies and metrics highlighted in bold.
+
+
+## Question 1: How would you design a resilient multi-agent architecture where autonomous LLM agents plan, execute, and monitor ad campaigns across Google, Meta, and TikTok without entering infinite execution loops or conflicting actions?
+**Domain:** Multi-Agent Systems & Architecture
+
+In designing a multi-agent orchestration layer for **AdsGency AI**, I draw directly from my experience building distributed **FastAPI** microservices and event-driven pipelines at **Uber** and **Epsilon**. To prevent execution loops and conflicting mutations across external ad platforms, I implement a deterministic directed acyclic graph (DAG) state machine using **LangGraph** backed by **PostgreSQL** and **Redis**. Rather than letting autonomous agents communicate in an unconstrained swarm, I separate agent responsibilities into a hierarchical supervisor-worker pattern: a Planner Agent decomposes high-level campaign objectives, specialized Worker Agents execute targeted tasks such as copy generation or budget allocation, and a Critic/Safety Agent verifies API parameters against strict safety guardrails.
+
+To guarantee deterministic progress and prevent runaway execution loops, every workflow run is assigned a unique `trace_id` and tracked with a maximum recursion ceiling and loop-detection hashing in **Redis**. Before an agent triggers an external mutation—such as calling the **Meta Graph API** or **Google Ads API**—it must transition through an explicit consensus verification phase. If an agent's proposed action contradicts an active campaign state, such as raising bids when spend is already pacing high, the Critic Agent flags an anomaly and halts the state transition. 
+
+State persistence is maintained using **PostgreSQL** with optimistic concurrency control, ensuring that concurrent agent decisions never overwrite campaign configurations simultaneously. By pairing **LangGraph** checkpoints with distributed locks in **Redis**, we achieve idempotent agent steps that can be paused, resumed, or rolled back cleanly. This mirrors the high-reliability patterns I used at **Uber** handling over **580K monthly trip events**, where distributed consistency and zero message loss were non-negotiable for system health.
+
+---
+
+## Question 2: At AdsGency AI, our core API handles webhook spikes, LLM streaming, and high-concurrency requests. How have you structured FastAPI applications to sustain sub-50ms latency under massive traffic surges?
+**Domain:** High-Throughput Backend & FastAPI
+
+At **Epsilon**, I built distributed **FastAPI** microservices handling over **2,000,000 daily API requests** across multiple external platforms, and at **Uber**, I reduced core API response times by **2 seconds**. Achieving broadcast-grade sub-50ms latency in **FastAPI** requires optimizing the entire asynchronous lifecycle from network ingress to database serialization. First, I ensure that all I/O-bound operations—such as querying **PostgreSQL**, caching in **Redis**, or streaming tokens from **OpenAI** and **Claude**—strictly utilize non-blocking async drivers like `asyncpg` and `redis-py` async pools, eliminating thread pool starvation within the Python event loop.
+
+To absorb massive incoming webhook surges from **Google Ads**, **Meta**, and **TikTok**, I decouple request receipt from processing using an event-driven buffer powered by **Apache Kafka**. The **FastAPI** endpoint performs lightweight schema validation via **Pydantic v2** (leveraging its ultra-fast C-extension core), validates authentication via cached **JWT** claims in **Redis**, writes the payload directly to a **Kafka** partition, and immediately returns an HTTP 202 Accepted within **12ms**. 
+
+For CPU-intensive tasks such as prompt assembly, embedding calculations, or token counting, I offload computation from the main asyncio event loop to dedicated **Celery** or **ARQ** worker processes running across our **Docker** and **Kubernetes (EKS)** clusters. Furthermore, I implement connection pooling with tuned pre-allocation, keep-alive connections via **uvicorn** workers behind an **AWS Application Load Balancer**, and in-memory **Redis** caching for read-heavy campaign analytics. This architecture reliably absorbed **1,100,000 traffic surges with zero failures** during peak marketing campaigns at **Epsilon**.
+
+---
+
+## Question 3: Digital advertising produces millions of click, impression, and conversion events. How do you design an event-driven data pipeline using Kafka to ensure exactly-once semantics and real-time budget pacing?
+**Domain:** Event Streaming & Real-Time Data
+
+Real-time budget pacing is one of the most critical challenges in performance marketing because delayed telemetry can cause an ad campaign to overspend its daily budget in minutes. At **Uber**, I integrated **Apache Kafka**, **Python**, and **Amazon S3** into automated event-driven routing pipelines handling over **100K monthly support requests**, and at **Epsilon**, I scrubbed over **12,000,000 weekly records** to guarantee data integrity. To achieve real-time budget pacing with exactly-once processing semantics at **AdsGency AI**, I structure an end-to-end streaming pipeline combining **Kafka**, **Redis**, and transactional storage.
+
+Incoming conversion and spend webhooks are published to partitioned **Kafka** topics keyed by `account_id` and `campaign_id`. Partitioning by campaign ensures that all financial events for a specific campaign arrive strictly in chronological order at the consumer level. On the consumer side, I leverage Kafka's transactional producer API alongside idempotent consumers. Each event carries an immutable `event_id`. When an event is consumed, the worker executes an atomic script in **Redis** using a Lua script: it checks whether the `event_id` exists in a deduplication bloom filter; if not, it increments the campaign's current spend counter and sets an expiration key.
+
+If the cumulative spend breaches the hourly pacing ceiling, the service immediately publishes a high-priority pause event to a downstream `campaign-control` topic, triggering our **FastAPI** agent workers to issue pause mutations to the **Google** or **Meta** APIs. Meanwhile, micro-batches of raw events are continuously dumped to **Amazon S3** and transformed via **Apache Airflow** and **dbt** for historical analytics in **Amazon Redshift** or **Snowflake**, guaranteeing strict reconciliation between cached real-time telemetry and settled billing records.
+
+---
+
+## Question 4: How do you evaluate and optimize LLM agent decision-making for ad campaigns to prevent hallucinations, reduce token costs, and maintain brand safety?
+**Domain:** AI/LLM Orchestration & Prompt Engineering
+
+In building production AI systems, treating LLM responses as unvalidated black boxes is disastrous, especially when financial budgets and client brand reputations are on the line. When developing recommendation and RAG engines using **Python**, **LangChain**, and **OpenAI API**, I established robust multi-tiered evaluation and guardrail frameworks. For **AdsGency AI**, I structure agent decision-making using constrained decoding, structured JSON outputs via **Pydantic**, and deterministic verification layers before any external ad execution occurs.
+
+To eliminate hallucinations in copy and audience parameters, every agent is supplied with dynamic context retrieved via hybrid search combining **PostgreSQL** (**pgvector**) and **Redis**. The prompt templates explicitly inject negative constraints, approved historical ad variations, and platform-specific formatting rules (such as character count limits for Google Headlines). Before generated ad copy is sent to downstream APIs, a lightweight Brand Safety Agent reviews the output against compliance rubrics, sentiment guidelines, and copyright databases using automated semantic distance scoring.
+
+To drastically curtail token costs and latency, I implement a semantic prompt caching layer in **Redis** utilizing cosine similarity on vector embeddings. If an agent receives a campaign optimization request structurally similar to one executed within the past hour, it reuses the validated strategy without incurring an external LLM invocation, cutting inference costs by up to **40%**. Furthermore, I benchmark agent reasoning trajectories using automated continuous evaluation pipelines, running synthetic test suites with tools like **LangSmith** and **DeepEval** to track accuracy, latency, and token consumption across model versions.
+
+---
+
+## Question 5: How do you implement distributed locking and race condition prevention when multiple agents attempt to modify the same campaign budget simultaneously?
+**Domain:** Distributed Systems & Caching
+
+In a multi-agent system where independent workers monitor performance metrics, adjust bids, and refresh creative assets, simultaneous agent decisions can easily cause severe race conditions. For example, an optimization agent might decrease a bid while a pacing agent increases the budget, resulting in invalid campaign states. At **Uber**, where I engineered **FastAPI**, **PostgreSQL**, and **Redis** microservices for distributed rider and driver workflows handling over **580K monthly records**, avoiding distributed race conditions was a fundamental requirement.
+
+To solve this at **AdsGency AI**, I implement distributed locks using **Redlock** primitives in **Redis** with unique random tokens and explicit time-to-live (TTL) expiration. When an agent initiates an optimization pass on a campaign, it must acquire an exclusive lock on the key `lock:campaign:{campaign_id}` with an automatic lease timeout of three seconds to prevent deadlocks in case of unexpected worker crashes. Only the worker holding the matching cryptographic token can release the lock via an atomic Lua script that compares the token before deleting the key.
+
+In addition to distributed locks, I implement optimistic concurrency control at the database layer in **PostgreSQL**. Every campaign record includes a monotonically increasing `version` column. When mutating campaign parameters, the update query executes conditionally: `UPDATE campaigns SET budget = :new_budget, version = version + 1 WHERE id = :id AND version = :expected_version`. If another agent has modified the campaign in the interim, the query returns zero affected rows, prompting the agent to re-fetch the freshest state from **Redis** and re-evaluate its decision logic before retrying with exponential backoff and jitter.
+
+---
+
+## Question 6: AdsGency needs to match high-performing historical ad creatives with new product descriptions. How would you design a hybrid retrieval system using PostgreSQL and pgvector?
+**Domain:** Vector Databases & RAG
+
+At **Dell Technologies** and in my Master's work in Data Science at **NYIT**, I developed deep experience in semantic search, feature representation, and high-scale data retrieval. Building a high-performing creative recommendation engine for **AdsGency AI** requires more than basic vector cosine similarity because advertising performance depends heavily on both semantic alignment and structured categorical constraints such as platform, industry vertical, historical click-through rate (**CTR**), and conversion rate (**ROAS**).
+
+I architect this retrieval layer directly inside **PostgreSQL** using the **pgvector** extension, paired with an **HNSW** (Hierarchical Navigable Small World) index for vector embeddings and standard B-Tree/GIN indexes for relational metadata. When a user submits a new product description or marketing objective, we generate dense vector embeddings using **OpenAI's text-embedding-3-small** or a fine-tuned Hugging Face transformer. We then execute a hybrid search combining dense semantic similarity with sparse keyword matching using PostgreSQL's native `tsvector` and full-text search.
+
+The SQL query computes a composite ranking score: it merges the cosine similarity distance `1 - (embedding <=> :query_vector)` with normalized historical performance metrics (`CTR` and `ROAS`), filtered strictly by active platform (such as **TikTok** vs. **Google Search**) and minimum spend thresholds. By executing both the semantic filter and the relational business logic within a single indexed query inside **PostgreSQL**, we achieve query latencies under **25ms** without the operational complexity and network hops of maintaining a separate external vector database. The top candidate creatives are then passed into the agent's context window as few-shot exemplars for creative generation.
+
+---
+
+## Question 7: How do you manage rate limits, schema variances, and transient outages when orchestrating campaign deployments across Google Ads, Meta Marketing API, and TikTok Business API?
+**Domain:** External API Integrations (AdTech)
+
+At **Epsilon**, I engineered distributed **FastAPI** microservices specifically to route **2,000,000 daily API requests across 3 external marketing platforms** without any message loss, making this problem directly aligned with my production background. Each major advertising network—**Google Ads API**, **Meta Graph API**, and **TikTok Marketing API**—enforces distinct rate-limiting policies, complex hierarchical schemas, and frequent transient 5xx server errors during high-volume periods.
+
+To handle this cleanly at **AdsGency AI**, I design an abstraction layer called the `AdPlatformGateway` following the Adapter and Circuit Breaker design patterns. The gateway normalizes external platform differences into a unified internal domain model. Every external API request is dispatched through a distributed token-bucket rate limiter managed in **Redis**, configured with platform-specific tier quotas (such as Meta's dynamic call-budget headers `X-Business-Use-Case-Usage`). If our rate of mutation approaches **85%** of a platform's threshold, requests are automatically throttled in a priority queue.
+
+For fault tolerance, every outbound mutation is executed through an idempotent retry mechanism backed by **Tenacity** in Python, applying exponential backoff with full jitter. If an external API experiences consecutive downtime, a circuit breaker implemented via **Redis** trips open, redirecting subsequent operations to an asynchronous retry queue in **Kafka** with a Dead Letter Queue (**DLQ**) for unrecoverable errors. All outbound payloads and external ID mappings (such as `campaign_id`, `ad_set_id`, and `creative_id`) are persisted in **PostgreSQL** with bidirectional mapping tables, ensuring full auditability and preventing duplicate ad creation under network partitions.
+
+---
+
+## Question 8: How would you build a responsive Next.js and React dashboard that streams real-time agent execution traces and live campaign metrics to human operators?
+**Domain:** Frontend & Real-Time Dashboards
+
+At **Uber**, I developed **Next.js**, **JavaScript**, **REST APIs**, and **AWS Lambda** features supporting **500K+ daily requests**, reducing frontend page load times by **1.3 seconds**. For **AdsGency AI**, where operators must monitor autonomous agent workflows, review creative assets, and intervene in real time, the user experience must be instantaneous, transparent, and reactive.
+
+I architect the dashboard using **Next.js App Router**, **React Server Components (RSC)**, **TypeScript**, and **Tailwind CSS**. Server components handle initial server-side rendering for static layouts and historical campaign tables, optimizing First Contentful Paint (**FCP**). For real-time agent execution traces—such as showing step-by-step reasoning, tool calls, and platform responses—I implement **Server-Sent Events (SSE)** via a dedicated **FastAPI** streaming endpoint rather than heavyweight bidirectional WebSockets, as agent traces represent a unidirectional server-to-client event stream.
+
+On the client side, I utilize **React Query** (`@tanstack/react-query`) paired with custom hooks that consume the SSE stream. As execution chunks arrive, state is appended into a virtualized list using `@tanstack/react-virtual` to ensure smooth 60fps scrolling even when tracking thousands of agent log lines. For live metric charts showing budget burn and impression spikes, I throttle client-side state updates using `requestAnimationFrame` to avoid unnecessary DOM re-renders. Furthermore, for human-in-the-loop actions where an operator must approve an ad copy change, the UI communicates via optimistic mutations, giving immediate visual feedback while the underlying **FastAPI** backend coordinates agent state transitions.
+
+---
+
+## Question 9: How do you structure database models and optimize SQL queries in PostgreSQL to handle high-frequency campaign telemetry and complex analytical aggregations?
+**Domain:** Database Architecture & Optimization
+
+At **Dell Technologies** and **Epsilon**, database performance tuning was a central focus of my role: at Dell, I tuned query execution and indexing strategies to drop average response times from **4 seconds to under 1 second**, and at Epsilon, I structured queries scrubbing **12,000,000 weekly records**. In an ad automation platform like **AdsGency AI**, the database must support both high-throughput transactional writes from agent workers and fast read aggregations for executive reporting.
+
+I design a hybrid schema in **PostgreSQL** utilizing declarative table partitioning. High-volume time-series tables, such as `campaign_metrics_hourly` and `agent_execution_logs`, are partitioned by range on `timestamp` (monthly or weekly chunks). This allows the query planner to perform partition pruning, scanning only relevant time slices and allowing older partitions to be archived or dropped instantly without locking active tables. 
+
+To accelerate multi-dimensional analytical queries—such as aggregating spend and conversions across campaigns, channels, and dates—I create composite B-Tree indexes on `(campaign_id, date, platform)` and partial indexes on active entities (`WHERE status = 'ACTIVE'`). For heavy analytical dashboards, I establish materialized views refreshed concurrently on a five-minute cadence via background worker jobs. Furthermore, I implement connection pooling using **PgBouncer** in transaction pooling mode, enabling our containerized **FastAPI** instances on **Kubernetes (EKS)** to reuse persistent database connections without exhausting PostgreSQL's process limits during sudden traffic surges.
+
+---
+
+## Question 10: How do you architect a Kubernetes deployment on AWS EKS with autoscaling to ensure agent workers scale dynamically during ad campaign launch windows?
+**Domain:** DevOps, Containerization & Kubernetes
+
+At **Uber**, I orchestrated containerized microservices using **Docker**, **Kubernetes (EKS)**, **GitHub Actions**, and **AWS CloudWatch** supporting workloads with over **10K concurrent users**, and at **Epsilon**, I directed cloud migrations absorbing **1,100,000 traffic surges**. Deploying autonomous AI workloads on **AWS EKS** requires decoupling web-facing API workloads from asynchronous, GPU/LLM-intensive agent workers.
+
+I organize the cluster into dedicated Kubernetes node groups using **Karpenter** for high-velocity cluster autoscaling. The web and API tier runs on cost-efficient general-purpose instances (such as `m6i.large`), managed by a Horizontal Pod Autoscaler (**HPA**) scaling on CPU utilization and average HTTP request latency. However, for background agent workers that consume tasks from **Kafka** or **Redis**, scaling on CPU is ineffective because LLM agent tasks spend substantial time waiting on network I/O from API providers.
+
+Instead, I configure **KEDA (Kubernetes Event-driven Autoscaling)** to scale agent worker pods directly based on queue depth metrics—specifically the lag in **Kafka** topic partitions and unacknowledged messages in our **Redis** task streams. When a surge of campaigns launch simultaneously, KEDA rapidly scales worker replicas from 5 to 50 within seconds. I utilize multi-stage **Docker** builds to minimize container image sizes to under **150MB**, enabling near-instant pod pull times. Deployments are orchestrated through **GitHub Actions** CI/CD pipelines applying blue-green rollouts, ensuring zero-downtime releases and automated rollbacks upon health check failures.
+
+---
+
+## Question 11: How do you implement distributed tracing and observability across multi-agent workflows to pinpoint failed tool executions, latency spikes, and cost anomalies?
+**Domain:** Observability & Production Debugging
+
+Debugging distributed systems and autonomous agent workflows requires end-to-end visibility across every hop of execution. At **Uber**, I monitored distributed microservice performance using **AWS CloudWatch** and logging pipelines, and for **AdsGency AI**, observability must bridge traditional infrastructure metrics with AI-specific telemetry.
+
+I implement a unified observability stack leveraging **OpenTelemetry (OTel)**, **Sentry**, and **PostHog**. Every user request or autonomous agent trigger is assigned a globally unique `trace_id` and `span_id` injected into the **FastAPI** request context. As the workflow progresses through the Planner Agent, tool executions, and external ad platform calls, the context is propagated across **Kafka** headers and HTTP client requests. 
+
+For agent-specific tracing, I instrument all LLM invocations to capture exact input prompt tokens, completion tokens, model latency, and prompt versioning using **LangSmith** or **OpenInference**. If an agent fails—such as generating an invalid ad parameter that gets rejected by the **Meta Graph API**—the error is captured with its complete state snapshot and sent to **Sentry** with custom tags including `agent_type`, `campaign_id`, and `model_name`. Furthermore, I set up real-time anomaly alerts in **AWS CloudWatch** and **Slack** webhooks triggered by sudden spikes in LLM token expenditure or HTTP 429 rate limit responses, allowing engineers to diagnose and patch agent reasoning failures in minutes.
+
+---
+
+## Question 12: Digital advertising platforms manage sensitive client billing data and customer audiences. How have you implemented secure authentication, authorization, and compliance audits?
+**Domain:** API Security & Compliance
+
+At **Epsilon**, I coded secure **GraphQL** and REST APIs implementing **JWT authentication** protocols alongside data compliance officers, protecting over **500,000 customer profiles** from unauthorized access to satisfy strict **HIPAA** and **GDPR** privacy audits. In an AI advertising startup like **AdsGency AI**, security and multi-tenant isolation are paramount because a vulnerability could expose proprietary advertiser budgets and customer audience lists across competitors.
+
+I establish a defense-in-depth security model starting at the edge with **OAuth 2.0** and **JWT** tokens signed using asymmetric **RS256** keys. Tokens include strictly scoped tenant identifiers (`organization_id`) and Role-Based Access Control (**RBAC**) claims. Inside **FastAPI**, custom security dependency injectors validate claims on every request, verifying that an operator or autonomous agent has explicit authorization to mutate the requested campaign entity.
+
+At the database layer, I enforce **PostgreSQL Row-Level Security (RLS)**, ensuring that even if an application query omits an organization filter, the database engine physically restricts rows to the authenticated tenant. All sensitive credentials—such as Google and Meta OAuth refresh tokens and API secrets—are encrypted at rest using **AWS KMS** (Key Management Service) envelope encryption before storage. Furthermore, all external ad mutations and internal agent actions are logged to an immutable append-only audit ledger, recording the exact timestamp, actor (human operator or agent ID), previous state, and mutated payload to guarantee audit compliance.
+
+---
+
+## Question 13: Can you explain the mechanics of Python's asyncio event loop, how GIL impacts performance, and how you prevent event loop blocking in high-throughput FastAPI servers?
+**Domain:** Python Internals & Asynchronous Programming
+
+Python's **asyncio** event loop is a single-threaded cooperative multitasking mechanism based on an OS-level I/O multiplexer like `epoll` on Linux or `kqueue` on macOS. Tasks yield control to the event loop via the `await` keyword whenever they execute non-blocking operations, such as waiting for network packets from **PostgreSQL**, **Redis**, or an external **OpenAI API** endpoint. While a task awaits I/O, the event loop resumes other ready coroutines, enabling a single process to handle thousands of concurrent connections.
+
+However, the **Global Interpreter Lock (GIL)** ensures that only one native OS thread executes Python bytecode at any given moment. If a developer accidentally executes a CPU-bound or blocking synchronous function inside an async route—such as `time.sleep()`, synchronous `requests.get()`, heavy JSON parsing, or image resizing—the entire event loop freezes, stalling all concurrent connections.
+
+To prevent event loop blocking in **FastAPI**, I enforce strict architectural standards. All I/O libraries must be natively asynchronous (using `httpx`, `asyncpg`, and `redis.asyncio`). When CPU-bound tasks are unavoidable—such as generating cryptographic signatures, tokenizing large text corpuses, or processing campaign analytics in **Pandas**—I offload execution using `asyncio.to_thread()`, which dispatches the work to an external thread pool, or delegate it to dedicated background workers via **Celery**. At **Uber** and **Epsilon**, applying these async best practices allowed our microservices to sustain high request concurrency with predictable low-latency response times.
+
+---
+
+## Question 14: At Epsilon, you overhauled data ingestion pipelines scrubbing 12M weekly records to eliminate audience segmentation errors. How would you design a similar pipeline for AdsGency AI?
+**Domain:** ETL & Data Scrubbing Pipelines
+
+At **Epsilon**, my overhaul of the data ingestion pipelines used **Python**, **Pandas**, and optimized **SQL** queries to isolate elusive validation bugs and scrub **12,000,000 weekly records**, completely eliminating downstream audience segmentation errors and saving marketing analysts over **30 hours monthly**. For **AdsGency AI**, where autonomous agents rely on clean customer audience data to target ad sets accurately, data pipeline reliability directly determines ad campaign performance and ROAS.
+
+I structure the ingestion pipeline using a modular validation and transformation architecture orchestrated by **Apache Airflow** or **Prefect**. Raw audience files and CRM event dumps are ingested into an **Amazon S3** landing bucket. An event notification triggers a distributed worker pool using **Python** and **PySpark** or **Polars** (which outperforms Pandas in memory efficiency and multi-core throughput). 
+
+Data validation is performed using strict schema contracts with **Great Expectations** and **Pydantic**. The pipeline applies deterministic scrubbing rules: deduplicating customer identifiers, normalizing email hashes to SHA-256 for ad platform matching, validating phone formatting to E.164 international standards, and detecting anomalous demographic outliers. Invalid records are segregated into an error quarantine bucket with detailed failure metadata, allowing automated notification to the data provider without stalling the entire batch. Clean, validated audience segments are then loaded into **PostgreSQL** and synced to **Meta Custom Audiences** and **Google Customer Match** APIs using idempotent bulk upload endpoints.
+
+---
+
+## Question 15: How do you coordinate state between a React/Next.js frontend and a Python backend when long-running agent workflows are executing in the background?
+**Domain:** Full Stack Integration & State Management
+
+Long-running autonomous agent workflows—such as analyzing historical ad account data, generating 20 creative variations, and deploying ad sets across three platforms—can take anywhere from 30 seconds to several minutes. In a modern full-stack application, the frontend cannot hold an open synchronous HTTP connection for this duration without risking proxy timeouts, client disconnections, and poor user experience.
+
+To solve this cleanly, I decouple the request into an asynchronous job pattern. When an operator initiates a multi-agent campaign deployment from the **Next.js** dashboard, the frontend issues a `POST /api/v1/campaigns/generate` request to **FastAPI**. The backend validates the parameters, assigns a unique `job_id`, pushes the task into a **Redis** queue, and immediately responds with HTTP 202 Accepted containing the `job_id` and an SSE subscription URL.
+
+The background agent worker executes the task, continuously publishing intermediate state updates—such as `status: 'PLANNING'`, `status: 'GENERATING_COPY'`, `progress: 45%`—into a **Redis Pub/Sub** channel keyed by `job_id`. The client-side **React** application establishes a **Server-Sent Events (SSE)** connection to `/api/v1/jobs/{job_id}/stream`. Using custom hooks and **Zustand** or **React Query**, the frontend incrementally updates the UI with interactive progress steppers and live draft previews. If the user refreshes the browser, the app re-syncs state instantly by querying the persistent job record in **PostgreSQL**, ensuring seamless continuity.
+
+---
+
+## Question 16: How do you design an automated A/B testing framework where AI agents dynamically allocate marketing budget toward winning creative variations?
+**Domain:** A/B Testing & Real-Time Performance Analytics
+
+Traditional A/B testing requires marketing analysts to run campaigns for weeks before manually reallocating budget, resulting in significant wasted ad spend on underperforming creative assets. At **Uber** and through my machine learning project building a **Real-Time Recommendation & Analytics Engine**, I implemented statistical evaluation models that optimize resource allocation in real time.
+
+For **AdsGency AI**, I design an autonomous A/B testing engine utilizing a **Multi-Armed Bandit (MAB)** algorithm, specifically **Thompson Sampling** or Upper Confidence Bound (**UCB**). When an agent deploys a new campaign, it launches multiple creative variations across Google and Meta. As real-time performance telemetry (impressions, clicks, and conversions) streams through our **Kafka** and **Redis** pipelines, an analytics worker updates the Beta distribution parameters for each variation's conversion rate.
+
+Rather than maintaining a static 50/50 budget split, the bandit algorithm dynamically adjusts the probability of serving each ad variant based on its posterior probability of being the highest-performing asset. Every hour, an automated Pacing Agent queries the bandit scores via **FastAPI** and issues automated budget adjustment mutations to the external ad APIs, progressively shifting spend toward winning variations while continuing to allocate a small exploration budget to newer variants. This dynamic optimization reduces the cost-per-acquisition (**CPA**) by up to **30%** compared to static testing frameworks.
+
+---
+
+## Question 17: At Epsilon, you coordinated backend infrastructure migration to serverless AWS Lambda and Kubernetes EKS. How do you decide between Serverless and Containerized microservices?
+**Domain:** Cloud Architecture & Serverless Migration
+
+At **Epsilon**, I coordinated the backend migration to serverless **AWS Lambda** functions, **Docker** containers, and **Kubernetes EKS** clusters, directing DevOps teams to absorb **1,100,000 traffic surges with 0 failures**. Deciding between serverless architectures and containerized microservices requires analyzing workload predictability, execution duration, cold-start tolerance, and operational costs.
+
+For event-driven, bursty, and lightweight workloads—such as processing incoming ad platform webhooks, periodic cron triggers, image thumbnail resizing, or sending Slack notifications—**AWS Lambda** is the ideal solution. Serverless provides instant horizontal scaling from zero to thousands of concurrent executions without paying for idle compute, perfectly absorbing unpredictably spiky webhook traffic from Meta and Google without provisioning excess capacity.
+
+Conversely, for workloads that require persistent state, long-running processes, complex dependencies, or low-latency predictability—such as our core **FastAPI** API gateway, multi-agent orchestration loops in **LangGraph**, and heavy **PostgreSQL** connection pooling—containerized deployments on **AWS EKS** are far superior. Containers avoid the dreaded cold-start penalties of serverless environments, allow fine-grained control over GPU resources for embedding generation, and eliminate vendor lock-in. At **AdsGency AI**, the optimal architecture is a hybrid: **AWS EKS** runs the core orchestration and API layer, while **AWS Lambda** handles bursty webhook ingress and lightweight asynchronous triggers.
+
+---
+
+## Question 18: When an autonomous agent crashes midway through updating a campaign across multiple external platforms, how do you handle state recovery and rollback?
+**Domain:** Error Recovery & Dead Letter Queues
+
+Distributed multi-step mutations across heterogeneous external APIs—such as creating an ad campaign on Google, an ad set on Meta, and a creative on TikTok—inherently lack native distributed ACID transactions. If an agent worker crashes after creating the Google campaign but before deploying to Meta, the system is left in an inconsistent, partially deployed state.
+
+To guarantee fault tolerance at **AdsGency AI**, I implement the **Saga Pattern** orchestrated through an explicit state machine. Each multi-platform campaign deployment is broken down into discrete, idempotent steps recorded in **PostgreSQL** with an execution ledger. Before executing an external mutation, the agent writes a pending step record. Upon receiving an affirmative response from the external API, the record is updated with the external platform ID.
+
+If a worker crashes or an external API returns a fatal failure, the supervisor worker detects the stalled job via heartbeat timeouts in **Redis**. The supervisor triggers the Saga's compensating transactions: it reads the execution ledger in reverse order and issues compensating delete or pause API calls to clean up orphaned resources on Google and Meta. If a compensating action fails, the payload is moved to a **Kafka Dead Letter Queue (DLQ)** with an automated alert to on-call engineers. This guarantees that campaigns are never left running unsupervised in partially configured states.
+
+---
+
+## Question 19: AdsGency AI is a fast-moving, early-stage AI startup. How do you balance rapid feature prototyping with architectural craftsmanship and avoiding over-engineering?
+**Domain:** Startup Engineering & Founder Collaboration
+
+Having worked in high-velocity teams at **Uber** and **Epsilon**, combined with building end-to-end full-stack platforms from scratch, I approach startup engineering with a pragmatic 'builder' mindset. In an early-stage startup like **AdsGency AI**, speed to market and customer feedback loops are the company's lifeblood, but reckless shortcuts that create architectural dead-ends will paralyze scaling later.
+
+My strategy balances velocity and craftsmanship through modular simplicity: I design systems from first principles, utilizing proven, boring technology where stability matters (such as **PostgreSQL**, **Redis**, and **FastAPI**) while innovating aggressively in the AI and agentic layer. I prioritize clean domain boundaries and strict interface contracts over premature microservice decomposition. In the earliest iterations, building a clean, modular monolith in FastAPI allows the team to deploy features in days rather than weeks, avoiding the overhead of managing dozens of independent network services.
+
+I avoid over-engineering by adhering strictly to the Rule of Three: I never build generic abstractions until we have implemented three concrete use cases that demand it. When prototyping an agent workflow, I validate the core prompt and tool loop in a script first, measure customer ROI, and only then harden it with distributed queues, caching, and comprehensive telemetry. This balance ensures that AdsGency ships weekly customer value while maintaining a robust foundation capable of scaling into a global enterprise platform.
+
+---
+
+## Question 20: Walk me through how you identify and eliminate performance bottlenecks in a distributed Python/PostgreSQL/Redis microservice stack.
+**Domain:** System Scalability & Performance Bottlenecks
+
+At **Dell Technologies**, I identified and eliminated database bottlenecks to slash response times from **4 seconds to under 1 second**, and at **Uber**, I reduced core API latencies by **2 seconds**. Systematically resolving performance bottlenecks in a distributed stack requires an empirical, data-driven profiling methodology rather than speculative guessing.
+
+My optimization workflow follows three systematic phases: instrumentation, isolation, and remediation. First, I inspect distributed traces in **OpenTelemetry** and APM tools to visualize the request waterfall, identifying whether latency is concentrated in network I/O, database execution, or Python runtime processing. For database bottlenecks in **PostgreSQL**, I analyze slow query logs and execute `EXPLAIN (ANALYZE, BUFFERS)` to detect sequential table scans, missing indexes, and buffer cache misses. I remediate these by adding composite B-Tree indexes, restructuring joins, and offloading repetitive read queries to **Redis** with sensible TTLs.
+
+In the **Python/FastAPI** layer, I profile CPU and memory consumption using tools like `cProfile` and `py-spy` on live container processes. Common culprits include blocking synchronous calls within async endpoints, redundant JSON serialization with legacy serializers, or N+1 query patterns. By replacing synchronous calls with async drivers, migrating to **Pydantic v2**, implementing batching with DataLoader patterns, and tuning connection pools in **PgBouncer**, I eliminate latency spikes and ensure consistent sub-50ms performance even under heavy production load.
+
+---
+
+# Part 2: Top 15 Coding & Algorithm Challenges in Python
+
+Each problem follows the strict four-step interview cadence: **Problem Statement**, **Complete Thought Process & Intuition**, **Production-Grade Python Code with Inline Comments**, and **Time & Space Complexity Analysis**.
+
+
+## Problem 1: Design a Distributed Sliding Window Log Rate Limiter
+**Topic:** Sliding Window / Hash Map / Queue | **Difficulty:** Medium-Hard
+
+### 1. Problem Statement
+In digital advertising platforms like AdsGency AI, external APIs (Meta Graph API, Google Ads API, TikTok API) enforce strict rate limits per account (e.g., maximum 100 requests per 60 seconds). Implement a sliding window log rate limiter class `SlidingWindowRateLimiter` that evaluates whether an incoming request from an account should be allowed or dropped in real time.
+
+Methods to implement:
+- `__init__(max_requests: int, window_seconds: int)`: Initializes the rate limiter with quota and sliding window window in seconds.
+- `allow_request(account_id: str, timestamp: float) -> bool`: Returns `True` if the request at the given timestamp is within the rate limit, otherwise records nothing and returns `False`.
+
+### 2. Complete Thought Process & Intuition
+To implement an exact sliding window log rate limiter, we must track the exact timestamp of every accepted request rather than relying on discrete fixed windows, which suffer from 2x boundary spikes.
+
+Data Structure Choice:
+We can maintain a dictionary mapping `account_id` to a double-ended queue (`collections.deque`) of floating-point timestamps.
+
+Algorithm:
+1. When `allow_request(account_id, timestamp)` is called, retrieve the deque for the account.
+2. Evict old timestamps: Remove all timestamps from the left of the deque where `entry_timestamp <= timestamp - window_seconds`.
+3. Check capacity: If the length of the deque is strictly less than `max_requests`, the request is allowed. We append `timestamp` to the right of the deque and return `True`.
+4. If the deque already has `max_requests`, the request breaches the rate limit. We do not record the timestamp and return `False`.
+
+In a production distributed environment like Redis, this algorithm maps directly to a Redis Sorted Set (ZSET) using `ZREMRANGEBYSCORE` to evict expired items, `ZCARD` to count elements, and `ZADD` to record the new request within an atomic transaction.
+
+### 3. Python 3 Implementation
+```python
+from collections import deque
+from typing import Dict
+
+class SlidingWindowRateLimiter:
+    def __init__(self, max_requests: int, window_seconds: int):
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        # Maps account_id -> deque of timestamps
+        self.account_logs: Dict[str, deque] = {}
+
+    def allow_request(self, account_id: str, timestamp: float) -> bool:
+        if account_id not in self.account_logs:
+            self.account_logs[account_id] = deque()
+
+        queue = self.account_logs[account_id]
+        window_start = timestamp - self.window_seconds
+
+        # Evict all timestamps outside the current sliding window
+        while queue and queue[0] <= window_start:
+            queue.popleft()
+
+        # Check if current request can be accommodated
+        if len(queue) < self.max_requests:
+            queue.append(timestamp)
+            return True
+        
+        # Quota exceeded; drop request
+        return False
+```
+
+### 4. Complexity Analysis
+Time Complexity: O(k) per request where k is the number of expired timestamps evicted (amortized O(1) per request). Space Complexity: O(N * max_requests) where N is the number of unique active accounts.
+
+---
+
+## Problem 2: Multi-Agent Task Dependency Resolution & Scheduling
+**Topic:** Graph / Topological Sort / Kahn's Algorithm | **Difficulty:** Medium
+
+### 1. Problem Statement
+An autonomous ad campaign launch at AdsGency AI requires executing multiple dependent tasks across agents (e.g., Task 0: Generate Copy, Task 1: Generate Image Assets, Task 2: Assemble Creative, Task 3: Deploy to Meta). Given `num_tasks` and a list of directed dependencies `dependencies` where `[a, b]` means Task `a` depends on Task `b` (Task `b` must complete before Task `a` can start), return a valid execution order for the agents. If a circular dependency exists (e.g., Task 0 needs Task 1, and Task 1 needs Task 0), return an empty list `[]`.
+
+### 2. Complete Thought Process & Intuition
+This problem models task scheduling in a workflow orchestrator like LangGraph or Airflow and can be solved using Topological Sort on a Directed Acyclic Graph (DAG).
+
+We can apply Kahn's Algorithm (BFS-based Topological Sort):
+1. Build an adjacency list `graph` where `b -> a` (since `b` must precede `a`).
+2. Track the in-degree of each task (number of prerequisite tasks that must finish before this task can execute).
+3. Initialize a queue with all tasks having `in_degree == 0` (tasks with zero prerequisites that can execute immediately).
+4. While the queue is non-empty, dequeue a task, append it to our `execution_order`, and decrement the in-degree of all its downstream dependent neighbors.
+5. If a neighbor's in-degree drops to 0, push it to the queue.
+6. Once the queue is empty, check if `len(execution_order) == num_tasks`. If true, we found a valid schedule. If false, a cycle exists, and scheduling is impossible.
+
+### 3. Python 3 Implementation
+```python
+from collections import deque
+from typing import List
+
+class AgentTaskScheduler:
+    def find_execution_order(self, num_tasks: int, dependencies: List[List[int]]) -> List[int]:
+        # Adjacency list: prereq -> list of dependent tasks
+        graph = {i: [] for i in range(num_tasks)}
+        in_degree = [0] * num_tasks
+
+        for task, prereq in dependencies:
+            graph[prereq].append(task)
+            in_degree[task] += 1
+
+        # Tasks with 0 prerequisites can execute immediately
+        queue = deque([i for i in range(num_tasks) if in_degree[i] == 0])
+        execution_order = []
+
+        while queue:
+            curr = queue.popleft()
+            execution_order.append(curr)
+
+            for neighbor in graph[curr]:
+                in_degree[neighbor] -= 1
+                if in_degree[neighbor] == 0:
+                    queue.append(neighbor)
+
+        # If order contains all tasks, no cycle exists
+        return execution_order if len(execution_order) == num_tasks else []
+```
+
+### 4. Complexity Analysis
+Time Complexity: O(V + E) where V = num_tasks and E = len(dependencies), as each task and edge is visited once. Space Complexity: O(V + E) to store the adjacency graph and in-degree array.
+
+---
+
+## Problem 3: Design In-Memory LRU Cache with Time-To-Live (TTL)
+**Topic:** Hash Map + Doubly Linked List | **Difficulty:** Hard
+
+### 1. Problem Statement
+AdsGency AI caches external ad campaign statistics and semantic embeddings in memory. Implement an LRU (Least Recently Used) cache with Time-To-Live (TTL) expiration.
+
+Implement the `LRUCacheWithTTL` class:
+- `__init__(capacity: int)`: Initializes the LRU cache with positive size capacity.
+- `get(key: str, current_time: float) -> int`: Returns the value of the key if it exists and has not expired (`current_time < expiry_time`). Otherwise, removes the key and returns -1. Accessing a valid key marks it as most recently used.
+- `put(key: str, value: int, ttl: float, current_time: float) -> None`: Sets or inserts the key with value and expiry timestamp (`current_time + ttl`). If capacity is exceeded, evicts the least recently used unexpired key.
+
+### 2. Complete Thought Process & Intuition
+A standard LRU cache uses a Hash Map combined with a Doubly Linked List to achieve O(1) reads, updates, and evictions.
+
+To support TTL expiration:
+1. Each node in the doubly linked list stores `key`, `value`, and `expires_at = current_time + ttl`.
+2. Hash Map maps `key -> Node`.
+3. In `get(key, current_time)`:
+   - If `key` is not in map, return -1.
+   - If `node.expires_at <= current_time`, the item has expired. We delete it from the linked list and hash map and return -1.
+   - If valid, we move the node to the head of the doubly linked list (most recently used) and return its value.
+4. In `put(key, value, ttl, current_time)`:
+   - If `key` already exists, update its value and expiry, and move it to the head.
+   - If new key and cache is at capacity, remove the tail node (least recently used) from both the linked list and hash map.
+   - Insert the new node at the head.
+
+### 3. Python 3 Implementation
+```python
+from typing import Optional, Dict
+
+class Node:
+    def __init__(self, key: str, value: int, expires_at: float):
+        self.key = key
+        self.value = value
+        self.expires_at = expires_at
+        self.prev: Optional['Node'] = None
+        self.next: Optional['Node'] = None
+
+class LRUCacheWithTTL:
+    def __init__(self, capacity: int):
+        self.capacity = capacity
+        self.cache: Dict[str, Node] = {}
+        # Sentinel dummy nodes
+        self.head = Node("", 0, float('inf'))
+        self.tail = Node("", 0, float('inf'))
+        self.head.next = self.tail
+        self.tail.prev = self.head
+
+    def _remove(self, node: Node) -> None:
+        prev_node = node.prev
+        next_node = node.next
+        prev_node.next = next_node
+        next_node.prev = prev_node
+
+    def _add_to_head(self, node: Node) -> None:
+        node.next = self.head.next
+        node.prev = self.head
+        self.head.next.prev = node
+        self.head.next = node
+
+    def get(self, key: str, current_time: float) -> int:
+        if key not in self.cache:
+            return -1
+
+        node = self.cache[key]
+        # Check expiration
+        if current_time >= node.expires_at:
+            self._remove(node)
+            del self.cache[key]
+            return -1
+
+        # Move accessed node to head (most recently used)
+        self._remove(node)
+        self._add_to_head(node)
+        return node.value
+
+    def put(self, key: str, value: int, ttl: float, current_time: float) -> None:
+        expires_at = current_time + ttl
+
+        if key in self.cache:
+            node = self.cache[key]
+            self._remove(node)
+            node.value = value
+            node.expires_at = expires_at
+            self._add_to_head(node)
+            return
+
+        if len(self.cache) >= self.capacity:
+            # Evict LRU node from tail
+            lru = self.tail.prev
+            self._remove(lru)
+            del self.cache[lru.key]
+
+        new_node = Node(key, value, expires_at)
+        self._add_to_head(new_node)
+        self.cache[key] = new_node
+```
+
+### 4. Complexity Analysis
+Time Complexity: O(1) for both get and put operations. Space Complexity: O(capacity) to store nodes and hash map entries.
+
+---
+
+## Problem 4: Optimal Ad Campaign Budget Allocation (Knapsack DP)
+**Topic:** Dynamic Programming / 0-1 Knapsack | **Difficulty:** Medium
+
+### 1. Problem Statement
+AdsGency AI is given a total client daily advertising budget `total_budget` (in dollars). A set of candidate ad campaigns is available, each with a required cost `costs[i]` and an estimated conversion return value `returns[i]`. Each campaign can be either fully funded once or skipped. Determine the maximum expected conversion return that can be achieved without exceeding `total_budget`.
+
+### 2. Complete Thought Process & Intuition
+This problem is a classic 0/1 Knapsack optimization problem.
+
+State Representation:
+Let `dp[b]` represent the maximum conversion return achievable using a budget of exactly or at most `b`.
+
+Base Case:
+`dp[b] = 0` for all `0 <= b <= total_budget`.
+
+Transitions:
+For each campaign `i` with cost `c = costs[i]` and return `r = returns[i]`:
+We iterate backwards from `total_budget` down to `c`:
+`dp[b] = max(dp[b], dp[b - c] + r)`
+Iterating backwards ensures that each campaign is used at most once (avoiding unbounded knapsack behavior).
+
+After evaluating all campaigns, `dp[total_budget]` contains the maximum possible return.
+
+### 3. Python 3 Implementation
+```python
+from typing import List
+
+class CampaignBudgetOptimizer:
+    def max_conversion_return(self, total_budget: int, costs: List[int], returns: List[int]) -> int:
+        n = len(costs)
+        # dp[b] stores max return achievable with budget b
+        dp = [0] * (total_budget + 1)
+
+        for i in range(n):
+            c = costs[i]
+            r = returns[i]
+            # Iterate backwards to ensure 0/1 constraint
+            for b in range(total_budget, c - 1, -1):
+                dp[b] = max(dp[b], dp[b - c] + r)
+
+        return dp[total_budget]
+```
+
+### 4. Complexity Analysis
+Time Complexity: O(N * total_budget) where N is the number of candidate campaigns. Space Complexity: O(total_budget) using a 1D space-optimized dynamic programming array.
+
+---
+
+## Problem 5: Ad Keyword Autocomplete & Prefix Search (Trie)
+**Topic:** Trie / Tree / Prefix Search | **Difficulty:** Medium
+
+### 1. Problem Statement
+AdsGency AI provides a search bar where marketing operators type ad keywords to see autocomplete recommendations. Implement a Trie-based autocomplete system `KeywordTrie` that stores ad keywords along with their search popularity frequencies.
+
+Methods:
+- `insert(word: str, frequency: int) -> None`: Inserts a keyword and its historical search volume.
+- `search_prefix(prefix: str) -> List[str]`: Returns up to the top 3 highest-frequency keywords starting with `prefix`. If frequencies tie, sort lexicographically.
+
+### 2. Complete Thought Process & Intuition
+A Trie (Prefix Tree) is the optimal structure for prefix-based search and autocomplete queries.
+
+Node Design:
+Each `TrieNode` contains:
+- `children`: Dict mapping char -> TrieNode
+- `top_words`: A cached list of the top words passing through or ending at this prefix node, sorted by `(-frequency, word)`.
+
+Algorithm:
+1. When inserting `(word, frequency)`, traverse the Trie character by character.
+2. At each node along the path (including root), maintain the top candidate keywords. We can update the list of candidates, sort by `(-freq, word)`, and slice the top 3.
+3. In `search_prefix(prefix)`, traverse down to the node corresponding to the last character of `prefix`. If any character is missing, return `[]`.
+4. If found, return the pre-computed `top_words` in O(1) time relative to the prefix length.
+
+### 3. Python 3 Implementation
+```python
+from typing import List, Dict
+
+class TrieNode:
+    def __init__(self):
+        self.children: Dict[str, 'TrieNode'] = {}
+        # Stores tuples of (-frequency, word) for top suggestions
+        self.top_suggestions: List[tuple] = []
+
+class KeywordTrie:
+    def __init__(self):
+        self.root = TrieNode()
+
+    def insert(self, word: str, frequency: int) -> None:
+        node = self.root
+        for char in word:
+            if char not in node.children:
+                node.children[char] = TrieNode()
+            node = node.children[char]
+            
+            # Update suggestions at current prefix
+            node.top_suggestions = [item for item in node.top_suggestions if item[1] != word]
+            node.top_suggestions.append((-frequency, word))
+            node.top_suggestions.sort()
+            if len(node.top_suggestions) > 3:
+                node.top_suggestions.pop()
+
+    def search_prefix(self, prefix: str) -> List[str]:
+        node = self.root
+        for char in prefix:
+            if char not in node.children:
+                return []
+            node = node.children[char]
+        return [word for _, word in node.top_suggestions]
+```
+
+### 4. Complexity Analysis
+Time Complexity: Insert is O(L * K log K) where L is keyword length and K = 3. Search is O(P) where P is prefix length. Space Complexity: O(N * L) where N is number of words and L is average word length.
+
+---
+
+## Problem 6: Real-Time Event Stream Deduplication
+**Topic:** Sliding Window / Hash Set / Deque | **Difficulty:** Medium
+
+### 1. Problem Statement
+AdsGency AI consumes conversion webhooks from Meta, Google, and TikTok. Due to network retries, duplicate events frequently arrive within a 10-minute sliding window. Given a stream of events `(event_id, timestamp)` arriving in chronological order, implement `EventDeduplicator` that filters out duplicate events within a 600-second window while keeping memory bounded.
+
+### 2. Complete Thought Process & Intuition
+To deduplicate streaming events with a time window constraint:
+1. We maintain a Hash Set `seen_ids` for O(1) membership lookup.
+2. We maintain a double-ended queue `event_queue` storing `(event_id, timestamp)` in chronological order.
+3. For each incoming event `(event_id, timestamp)`:
+   - Evict expired events: While `event_queue` is non-empty and `event_queue[0][1] <= timestamp - 600`, pop the oldest event `(old_id, old_time)` and remove `old_id` from `seen_ids`.
+   - Check duplication: If `event_id` is in `seen_ids`, it is a duplicate—drop it and return `False`.
+   - Otherwise, add `event_id` to `seen_ids`, append `(event_id, timestamp)` to `event_queue`, and return `True`.
+
+### 3. Python 3 Implementation
+```python
+from collections import deque
+from typing import Set, Tuple
+
+class EventDeduplicator:
+    def __init__(self, window_seconds: int = 600):
+        self.window_seconds = window_seconds
+        self.seen_ids: Set[str] = set()
+        self.event_queue: deque[Tuple[str, float]] = deque()
+
+    def process_event(self, event_id: str, timestamp: float) -> bool:
+        # Evict events older than window_seconds
+        cutoff = timestamp - self.window_seconds
+        while self.event_queue and self.event_queue[0][1] <= cutoff:
+            old_id, _ = self.event_queue.popleft()
+            self.seen_ids.discard(old_id)
+
+        # Check for duplicate
+        if event_id in self.seen_ids:
+            return False
+
+        # Register new unique event
+        self.seen_ids.add(event_id)
+        self.event_queue.append((event_id, timestamp))
+        return True
+```
+
+### 4. Complexity Analysis
+Time Complexity: Amortized O(1) per incoming event. Space Complexity: O(W) where W is the number of events received within the 10-minute window.
+
+---
+
+## Problem 7: Priority Queue for Multi-Platform Ad Bidding
+**Topic:** Heap / Priority Queue | **Difficulty:** Medium
+
+### 1. Problem Statement
+AdsGency AI manages real-time bids across multiple ad auctions. Each bid has an `auction_id`, a `bid_amount`, and an `expected_ctr`. The composite priority score of a bid is defined as `score = bid_amount * expected_ctr`. Implement `AdBidAuctionManager` to maintain the top-k highest priority bids across streaming updates.
+
+### 2. Complete Thought Process & Intuition
+To maintain the top-k highest scoring items from a continuous stream:
+A Min-Heap of fixed size `k` is the optimal choice.
+
+Algorithm:
+1. Store elements in the min-heap as `(score, auction_id, bid_amount)`.
+2. When a new bid arrives:
+   - Calculate its score: `score = bid_amount * expected_ctr`.
+   - If the heap has fewer than `k` items, push the bid.
+   - If the heap has `k` items and the new bid's score is strictly greater than the heap root (the smallest score among current top-k), pop the root and push the new bid.
+3. To retrieve current top bids, extract and sort the elements descending.
+
+### 3. Python 3 Implementation
+```python
+import heapq
+from typing import List, Tuple
+
+class AdBidAuctionManager:
+    def __init__(self, k: int):
+        self.k = k
+        # Min-heap storing tuples of (score, auction_id, bid_amount)
+        self.min_heap: List[Tuple[float, str, float]] = []
+
+    def submit_bid(self, auction_id: str, bid_amount: float, expected_ctr: float) -> None:
+        score = round(bid_amount * expected_ctr, 4)
+
+        if len(self.min_heap) < self.k:
+            heapq.heappush(self.min_heap, (score, auction_id, bid_amount))
+        elif score > self.min_heap[0][0]:
+            heapq.heapreplace(self.min_heap, (score, auction_id, bid_amount))
+
+    def get_top_bids(self) -> List[Tuple[str, float, float]]:
+        # Return sorted descending by score
+        return [(item[1], item[2], item[0]) for item in sorted(self.min_heap, reverse=True)]
+```
+
+### 4. Complexity Analysis
+Time Complexity: O(log k) for each bid submission. O(k log k) to inspect top bids. Space Complexity: O(k) for the bounded heap.
+
+---
+
+## Problem 8: Merge Overlapping Campaign Flight Schedules
+**Topic:** Intervals / Sorting | **Difficulty:** Medium
+
+### 1. Problem Statement
+Multiple ad sets run during specified start and end dates (intervals). Given an array of intervals `schedules` where `schedules[i] = [start_i, end_i]`, merge all overlapping campaign schedules and return an array of the non-overlapping intervals that cover all the schedules in the input.
+
+### 2. Complete Thought Process & Intuition
+This is the classic Merge Intervals problem, essential for calculating continuous active campaign flight dates.
+
+Algorithm:
+1. If the input list is empty or has 1 interval, return it immediately.
+2. Sort the intervals based on their start times: `schedules.sort(key=lambda x: x[0])`.
+3. Initialize an empty list `merged` and append the first interval.
+4. Iterate through the remaining intervals `curr`:
+   - Let `last = merged[-1]`.
+   - If `curr[0] <= last[1]`, the intervals overlap. Update `last[1] = max(last[1], curr[1])`.
+   - Otherwise, there is no overlap; append `curr` to `merged`.
+5. Return `merged`.
+
+### 3. Python 3 Implementation
+```python
+from typing import List
+
+class CampaignScheduleMerger:
+    def merge_schedules(self, schedules: List[List[int]]) -> List[List[int]]:
+        if not schedules:
+            return []
+
+        # Sort by interval start time
+        schedules.sort(key=lambda x: x[0])
+        merged = [schedules[0]]
+
+        for curr in schedules[1:]:
+            last = merged[-1]
+            # Overlap detected
+            if curr[0] <= last[1]:
+                last[1] = max(last[1], curr[1])
+            else:
+                merged.append(curr)
+
+        return merged
+```
+
+### 4. Complexity Analysis
+Time Complexity: O(N log N) dominated by sorting the intervals. Space Complexity: O(N) to store the merged result.
+
+---
+
+## Problem 9: Detect Circular Delegation Loops in Multi-Agent Workflows
+**Topic:** Graph / DFS / Cycle Detection | **Difficulty:** Medium
+
+### 1. Problem Statement
+In AdsGency's multi-agent system, an agent can delegate sub-tasks to other agents. Given an integer `num_agents` (labeled `0` to `num_agents - 1`) and a list of directed delegation pairs `delegations` where `[u, v]` represents Agent `u` delegating to Agent `v`, determine whether the delegation network contains any circular deadlocks (cycles). Return `True` if a cycle exists, and `False` otherwise.
+
+### 2. Complete Thought Process & Intuition
+To detect a cycle in a directed graph, we can use Depth First Search (DFS) with a 3-color state tracking approach:
+- State 0 (WHITE / Unvisited): Node has not been visited yet.
+- State 1 (GRAY / Visiting): Node is currently in the active DFS recursion stack.
+- State 2 (BLACK / Visited): Node and all its descendants have been completely processed.
+
+Algorithm:
+1. Build an adjacency list `graph`.
+2. Maintain a `visited` array initialized to 0 for all nodes.
+3. For each node from `0` to `num_agents - 1`:
+   - If the node is in State 0, run DFS.
+   - If DFS encounters a node in State 1 (currently in the active recursion call stack), a back-edge is found, meaning a cycle exists! Return `True`.
+4. If all nodes reach State 2 without encountering a back-edge, return `False`.
+
+### 3. Python 3 Implementation
+```python
+from typing import List
+
+class MultiAgentDeadlockDetector:
+    def has_circular_delegation(self, num_agents: int, delegations: List[List[int]]) -> bool:
+        graph = {i: [] for i in range(num_agents)}
+        for u, v in delegations:
+            graph[u].append(v)
+
+        # 0 = Unvisited, 1 = Visiting (in current path), 2 = Completely Visited
+        state = [0] * num_agents
+
+        def dfs(node: int) -> bool:
+            state[node] = 1  # Mark visiting
+
+            for neighbor in graph[node]:
+                if state[neighbor] == 1:
+                    return True  # Cycle detected
+                if state[neighbor] == 0:
+                    if dfs(neighbor):
+                        return True
+
+            state[node] = 2  # Mark completely processed
+            return False
+
+        for agent in range(num_agents):
+            if state[agent] == 0:
+                if dfs(agent):
+                    return True
+
+        return False
+```
+
+### 4. Complexity Analysis
+Time Complexity: O(V + E) where V = num_agents and E = len(delegations). Space Complexity: O(V + E) for graph storage and recursion call stack.
+
+---
+
+## Problem 10: Longest Substring Without Repeating Keywords
+**Topic:** Sliding Window / Two Pointers / Hash Map | **Difficulty:** Medium
+
+### 1. Problem Statement
+AdsGency AI generates comma-separated ad headline tags. Given a string `tags` containing characters, find the length of the longest contiguous substring without any repeating characters to maximize headline variety.
+
+### 2. Complete Thought Process & Intuition
+We use a dynamic sliding window with two pointers (`left` and `right`) and a Hash Map `last_seen` that tracks the most recent index of each character.
+
+Algorithm:
+1. Initialize `max_len = 0` and `left = 0`.
+2. Iterate `right` from 0 to `len(tags) - 1`:
+   - Let `char = tags[right]`.
+   - If `char` is in `last_seen` and its last seen index is `>= left`, advance `left` to `last_seen[char] + 1` to exclude the duplicate.
+   - Update `last_seen[char] = right`.
+   - Update `max_len = max(max_len, right - left + 1)`.
+3. Return `max_len`.
+
+### 3. Python 3 Implementation
+```python
+class HeadlineVarietyFinder:
+    def length_of_longest_unique_substring(self, s: str) -> int:
+        last_seen = {}
+        max_len = 0
+        left = 0
+
+        for right, char in enumerate(s):
+            if char in last_seen and last_seen[char] >= left:
+                left = last_seen[char] + 1
+            last_seen[char] = right
+            max_len = max(max_len, right - left + 1)
+
+        return max_len
+```
+
+### 4. Complexity Analysis
+Time Complexity: O(N) where N is string length, as both pointers traverse at most N steps. Space Complexity: O(min(N, M)) where M is the character alphabet size.
+
+---
+
+## Problem 11: Design In-Memory Key-Value Store with TTL & Transactions
+**Topic:** Design / Stack / Hash Map | **Difficulty:** Hard
+
+### 1. Problem Statement
+Implement an in-memory transactional key-value store `TransactionalKV` supporting `get`, `set`, `delete`, and transaction commands `begin`, `commit`, and `rollback`. Transactions can be nested. If a transaction is rolled back, all mutations made within it must be reverted.
+
+### 2. Complete Thought Process & Intuition
+To support nested transactions with rollback:
+1. We maintain a primary database dictionary `store`.
+2. We maintain a stack of transaction contexts `transaction_stack = []`.
+3. When `begin()` is called, push an empty dictionary representing the delta/undo log for that transaction level.
+4. When `set(key, value)` or `delete(key)` is called:
+   - If inside a transaction (`transaction_stack` is non-empty), record the previous state of `key` in the top transaction's undo log (if not already recorded).
+   - Apply the mutation to `store`.
+5. When `rollback()` is called:
+   - Pop the top transaction from the stack.
+   - For every key in the undo log, restore its previous value in `store`.
+6. When `commit()` is called:
+   - Pop the top transaction. If there is an outer parent transaction, merge the undo log into the parent. If it was the outermost transaction, changes become permanent.
+
+### 3. Python 3 Implementation
+```python
+from typing import Optional, Dict, List
+
+class TransactionalKV:
+    def __init__(self):
+        self.store: Dict[str, str] = {}
+        # Stack of undo logs: maps key -> previous_value (None if key was absent)
+        self.transaction_stack: List[Dict[str, Optional[str]]] = []
+
+    def get(self, key: str) -> Optional[str]:
+        return self.store.get(key, None)
+
+    def set(self, key: str, value: str) -> None:
+        if self.transaction_stack:
+            # Record original value before mutation if not yet recorded in current tx
+            undo_log = self.transaction_stack[-1]
+            if key not in undo_log:
+                undo_log[key] = self.store.get(key, None)
+        self.store[key] = value
+
+    def delete(self, key: str) -> None:
+        if self.transaction_stack:
+            undo_log = self.transaction_stack[-1]
+            if key not in undo_log:
+                undo_log[key] = self.store.get(key, None)
+        self.store.pop(key, None)
+
+    def begin(self) -> None:
+        self.transaction_stack.append({})
+
+    def commit(self) -> bool:
+        if not self.transaction_stack:
+            return False
+        committed_undo = self.transaction_stack.pop()
+        # If nested, merge into parent transaction
+        if self.transaction_stack:
+            parent_undo = self.transaction_stack[-1]
+            for key, val in committed_undo.items():
+                if key not in parent_undo:
+                    parent_undo[key] = val
+        return True
+
+    def rollback(self) -> bool:
+        if not self.transaction_stack:
+            return False
+        undo_log = self.transaction_stack.pop()
+        for key, prev_val in undo_log.items():
+            if prev_val is None:
+                self.store.pop(key, None)
+            else:
+                self.store[key] = prev_val
+        return True
+```
+
+### 4. Complexity Analysis
+Time Complexity: O(1) for get, set, delete, and begin. O(K) for commit and rollback where K is the number of keys mutated in the transaction. Space Complexity: O(N + K) where N is total keys and K is uncommitted mutations.
+
+---
+
+## Problem 12: Top-K Frequent Ad Search Queries in Streaming Window
+**Topic:** Hash Map + Min-Heap | **Difficulty:** Medium
+
+### 1. Problem Statement
+Given a list of ad search keyword queries `queries` and an integer `k`, return the `k` most frequent queries. If two queries have the same frequency, the one with lower alphabetical order should come first.
+
+### 2. Complete Thought Process & Intuition
+1. Count the frequency of each search query using `collections.Counter`.
+2. We need the top `k` elements based on `(frequency DESC, query ASC)`.
+3. To achieve O(N log K) time complexity, we can use a Min-Heap of size `k`.
+   - In Python, we define a wrapper class or tuple. For a min-heap, we want lower frequency to be popped first, and higher alphabetical string to be popped first in tie-breaks.
+   - So we store `(freq, ReverseString(query))` or sort the frequencies directly using `heapq.nsmallest` / `heapq.nlargest`.
+4. Alternatively, use Python's `heapq` with custom comparison or sort all unique keys by `(-freq, query)` and slice `[:k]`.
+
+### 3. Python 3 Implementation
+```python
+from collections import Counter
+import heapq
+from typing import List
+
+class FrequencyQueryItem:
+    def __init__(self, query: str, freq: int):
+        self.query = query
+        self.freq = freq
+
+    def __lt__(self, other: 'FrequencyQueryItem') -> bool:
+        # Min-heap criteria: smaller freq first; if tie, lexicographically larger query first
+        if self.freq != other.freq:
+            return self.freq < other.freq
+        return self.query > other.query
+
+class TopKQueryTracker:
+    def top_k_queries(self, queries: List[str], k: int) -> List[str]:
+        counts = Counter(queries)
+        min_heap = []
+
+        for query, freq in counts.items():
+            item = FrequencyQueryItem(query, freq)
+            heapq.heappush(min_heap, item)
+            if len(min_heap) > k:
+                heapq.heappop(min_heap)
+
+        # Extract items and sort descending by priority
+        result = []
+        while min_heap:
+            result.append(heapq.heappop(min_heap))
+        
+        result.sort(key=lambda x: (-x.freq, x.query))
+        return [x.query for x in result]
+```
+
+### 4. Complexity Analysis
+Time Complexity: O(N + U log K) where N is len(queries) and U is unique queries count. Space Complexity: O(U) for the frequency map and O(k) for the heap.
+
+---
+
+## Problem 13: Subarray Spend Sum Equals Target Budget
+**Topic:** Prefix Sums + Hash Map | **Difficulty:** Medium
+
+### 1. Problem Statement
+Given an array of integers `daily_spends` representing daily marketing costs and an integer `target_budget`, return the total number of continuous sub-periods (subarrays) where the cumulative ad spend equals exactly `target_budget`.
+
+### 2. Complete Thought Process & Intuition
+A brute-force solution checks all O(N^2) subarrays.
+We can optimize this to O(N) using Prefix Sums and a Hash Map:
+
+Let `prefix_sum[i]` be the cumulative sum from index 0 to `i`.
+A subarray from `j + 1` to `i` has sum:
+`sum(j+1...i) = prefix_sum[i] - prefix_sum[j]`
+We want this to equal `target_budget`:
+`prefix_sum[i] - prefix_sum[j] = target_budget`
+Rearranging:
+`prefix_sum[j] = prefix_sum[i] - target_budget`
+
+Algorithm:
+1. Maintain `running_sum = 0` and a hash map `prefix_counts` initialized with `{0: 1}` (representing an empty subarray).
+2. For each value in `daily_spends`:
+   - `running_sum += val`
+   - If `(running_sum - target_budget)` exists in `prefix_counts`, add its frequency to `count`.
+   - Increment `prefix_counts[running_sum]`.
+3. Return `count`.
+
+### 3. Python 3 Implementation
+```python
+from collections import defaultdict
+from typing import List
+
+class BudgetPacingAuditor:
+    def count_target_spend_subarrays(self, daily_spends: List[int], target_budget: int) -> int:
+        prefix_counts = defaultdict(int)
+        prefix_counts[0] = 1  # Base case for subarray starting at index 0
+
+        running_sum = 0
+        total_subarrays = 0
+
+        for spend in daily_spends:
+            running_sum += spend
+            complement = running_sum - target_budget
+            if complement in prefix_counts:
+                total_subarrays += prefix_counts[complement]
+            prefix_counts[running_sum] += 1
+
+        return total_subarrays
+```
+
+### 4. Complexity Analysis
+Time Complexity: O(N) single pass through the array. Space Complexity: O(N) to store prefix sum frequencies.
+
+---
+
+## Problem 14: Lowest Common Ancestor in Ad Taxonomy Category Tree
+**Topic:** Binary Tree / Tree Traversal | **Difficulty:** Medium
+
+### 1. Problem Statement
+AdsGency AI organizes ad verticals into a hierarchical taxonomy tree. Given the root of a binary taxonomy tree and two category nodes `p` and `q`, find the lowest common ancestor (LCA) node of `p` and `q`.
+
+### 2. Complete Thought Process & Intuition
+The lowest common ancestor is defined between two nodes `p` and `q` as the lowest node in `T` that has both `p` and `q` as descendants (where we allow a node to be a descendant of itself).
+
+Recursive Approach:
+1. Base cases:
+   - If `root` is `None`, return `None`.
+   - If `root == p` or `root == q`, return `root`.
+2. Recursively search left and right subtrees:
+   - `left = lowestCommonAncestor(root.left, p, q)`
+   - `right = lowestCommonAncestor(root.right, p, q)`
+3. If both `left` and `right` return non-null, `p` and `q` reside in separate branches, so current `root` is their LCA!
+4. If only one of `left` or `right` is non-null, return that non-null node.
+
+### 3. Python 3 Implementation
+```python
+class TreeNode:
+    def __init__(self, val: str):
+        self.val = val
+        self.left = None
+        self.right = None
+
+class AdTaxonomyNavigator:
+    def lowest_common_ancestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
+        if not root or root == p or root == q:
+            return root
+
+        left = self.lowest_common_ancestor(root.left, p, q)
+        right = self.lowest_common_ancestor(root.right, p, q)
+
+        # If p and q found in separate branches, root is LCA
+        if left and right:
+            return root
+
+        # Otherwise return whichever side found a match
+        return left if left else right
+```
+
+### 4. Complexity Analysis
+Time Complexity: O(N) where N is number of nodes in tree. Space Complexity: O(H) where H is tree height for recursion stack.
+
+---
+
+## Problem 15: Median of Real-Time Ad Click Latencies from Stream
+**Topic:** Two Heaps / Heap | **Difficulty:** Hard
+
+### 1. Problem Statement
+AdsGency AI monitors real-time ad click response latencies in milliseconds. Implement a data structure `MedianStreamFinder` that calculates the median latency dynamically in O(1) time as new latencies arrive.
+
+Methods:
+- `add_latency(val: int) -> None`: Adds a latency value from the streaming pipeline.
+- `find_median() -> float`: Returns the median of all recorded latencies.
+
+### 2. Complete Thought Process & Intuition
+To compute the median dynamically in O(1) time:
+We partition the stream into two halves using two heaps:
+1. Max-Heap (`small`): Stores the smaller half of numbers. Root contains the maximum of the smaller half.
+2. Min-Heap (`large`): Stores the larger half of numbers. Root contains the minimum of the larger half.
+
+Balancing Invariants:
+1. Every element in `small` must be <= every element in `large`.
+2. `len(small)` must be either equal to `len(large)` (even count) or `len(large) + 1` (odd count).
+
+Algorithm:
+- When adding `val`:
+  - Push to `small` (negated because Python heapq is min-heap).
+  - Pop max from `small` and push to `large` to enforce invariant 1.
+  - If `len(large) > len(small)`, pop min from `large` and push to `small` to enforce invariant 2.
+- Finding median:
+  - If odd total elements (`len(small) > len(large)`), median is `-small[0]`.
+  - If even total elements, median is `(-small[0] + large[0]) / 2.0`.
+
+### 3. Python 3 Implementation
+```python
+import heapq
+
+class MedianStreamFinder:
+    def __init__(self):
+        # Max-heap for lower half (negated values)
+        self.small = []
+        # Min-heap for upper half
+        self.large = []
+
+    def add_latency(self, val: int) -> None:
+        # Push to small max-heap
+        heapq.heappush(self.small, -val)
+
+        # Balance invariant 1: max of small <= min of large
+        max_small = -heapq.heappop(self.small)
+        heapq.heappush(self.large, max_small)
+
+        # Balance invariant 2: len(small) >= len(large)
+        if len(self.large) > len(self.small):
+            min_large = heapq.heappop(self.large)
+            heapq.heappush(self.small, -min_large)
+
+    def find_median(self) -> float:
+        if len(self.small) > len(self.large):
+            return float(-self.small[0])
+        return (-self.small[0] + self.large[0]) / 2.0
+```
+
+### 4. Complexity Analysis
+Time Complexity: O(log N) for add_latency; O(1) for find_median. Space Complexity: O(N) to store stream latencies in the two heaps.
+
+---
+
+# Part 3: Top 10 System Designs (AdsGency AI Infrastructure)
+
+Every system design breakdown is presented in a **simple, conversational walkthrough format written in small, clear paragraph chunks WITHOUT ANY BULLET POINTS**, guiding the interviewer naturally through Functional Requirements, Non-Functional Requirements, Core Entities, API Design, Data Flow, High-Level Architecture, and Non-Functional Deep Dives.
+
+
+## System Design 1: Multi-Agent Autonomous Ad Campaign Orchestration Engine
+**Domain Category:** Multi-Agent Systems & AI Infrastructure
+
+### 1. Complete Problem Statement
+Design an autonomous multi-agent orchestration engine for AdsGency AI that allows marketing operators to input natural language campaign objectives. The system must autonomously plan, generate copy and visual creatives, configure audience targeting, and deploy campaigns across Google Ads, Meta, and TikTok without entering infinite execution loops or conflicting actions.
+
+### 2. High-Level Architecture Diagram
+```
+=== MULTI-AGENT AUTONOMOUS CAMPAIGN ORCHESTRATOR ===
+
+[1] Operator Dashboard (Next.js / React)
+        │
+        ▼
+[2] API Gateway & Auth (FastAPI / JWT)
+        │
+        ▼
+[3] Supervisor & Planner Agent (LangGraph / State Machine)
+        │
+        ├──────────────────────┬──────────────────────┐
+        ▼                      ▼                      ▼
+[4] Creative Copy Agent   [5] Audience Agent    [6] Budget Pacing Agent
+ (OpenAI / Claude / RAG)   (Customer Match/DB)   (Redis / Multi-Platform)
+        │                      │                      │
+        └──────────────────────┼──────────────────────┘
+                               │
+                               ▼
+[7] Brand Safety & Verification Agent (Semantic Guardrails)
+                               │
+                               ▼
+[8] Ad Platform Gateway (Meta, Google, TikTok Graph APIs)
+```
+
+### 3. Functional Requirements (Conversational Walkthrough)
+When we look at what this system needs to accomplish for our users, the core experience begins when a marketing operator enters a natural language prompt specifying a marketing goal, such as launching a summer promotional blitz for an e-commerce brand with a daily budget split across social channels. The system needs to take that broad objective and automatically break it down into concrete, actionable steps across creative generation, audience targeting, and multi-platform deployment.
+
+Once the plan is established, specialized autonomous agents need to execute the individual components of the campaign. A copy agent generates platform-compliant headlines and captions, an audience agent pulls relevant demographic clusters and lookalike segments, and a budget agent configures platform-specific bidding parameters. 
+
+Before any mutation is submitted to external ad platforms, the system must enforce a verification step where safety guardrails inspect the generated copy and budget limits. Finally, the system needs to persist the execution state at every stage so that an operator can inspect the intermediate reasoning traces, pause the workflow, or manually adjust parameters before final deployment.
+
+### 4. Non-Functional Requirements (Conversational Walkthrough)
+On the non-functional side, reliability and determinism are our highest priorities because we are automating real marketing spend across external financial platforms. The system cannot afford to lose state or trigger duplicate ad creation if an external network connection blinks during deployment.
+
+We need our orchestration engine to maintain high availability with four nines of uptime so that scheduled campaigns launch reliably across global time zones. Latency for the initial planning phase should complete in under ten seconds, giving the operator rapid feedback, while background multi-platform execution can run asynchronously within two minutes.
+
+Data isolation across enterprise tenants is non-negotiable. Every agent execution, context memory, and ad platform token must be strictly segregated by organization so that one customer's proprietary marketing strategy is never leaked or accessible to another tenant's agents.
+
+### 5. Core Entities & Data Modeling
+The central entity in our data model is the Campaign Workflow, which tracks the overall lifecycle, tenant identity, status, and raw user prompt. Each workflow links to multiple Agent Task Execution records, representing discrete tasks performed by specialized agents such as copy generation, asset formatting, or budget allocation.
+
+Beneath each task, we store Agent Message Traces, which capture the exact prompts, LLM model identifiers, tool calls, and platform responses. This creates an immutable audit trail for observability and debugging.
+
+We also maintain the Campaign Deployment entity, which records external platform identifiers such as the Meta Ad Set ID or Google Campaign ID, alongside status flags, timestamps, and active version numbers to support safe rollbacks and reconciliation.
+
+### 6. API & Interface Design
+Our API surface is built using FastAPI and exposes clean RESTful endpoints for workflow creation and real-time streaming. An operator initiates a workflow by sending a POST request to the campaigns endpoint with their prompt, budget, and target platforms, receiving back a unique workflow identifier and an HTTP 202 Accepted status.
+
+To inspect progress without polling, the frontend connects to an SSE streaming endpoint that continuously emits state transition events as individual agents complete their tasks. This delivers live progress updates and reasoning tokens directly into the React user interface.
+
+If an operator wants to modify an active plan, they send a PATCH request to the workflow tasks endpoint with updated parameters. Furthermore, a POST request to the approval endpoint allows human operators to provide final authorization before external ad platform mutations execute.
+
+### 7. End-to-End Data Flow
+The end-to-end data flow begins when the operator submits their campaign prompt through our Nextra and React frontend dashboard. The request enters our FastAPI gateway, where authentication tokens are validated, and a new workflow record is committed to PostgreSQL with a pending state.
+
+The gateway pushes the workflow task into a Redis queue, which is picked up by a LangGraph supervisor worker. The supervisor prompts our primary LLM to construct a deterministic execution graph, decomposing the campaign into sub-tasks for copy generation, audience selection, and budget calculation.
+
+These worker agents execute their tasks in parallel or sequence, pulling brand context and historical exemplars from PostgreSQL using pgvector embeddings. Once all worker outputs are assembled, the payload passes through the Brand Safety Agent for compliance verification. Upon approval, the Ad Platform Gateway dispatches signed requests to Meta, Google, and TikTok, writing back external IDs to our database and streaming a completion notification to the operator.
+
+### 8. High-Level System Architecture (HLD)
+Our high-level architecture is organized into four distinct horizontal tiers: the presentation and edge tier, the API and state machine tier, the agent worker tier, and the external integration tier. The presentation layer is powered by Next.js and React, delivering an interactive operator interface with real-time streaming capabilities.
+
+The API tier runs FastAPI microservices containerized on Kubernetes EKS behind an AWS Application Load Balancer. It handles rate limiting, request validation, and tenant authentication before dispatching jobs to our messaging bus.
+
+The agent worker tier utilizes LangGraph state machines backed by Redis for ephemeral state and distributed locking, with PostgreSQL serving as our source of truth. The external integration tier wraps external advertising APIs behind circuit breakers and idempotent retry queues, ensuring our platform interacts safely with third-party networks.
+
+### 9. Deep Dive into Non-Functional Requirements & Resilience
+Let's take a deep dive into how we guarantee loop prevention, fault recovery, and strict tenant isolation. In autonomous agent loops, there is always a risk that an agent encounters ambiguous feedback and repeatedly invokes tools in an infinite recursion, draining LLM token budgets and stalling the system. We eliminate this by enforcing a hard recursion limit inside LangGraph and tracking a state hash in Redis; if the same state hash repeats twice without forward progress, the workflow automatically halts and requests human intervention.
+
+For fault tolerance, every step in our state graph is an idempotent checkpoint persisted in PostgreSQL. If a worker pod crashes mid-execution, a secondary worker immediately recovers the workflow from the last verified checkpoint rather than starting from scratch, preventing duplicate creative generation and wasted API spend.
+
+Tenant isolation is enforced through PostgreSQL Row-Level Security paired with encrypted tenant context in our Redis key namespacing. Furthermore, external platform OAuth tokens are encrypted at rest using AWS KMS envelope encryption, ensuring that agents can only decrypt credentials belonging to the active tenant session.
+
+---
+
+## System Design 2: Real-Time Ad Spend & Budget Pacing Engine
+**Domain Category:** Real-Time Streaming & Financial Infrastructure
+
+### 1. Complete Problem Statement
+Design an ultra-low latency, distributed budget pacing engine for AdsGency AI that tracks spend across Google, Meta, and TikTok ad accounts in real time. The system must prevent overspending during viral traffic surges, adjust bids dynamically based on hourly pacing targets, and execute emergency ad pauses within 500 milliseconds of budget exhaustion.
+
+### 2. High-Level Architecture Diagram
+```
+=== REAL-TIME BUDGET PACING & EMERGENCY CIRCUIT BREAKER ===
+
+[1] Ad Platform Webhooks (Meta, Google, TikTok Clicks/Spend)
+        │
+        ▼
+[2] Ingestion Gateway (FastAPI / Async Buffer)
+        │
+        ▼
+[3] Partitioned Event Log (Apache Kafka / Key: campaign_id)
+        │
+        ▼
+[4] Streaming Processor (Python / Flink / Redis Lua Scripts)
+        │
+        ├── Atomic Spend Accumulator (Redis In-Memory Counter)
+        │
+        ▼
+[5] Pacing Evaluator (Linear & PID Controller Algorithm)
+        │
+        ├── Normal Pacing ───> [6] Dynamic Bid Adjustment Queue
+        │
+        └── Overspend Detected ───> [7] Emergency Kill Switch (HTTP <500ms)
+                                          │
+                                          ▼
+                                   [8] External Ad APIs (Campaign Pause)
+```
+
+### 3. Functional Requirements (Conversational Walkthrough)
+The functional goal of the budget pacing engine is to ensure that a client's daily marketing capital is distributed intelligently across the day rather than being exhausted in the first few hours of the morning. When impressions and clicks occur on external platforms, raw telemetry and webhook events flow into our system detailing the exact micro-costs incurred.
+
+The engine must continuously aggregate these micro-costs in real time and compare current spend against the scheduled pacing curve. Depending on campaign strategy, the pacing algorithm might follow an even linear pacing model or an accelerated curve that capitalizes on peak conversion hours.
+
+If the pacing curve indicates that a campaign is spending faster than expected, the system must automatically calculate reduced bid values and push them to the ad networks. Conversely, if a campaign breaches its daily budget ceiling due to sudden viral spikes, the engine must trigger an automated emergency pause across all participating platforms to prevent financial overruns.
+
+### 4. Non-Functional Requirements (Conversational Walkthrough)
+Latency and accuracy are paramount when dealing with live advertising budgets. The emergency kill switch must execute and dispatch pause commands to external ad APIs within five hundred milliseconds of a budget breach to prevent overspend.
+
+Our aggregation counters must guarantee strict consistency and idempotency. Because external webhooks can be retried multiple times during network hiccups, processing the same click event twice would artificially inflate spend calculations, while dropping events would cause real-world overspending.
+
+The system must scale horizontally to handle over fifty thousand incoming webhook events per second during peak holiday shopping surges without backpressure or dropped records, maintaining high availability around the clock.
+
+### 5. Core Entities & Data Modeling
+The primary data entity is the Campaign Budget Profile, which defines the total budget, daily allocation, pacing strategy, and active status for each ad account. Linked to this is the Hourly Pacing Schedule, which maps target spend percentages to each hour of the day in the client's local time zone.
+
+We maintain the Real-Time Spend Counter entity in our in-memory cache, storing cumulative micro-dollar spend, impression counts, and last-updated timestamps for immediate atomic querying.
+
+Finally, the Budget Adjustment Ledger stores an append-only historical log of all automated bid adjustments, budget alerts, and emergency pause actions, recording the exact telemetry values that triggered each intervention.
+
+### 6. API & Interface Design
+For administrative control, the engine exposes a PUT endpoint at campaign budgets allowing operators to set or adjust daily limits and pacing models. This endpoint validates the payload and updates both the relational database and the in-memory cache atomically.
+
+For real-time visibility, an endpoint at campaign budgets pacing returns the current spend, target pacing percentage, projected daily run rate, and current health status of the campaign.
+
+There is also an emergency override endpoint accessible via POST that allows marketing operators to manually trigger an immediate campaign pause or resume across all platforms with a single authenticated call.
+
+### 7. End-to-End Data Flow
+Incoming conversion and spend webhooks from Google, Meta, and TikTok hit our lightweight ingestion gateway, which validates authentication headers and immediately writes the raw payload into a partitioned Kafka topic keyed by campaign ID.
+
+Partitioning by campaign ID ensures that all financial events for a specific campaign are processed in strict chronological order by the downstream streaming workers. The worker consumes the event and executes an atomic Lua script in Redis that checks an event deduplication filter and increments the campaign's active spend accumulator.
+
+Immediately after the accumulator updates, the pacing algorithm evaluates whether the new spend exceeds the hourly or daily limit. If the spend is normal, a bid adjustment task is scheduled; however, if the budget threshold is crossed, the worker immediately dispatches an urgent pause command directly to the ad network APIs via an asynchronous HTTP client pool while alerting operators.
+
+### 8. High-Level System Architecture (HLD)
+The architecture centers around a decoupled streaming and caching topology designed for extreme read and write performance. Ingress is handled by asynchronous FastAPI workers that push directly to an Apache Kafka cluster running across multiple availability zones.
+
+State computation is divided between an in-memory Redis cluster that holds real-time atomic accumulators and a PostgreSQL database that stores long-term campaign rules and settled financial ledgers.
+
+The decisioning layer is powered by background Python streaming workers that read from Kafka and interface with Redis via compiled Lua scripts. This ensures that spend accumulation and limit evaluation happen in a single non-blocking roundtrip. External mutations are handled by an outbound HTTP connection pool tuned with pre-warmed sockets to minimize dispatch latency.
+
+### 9. Deep Dive into Non-Functional Requirements & Resilience
+Let's look into how we achieve sub-millisecond atomic consistency and guarantee zero overspend. Redis Lua scripts are executed atomically on the server, meaning no other client can read or modify the spend key between the time we increment the balance and the time we evaluate the ceiling. This completely eliminates race conditions where concurrent webhook threads might both observe an under-budget state and fail to trigger the pause.
+
+To handle transient network failures when communicating with external ad APIs, our outbound client implements an aggressive retry strategy with exponential backoff and circuit breaking. If Meta's API responds with a temporary five-hundred error, the pause request is immediately retried on alternative connections while an emergency webhook is broadcast to our internal Slack alert channel.
+
+For disaster recovery, the streaming worker periodically takes snapshots of in-memory Redis balances and persists them to PostgreSQL. If an entire Redis instance fails, the state can be fully rehydrated in seconds by replaying Kafka offsets from the last verified database checkpoint, ensuring zero data loss.
+
+---
+
+## System Design 3: High-Throughput Multi-Platform Marketing API Gateway
+**Domain Category:** API Gateway & External Integrations
+
+### 1. Complete Problem Statement
+Design a resilient, unified Marketing API Gateway for AdsGency AI that abstracts the heterogeneous schemas, dynamic rate limits, and authentication protocols of Google Ads, Meta Graph API, and TikTok Business API into a single standardized internal interface.
+
+### 2. High-Level Architecture Diagram
+```
+=== UNIFIED MARKETING API GATEWAY ===
+
+[1] Internal Agent Workers & Services
+        │
+        ▼
+[2] Unified API Gateway (FastAPI / Pydantic Domain Model)
+        │
+        ▼
+[3] Distributed Token-Bucket Rate Limiter (Redis)
+        │
+        ├── Under Quota ───> [4] Platform Adapter Layer
+        │                          │
+        │                          ├─ Google Ads gRPC Adapter
+        │                          ├─ Meta Graph REST Adapter
+        │                          └─ TikTok Marketing REST Adapter
+        │                                  │
+        │                                  ▼
+        │                    [5] External Ad Platforms
+        │
+        └── Rate Limit Approaching ───> [6] Priority Buffer Queue (Kafka)
+```
+
+### 3. Functional Requirements (Conversational Walkthrough)
+Our marketing API gateway acts as the single bridge between our internal autonomous agent services and the external advertising networks. Internally, our agents should not have to understand the idiosyncratic JSON structures of Meta's Marketing API, the protobuf schemas of Google Ads, or the specific field names of TikTok's Business API.
+
+The gateway must provide a standardized internal domain model for campaigns, ad sets, creatives, and performance metrics. When an internal agent issues a command to create an ad, it sends a single unified payload to the gateway, which translates the request into the appropriate external platform format.
+
+The system must also handle credential management and token refreshes transparently. When OAuth access tokens expire on Meta or Google, the gateway must automatically negotiate fresh tokens using secure refresh credentials without interrupting active agent workflows.
+
+### 4. Non-Functional Requirements (Conversational Walkthrough)
+Resilience and strict adherence to external platform rate limits are the most vital non-functional requirements. External platforms will ban or throttle accounts that exceed their rate limits, which would halt all client campaigns. The gateway must dynamically throttle outbound traffic based on real-time rate limit headers.
+
+The gateway needs to achieve high throughput, capable of processing millions of outbound requests and incoming webhooks daily with an internal proxy overhead of less than twenty milliseconds.
+
+All outbound mutations must be strictly idempotent. If a network timeout occurs while creating an ad set, retrying the request must never create a duplicate ad set on the external platform, preserving client budget and campaign structure.
+
+### 5. Core Entities & Data Modeling
+The core entity is the Platform Account Connection, which stores the organization identifier, platform name, external account ID, and encrypted OAuth tokens. Each connection references a Rate Limit Quota Profile that defines the active call allowances and window durations.
+
+We also have the External Resource Mapping entity, which maintains the cross-reference between our internal UUIDs and the external platform identifiers such as Meta Campaign ID or Google Ad Group ID.
+
+Finally, the Gateway Request Audit entity logs every outbound API dispatch, capturing response codes, round-trip latency, payload hashes, and rate limit header states for debugging and compliance.
+
+### 6. API & Interface Design
+Internally, the gateway exposes RESTful routes such as POST to api v1 gateway campaigns, accepting a unified campaign schema with standard fields like name, daily budget, objective, target platforms, and flight dates.
+
+For creative uploads, a POST endpoint at api v1 gateway creatives handles asset ingestion, uploads the binary files to our Amazon S3 buckets, and registers the creative across selected ad networks concurrently.
+
+For telemetry, a GET endpoint at api v1 gateway metrics retrieves unified performance data across channels for any date range, normalizing disparate metrics into standard impressions, clicks, spend, and conversion values.
+
+### 7. End-to-End Data Flow
+An autonomous agent submits a campaign deployment request to our gateway via an internal HTTP call. The gateway validates the unified payload using Pydantic and checks the tenant's authorization credentials.
+
+Next, the gateway queries our Redis rate limiter to verify whether the target platform account has available call quota. If quota is available, the request passes into the platform-specific adapter, which formats the parameters and attaches the decrypted OAuth bearer token.
+
+The adapter sends the request over the wire to the external API using pre-warmed HTTP or gRPC client pools. Upon receiving the external response, the adapter extracts the newly generated platform resource IDs, stores the cross-reference mapping in PostgreSQL, updates the rate limit tracker with the returned header values, and returns the unified response to the calling agent.
+
+### 8. High-Level System Architecture (HLD)
+The gateway is architected as an asynchronous modular service built on FastAPI and Python, deployed across multiple pods on AWS EKS. It sits behind an internal load balancer that routes requests from agent workers and frontend services.
+
+The system relies on an in-memory Redis cluster to track distributed rate-limiting tokens across all running gateway instances. A PostgreSQL database stores account credentials, schema mappings, and audit logs.
+
+For requests that cannot be dispatched immediately due to rate limits or external platform downtime, the gateway offloads jobs into a Kafka priority queue. Background consumer workers drain this queue as soon as rate limit windows reset, ensuring zero lost operations.
+
+### 9. Deep Dive into Non-Functional Requirements & Resilience
+Let's examine how our rate limiting and idempotency mechanisms prevent external account bans and duplicate mutations. We implement a distributed token-bucket rate limiter in Redis that inspects platform-specific response headers, such as Meta's business use case usage header. When our consumption reaches eighty-five percent of the platform threshold, the gateway automatically downshifts traffic, queuing lower-priority reporting requests and prioritizing high-value campaign mutations.
+
+To guarantee idempotency, every outbound mutation generates a deterministic idempotency key derived from the campaign parameters and step identifier. When calling external APIs that support idempotency keys, such as Meta and Google, we pass this key in the request header. If an external call times out, our retry mechanism resubmits the exact same key; the external network recognizes the duplicate and returns the original result without re-executing the mutation.
+
+For platforms that lack native idempotency support, our gateway checks its internal mapping database before retrying, querying the external platform by name or client reference to verify whether the asset was already created before deciding whether to resubmit.
+
+---
+
+## System Design 4: Autonomous Creative Generation & Ad Copy A/B Testing Pipeline
+**Domain Category:** AI/LLM Pipelines & Creative Optimization
+
+### 1. Complete Problem Statement
+Design an autonomous ad creative generation and continuous A/B testing pipeline for AdsGency AI. The system must ingest product catalogs, generate high-converting ad copy and visual concepts using LLMs and diffusion models, deploy multi-variant ad sets, and dynamically reallocate budget toward winning variations using multi-armed bandit algorithms.
+
+### 2. High-Level Architecture Diagram
+```
+=== AUTONOMOUS CREATIVE GENERATION & MULTI-ARMED BANDIT A/B TESTING ===
+
+[1] Product Catalog & Brief Ingestion (PostgreSQL / S3)
+        │
+        ▼
+[2] Context Retrieval & Exemplars (pgvector / Historical CTR)
+        │
+        ▼
+[3] Multi-Variant Copy Generator (OpenAI / Claude / Pydantic)
+        │
+        ├──────────────────────┬──────────────────────┐
+        ▼                      ▼                      ▼
+  Variation A (Urgency)   Variation B (Social)   Variation C (Feature)
+        │                      │                      │
+        └──────────────────────┼──────────────────────┘
+                               │
+                               ▼
+[4] Creative Safety & Compliance Filter (Semantic Distance)
+                               │
+                               ▼
+[5] Automated Ad Deployment (Meta, Google, TikTok APIs)
+                               │
+                               ▼
+[6] Telemetry Stream (Impressions, Clicks, Conversions via Kafka)
+                               │
+                               ▼
+[7] Multi-Armed Bandit Engine (Thompson Sampling / Beta Distribution)
+                               │
+                               ▼
+[8] Automated Budget Reallocation (Dynamic Ad Spend Shift)
+```
+
+### 3. Functional Requirements (Conversational Walkthrough)
+This pipeline serves as the creative brain of AdsGency AI, responsible for generating, testing, and optimizing ad creatives automatically. The workflow begins when a client uploads their product catalog, brand style guidelines, and historical performance briefs into the platform.
+
+The creative generation engine retrieves top-performing historical ad copy and analyzes the target audience personas. It then uses LLMs to generate dozens of distinct copy variations, each exploring different psychological angles such as urgency, social proof, feature highlights, and curiosity hooks, while ensuring character counts match platform limits.
+
+Once generated and approved, the variations are grouped into multi-variant ad sets and launched across selected advertising channels. The system continuously tracks performance telemetry and automatically shifts budget away from low-converting variants toward top-performing creatives using statistical algorithms.
+
+### 4. Non-Functional Requirements (Conversational Walkthrough)
+Creative generation must maintain high semantic quality and strict adherence to brand safety guidelines. Generated copy must never include prohibited claims, hallucinations, or offensive phrasing that could jeopardize an advertiser's brand reputation.
+
+The real-time analytics loop that feeds the multi-armed bandit must process incoming conversion signals with a latency of less than five minutes so that budget reallocations occur dynamically while campaigns are live.
+
+The pipeline must support high concurrency, capable of generating hundreds of creative variations simultaneously for multiple enterprise clients without hitting LLM rate limits or exhausting backend memory.
+
+### 5. Core Entities & Data Modeling
+The Product Asset entity stores product descriptions, price points, imagery URLs, and brand tone guidelines. Linked to this is the Creative Generation Run, which captures the generation prompt, model parameters, and target channels.
+
+Each generated asset is represented by an Ad Creative Variation record, detailing the headline, body text, visual asset references, call-to-action, and unique variation tag.
+
+For tracking performance, we have the Variant Performance Score entity, which stores cumulative impressions, clicks, conversions, current conversion rate, and the alpha and beta parameters used by the Thompson Sampling bandit algorithm.
+
+### 6. API & Interface Design
+Marketing operators trigger generation through a POST request to api v1 creatives generate, passing the product identifier, desired number of variations, target platforms, and creative tone. The endpoint initiates an asynchronous job and returns a job identifier.
+
+To preview and manage generated copy, operators query a GET endpoint at api v1 creatives variations with the job ID, returning structured cards with headlines, body text, and predicted engagement scores.
+
+For real-time testing analytics, a GET endpoint at api v1 campaigns ab-test results provides real-time conversion curves, current budget distribution percentages, and statistical confidence intervals for each active variant.
+
+### 7. End-to-End Data Flow
+When an operator requests creative generation, our background worker pulls the product metadata from PostgreSQL and queries pgvector for historical ad creatives in the same industry vertical that achieved a ROAS greater than three.
+
+These top-performing examples are injected into our LLM prompt context as few-shot exemplars. The model generates structured JSON containing multiple distinct angles. The generated copy is passed through a semantic safety validator that checks against banned words and platform compliance policies.
+
+The approved creatives are deployed to external ad networks as an experimental ad set. As real-time impression and conversion webhooks arrive via Kafka, a streaming worker updates the Beta distribution parameters for each variation in Redis. Every hour, the bandit algorithm recalculates allocation weights and adjusts external ad set budgets accordingly.
+
+### 8. High-Level System Architecture (HLD)
+The creative pipeline combines asynchronous generation workers with a streaming optimization engine. Generation is powered by Python workers utilizing LangChain and direct OpenAI and Claude API integrations, orchestrated via Celery and Redis.
+
+Creative assets and historical embeddings are stored in PostgreSQL with pgvector, enabling fast semantic similarity lookups. Visual assets are stored in Amazon S3 and distributed via CloudFront CDN.
+
+The statistical optimization engine runs as a lightweight real-time microservice that reads telemetry from Kafka, updates state in Redis, and issues budget mutation requests to external ad platforms via our marketing API gateway.
+
+### 9. Deep Dive into Non-Functional Requirements & Resilience
+Let's look into the mechanics of our Thompson Sampling multi-armed bandit algorithm and how we handle brand safety. Traditional A/B tests split traffic fifty-fifty for weeks, burning substantial money on inferior ads before declaring a winner. In our system, each ad variation is modeled as a Bernoulli bandit with a Beta distribution representing its conversion probability, parameterized by alpha (successes) and beta (failures). Every hour, the system draws random samples from each variant's posterior distribution and allocates budget proportionally to the probability that a variant is optimal. This ensures that winning ads quickly receive the majority of spend while continuing to explore newer variants.
+
+For brand safety, every generated headline is evaluated against a pre-computed vector space of compliance violations and brand restrictions using cosine similarity in pgvector. If an ad's embedding falls within a safety threshold of prohibited themes or hallucinates an unauthorized discount percentage, it is automatically discarded and regenerated before human operators ever see it.
+
+To handle LLM rate limits gracefully, our generation workers utilize an adaptive backoff queue in Redis, distributing prompt requests across multiple API keys and fallback models (such as Claude 3.5 Sonnet and GPT-4o) if an upstream provider experiences elevated latency or outages.
+
+---
+
+## System Design 5: Agent Long-Term Memory & Context Retrieval System
+**Domain Category:** Vector Databases, RAG & Context Infrastructure
+
+### 1. Complete Problem Statement
+Design a scalable, low-latency long-term memory and context retrieval system for AdsGency AI. The system must store brand guidelines, past campaign performance logs, audience personas, and operator feedback, enabling autonomous agents to retrieve relevant historical context in under 50 milliseconds to guide campaign strategy.
+
+### 2. High-Level Architecture Diagram
+```
+=== AGENT LONG-TERM MEMORY & CONTEXT RETRIEVAL SYSTEM ===
+
+[1] Memory Ingestion Pipeline (Campaign Logs, Brand Docs, Feedback)
+        │
+        ▼
+[2] Document Chunking & Embedding Generator (OpenAI text-embedding-3)
+        │
+        ▼
+[3] Hybrid Storage Engine (PostgreSQL + pgvector + HNSW)
+        │
+        ├── Dense Vector Index (1536-dim HNSW Cosine Distance)
+        │
+        └── Sparse Keyword Index (PostgreSQL Full-Text Search / GIN)
+        │
+        ▼
+[4] Hybrid Retrieval & Ranker (Reciprocal Rank Fusion / RRF)
+        │
+        ├── Semantic Distance Filtering
+        ├── Metadata Scoping (tenant_id, platform, industry)
+        └── Performance Weighting (Historical ROAS Multiplier)
+        │
+        ▼
+[5] Agent Context Assembler (Injected into LLM System Prompt)
+```
+
+### 3. Functional Requirements (Conversational Walkthrough)
+Autonomous agents are only as smart as the context provided to them. If an agent does not remember that a client's brand strictly avoids aggressive discount language or that visual memes performed poorly for their target demographic last quarter, it will make repetitive, costly mistakes.
+
+The memory system must ingest and index diverse context sources, including brand guidelines, product catalogs, historical campaign performance reports, client feedback notes, and past operator corrections.
+
+When an agent is assigned a task, the memory system must execute a hybrid search to retrieve the most relevant guidelines, historical successes, and negative constraints. The retrieved context must be formatted into clean prompt context windows, enabling the agent to reason from past brand learnings seamlessly.
+
+### 4. Non-Functional Requirements (Conversational Walkthrough)
+Context retrieval must complete with sub-fifty-millisecond latency so that multi-agent reasoning chains do not suffer compounding delays during interactive planning sessions.
+
+The system must guarantee absolute tenant data isolation. Because memory contains proprietary brand secrets, audience strategies, and performance metrics, under no circumstances can one tenant's memory index be queried or leaked into another tenant's agent prompt.
+
+The storage engine must scale gracefully to millions of memory chunks across thousands of enterprise client organizations while maintaining high vector recall and fast index build times.
+
+### 5. Core Entities & Data Modeling
+The primary entity is the Memory Item, which represents a chunk of context with its raw text content, tenant identifier, category (such as Brand Rule, Historical Performance, or Audience Persona), and source document reference.
+
+Each memory item has an associated Embedding Record, storing the dense 1536-dimensional vector array indexed using an HNSW index in pgvector.
+
+We also store the Memory Feedback entity, which captures whether an agent's retrieval was helpful or unhelpful based on human operator edits, allowing the system to adjust retrieval weighting over time.
+
+### 6. API & Interface Design
+To store new context, the system provides a POST endpoint at api v1 memory items, accepting the raw text, category, metadata tags, and tenant ID, automatically triggering background chunking and embedding generation.
+
+To query memory, agents call a POST endpoint at api v1 memory query, passing their current objective, target platform, and category filters, receiving the top-k most relevant context snippets alongside similarity scores and performance metadata.
+
+For auditability, an operator can inspect an organization's active memory index via a GET endpoint at api v1 memory items, allowing them to review, update, or delete obsolete brand rules and outdated campaign learnings.
+
+### 7. End-to-End Data Flow
+When a new brand document or campaign report is uploaded, an asynchronous ingestion worker splits the text into semantic chunks of roughly three hundred tokens with fifty-token overlaps. The worker calls the embedding API to generate dense vector representations and writes the chunks, metadata, and embeddings into PostgreSQL.
+
+When an autonomous agent prepares to generate an ad campaign, it issues a retrieval query to the memory service containing its prompt and platform scope. The database executes a hybrid search combining dense vector cosine similarity with sparse full-text keyword matching using PostgreSQL's native tsvector.
+
+The results are scored using Reciprocal Rank Fusion, boosted by historical performance multipliers (such as prioritizing chunks associated with high ROAS campaigns). The top five candidate chunks are assembled into a compact context block and injected directly into the agent's prompt context window before inference begins.
+
+### 8. High-Level System Architecture (HLD)
+Our memory architecture is built entirely on PostgreSQL using the pgvector extension, avoiding the operational overhead, synchronization lag, and cost of maintaining a separate external vector database.
+
+The ingestion tier uses FastAPI workers that handle document parsing, semantic chunking, and embedding generation via asynchronous worker queues in Redis.
+
+At the database tier, PostgreSQL hosts both the relational metadata and the high-dimensional vector embeddings, indexed using HNSW for near-instant approximate nearest neighbor searches. A Redis caching layer sits in front of frequent read queries to serve identical context requests in under five milliseconds.
+
+### 9. Deep Dive into Non-Functional Requirements & Resilience
+Let's look into how we achieve sub-fifty-millisecond hybrid retrieval and guarantee strict tenant isolation. By leveraging PostgreSQL with HNSW indexes configured with optimized construction parameters (m equals sixteen and ef_construction equals sixty-four), vector similarity lookups execute in roughly fifteen milliseconds even across millions of rows. Combining this with PostgreSQL's native GIN index on full-text search provides robust hybrid retrieval that captures both conceptual meaning and exact keyword matches like brand names and product codes.
+
+Tenant isolation is strictly enforced at the database engine level using Row-Level Security. Every memory query executes within a database transaction where the tenant ID is set in the session context; the query engine physically prunes all rows that do not belong to that tenant before performing the vector distance calculation, mathematically preventing cross-tenant data contamination.
+
+To ensure long-term memory relevance and prevent context pollution from stale data, we implement a memory decay scoring algorithm. Each memory chunk's retrieval score is adjusted by an exponential time-decay factor based on its creation date, while explicit operator feedback applies positive or negative multipliers, ensuring that current brand rules consistently supersede outdated guidelines.
+
+---
+
+## System Design 6: Real-Time Campaign Monitoring & Operator Alerting Platform
+**Domain Category:** Observability, Telemetry & Full-Stack Real-Time UI
+
+### 1. Complete Problem Statement
+Design a real-time campaign observability and alerting platform for AdsGency AI. The system must process real-time click and conversion telemetry, detect performance anomalies (such as sudden CPA spikes or zero-conversion spend), stream live health metrics to a Next.js operator dashboard, and dispatch automated alerts via Slack and email within seconds.
+
+### 2. High-Level Architecture Diagram
+```
+=== REAL-TIME CAMPAIGN MONITORING & ALERTING PLATFORM ===
+
+[1] Telemetry Stream (Ad Clicks, Spend, Conversions via Kafka)
+        │
+        ▼
+[2] Stream Analytics & Anomaly Detector (Python / Scikit-Learn / Z-Score)
+        │
+        ├── Normal Metrics ───> [3] In-Memory Time-Series Cache (Redis)
+        │                             │
+        │                             ▼
+        │                       [4] FastAPI Streaming Gateway (SSE / Server-Sent Events)
+        │                             │
+        │                             ▼
+        │                       [5] Operator Live Dashboard (Next.js / React Query)
+        │
+        └── Anomaly Detected ───> [6] Alert Notification Worker
+                                      │
+                                      ├─ Slack Webhook Dispatcher
+                                      ├─ Email / PagerDuty Dispatcher
+                                      └─ Autonomous Agent Mitigation Trigger
+```
+
+### 3. Functional Requirements (Conversational Walkthrough)
+Marketing operators managing dozens of client campaigns need instant visibility into real-time performance to prevent wasted spend and catch conversion tracking bugs early. The platform must continuously ingest live telemetry from external platforms and compute key operational metrics, including click-through rates, cost per acquisition, and return on ad spend.
+
+The anomaly detection engine must constantly compare incoming performance against expected statistical baselines. If a campaign experiences an abnormal spike in spend without corresponding conversions, or if an ad platform reports widespread delivery drops, the system must flag an anomaly immediately.
+
+The platform must stream live performance metrics and active agent traces directly into an interactive operator dashboard built in Next.js, while dispatching high-priority alerts to external channels like Slack and email so teams can take action immediately.
+
+### 4. Non-Functional Requirements (Conversational Walkthrough)
+End-to-end alert latency from the moment an anomaly occurs in the telemetry stream to the delivery of a Slack notification must take less than five seconds to protect customer marketing budgets.
+
+The live dashboard streaming connection must maintain low client CPU and memory overhead, supporting hundreds of active operator sessions without server degradation or UI freezing.
+
+The monitoring pipeline must be fault-tolerant and highly available, ensuring that temporary network partitions or worker restarts never miss telemetry events or cause false alarm storms.
+
+### 5. Core Entities & Data Modeling
+The Campaign Health Metric entity stores aggregated metrics for rolling time windows (one-minute, five-minute, and hourly), including spend, impressions, clicks, conversions, and computed CPA.
+
+The Anomaly Alert Rule entity defines the detection thresholds for each campaign, specifying acceptable variance ranges, baseline metrics, and notification channels.
+
+Finally, the Alert Notification Record logs every triggered alert, the offending metric values, the notification destination, acknowledgment status, and any automated mitigation actions taken by our agents.
+
+### 6. API & Interface Design
+The monitoring platform exposes an SSE streaming endpoint at api v1 monitoring campaigns stream, allowing the Next.js frontend to subscribe to live metric updates and agent execution logs using an open HTTP connection.
+
+For alert configuration, an endpoint at api v1 monitoring rules allows operators to create, update, or disable automated alerting thresholds and webhook destinations using standard REST methods.
+
+To acknowledge or resolve an incident, operators issue a POST request to api v1 monitoring alerts resolve with the alert ID and resolution notes, updating the alert status and notifying team members across Slack.
+
+### 7. End-to-End Data Flow
+Raw click and conversion events stream continuously from external webhooks into our Kafka telemetry topic. A stream processing worker consumes events and updates rolling statistical counters in Redis.
+
+Concurrently, an anomaly detection worker evaluates current metric trends against rolling seven-day baselines using statistical z-scores. If a metric deviates beyond three standard deviations, the worker flags an anomaly and pushes an alert event to an internal notification queue.
+
+The alert dispatcher consumes the event and formats structured Slack messages with interactive buttons allowing operators to pause the campaign or approve automated agent mitigation. Simultaneously, the streaming gateway pushes updated metric payloads across open SSE connections to active Next.js dashboard clients.
+
+### 8. High-Level System Architecture (HLD)
+The monitoring architecture is designed around an event-driven streaming pipeline decoupled from our web tier. Ingestion and stream processing are powered by Kafka and Python workers, maintaining hot time-series metrics in Redis.
+
+The frontend communication layer is hosted on FastAPI, using Server-Sent Events to push updates to our Next.js and React dashboard, which leverages React Query and virtualized lists for smooth rendering.
+
+Outbound notifications are managed by asynchronous Celery workers that dispatch messages to external Slack and email APIs, backed by Redis for alert deduplication and rate throttling.
+
+### 9. Deep Dive into Non-Functional Requirements & Resilience
+Let's look into how we prevent alert fatigue and maintain smooth UI performance under high event volume. A major risk in real-time monitoring is alert flapping, where an unstable metric repeatedly crosses an alert boundary and floods operators with hundreds of duplicate Slack messages. We resolve this by implementing alert hysteresis and deduplication windows in Redis: once an alert fires for a campaign, subsequent alerts for the same condition are suppressed for thirty minutes unless the severity escalates, while a resolved notification is sent only after the metric remains stable for fifteen consecutive minutes.
+
+On the frontend, streaming thousands of raw telemetry events over WebSockets can quickly degrade browser performance and cause memory leaks. We utilize Server-Sent Events instead of WebSockets because metric monitoring is strictly a unidirectional server-to-client feed, dramatically simplifying connection management across proxies and firewalls. In the React client, updates are throttled using requestAnimationFrame, batching state updates so the UI re-renders at a steady sixty frames per second without stutter.
+
+For anomaly detection, using static thresholds often fails because weekend traffic patterns differ dramatically from weekday peaks. We employ dynamic z-score thresholding based on hour-of-week historical baselines, allowing our anomaly detector to adapt automatically to natural traffic seasonality without triggering false alarms.
+
+---
+
+## System Design 7: Distributed Dynamic Bid Optimization & Anomaly Detection Service
+**Domain Category:** Machine Learning & Algorithmic Optimization
+
+### 1. Complete Problem Statement
+Design an automated, distributed bid optimization service for AdsGency AI that computes optimal cost-per-click (CPC) and target cost-per-acquisition (tCPA) bids across Google, Meta, and TikTok ad auctions in real time, maximizing client ROAS under variable conversion rates and competitive auction dynamics.
+
+### 2. High-Level Architecture Diagram
+```
+=== DISTRIBUTED DYNAMIC BID OPTIMIZER ===
+
+[1] Campaign Performance Features (CTR, CVR, ROAS, Competitor Density)
+        │
+        ▼
+[2] Feature Engineering Pipeline (Redis Feature Store / PostgreSQL)
+        │
+        ▼
+[3] Bid Optimization Model (Gradient Boosted Trees / Scikit-Learn / PyTorch)
+        │
+        ├── Predicted CVR & Value Calculation
+        │
+        ▼
+[4] Constraint Solver (Linear Programming / Budget Ceiling & ROAS Target)
+        │
+        ▼
+[5] Anomaly & Guardrail Filter (Max Bid Cap & Rate-of-Change Limit)
+        │
+        ▼
+[6] Dynamic Bid Dispatcher (FastAPI / Outbound Gateway)
+        │
+        ▼
+[7] Ad Platform APIs (Meta, Google, TikTok Ad Set Mutations)
+```
+
+### 3. Functional Requirements (Conversational Walkthrough)
+In digital advertising auctions, static bidding strategies consistently overpay during low-converting hours and underbid during high-intent conversion spikes. The bid optimization service must analyze real-time and historical campaign signals to determine the mathematically optimal bid for each ad set.
+
+The service must ingest continuous performance features, including device type, placement, geographic location, hour of the day, and historical conversion rates. It calculates expected conversion probability and multiplies it by target transaction value to generate optimal bid recommendations.
+
+Once computed, the service evaluates the proposed bid against client-defined constraints such as maximum CPC caps and minimum ROAS targets. Approved bid adjustments are pushed directly to external ad platform APIs to maintain optimal auction positioning.
+
+### 4. Non-Functional Requirements (Conversational Walkthrough)
+Bid calculation and mutation dispatch must execute on a scheduled cadence (such as every fifteen minutes per campaign) with high throughput, evaluating thousands of active ad sets within a three-minute execution window.
+
+The system must incorporate strict financial guardrails. Even if a machine learning model predicts an extraordinarily high conversion probability, the service must enforce hard ceilings on bid values and limit the maximum percentage change allowed in a single update to prevent catastrophic spend spikes.
+
+The optimization service must be resilient against missing or delayed telemetry, gracefully falling back to safe historical baseline bids if real-time streaming data is temporarily interrupted.
+
+### 5. Core Entities & Data Modeling
+The Bid Configuration Profile entity defines the optimization target (such as Maximize Conversions or Target ROAS), allowable bid ranges (minimum and maximum CPC), and pacing aggressiveness.
+
+The Ad Set Feature Vector entity stores the latest computed feature signals, including rolling 24-hour CTR, 7-day CVR, average order value, and competitive auction win rates.
+
+Finally, the Bid Adjustment Event entity records every calculated bid, model confidence score, constraint overrides, external platform response status, and the subsequent change in campaign performance.
+
+### 6. API & Interface Design
+Marketing operators configure bidding policies through a PUT endpoint at api v1 bidding campaigns config, specifying target ROAS, maximum bid ceilings, and optimization modes.
+
+To inspect algorithmic decisions, a GET endpoint at api v1 bidding campaigns decisions returns recent bid adjustments, detailing the feature inputs, model predictions, and safety constraints applied to each decision.
+
+An emergency override endpoint accessible via POST at api v1 bidding campaigns reset allows operators to instantly reset all campaign bids back to conservative default values if market conditions behave unpredictably.
+
+### 7. End-to-End Data Flow
+Every fifteen minutes, an orchestration worker queries active campaigns from PostgreSQL and fetches the freshest feature vectors from our Redis feature store.
+
+The feature vectors are passed into our lightweight bid optimization model running in Python using Scikit-Learn and XGBoost. The model predicts the expected conversion rate for the upcoming time window and computes the raw bid value.
+
+The raw bid passes through our constraint solver, which clamps the value within client-specified minimum and maximum limits and restricts the change to no more than twenty percent of the previous bid. The approved bid adjustments are packaged into batch mutation requests and dispatched to Google, Meta, and TikTok APIs via our marketing gateway.
+
+### 8. High-Level System Architecture (HLD)
+The bid optimization architecture utilizes an offline-training and online-inference topology. Model training is executed daily using Apache Airflow pipelines on Amazon EMR or Redshift, training on historical conversion logs and outputting serialized model artifacts to Amazon S3.
+
+Online inference runs inside containerized FastAPI worker pods on AWS EKS, pulling model artifacts from S3 and reading real-time features from a low-latency Redis cluster.
+
+Outbound bid adjustments are distributed across worker pods using Kafka task queues, ensuring parallelized dispatch across hundreds of advertiser accounts without bottlenecking on external network I/O.
+
+### 9. Deep Dive into Non-Functional Requirements & Resilience
+Let's look into how we prevent model exploitation and handle cold-start campaigns. Machine learning models in advertising can easily fall victim to feedback loops where an aggressive bid wins more traffic, inflating model confidence and driving bids higher until budgets are exhausted. We prevent this by implementing an exploration-exploitation policy inspired by Upper Confidence Bound algorithms, enforcing a maximum bid change velocity of twenty percent per adjustment cycle. This ensures that bids adjust smoothly and gives the telemetry pipeline ample time to measure the real-world impact of price changes.
+
+For brand new campaigns with zero historical conversion data (the classic cold-start problem), the model cannot accurately predict CVR. In these cases, the service automatically falls back to an industry-vertical benchmark profile derived from aggregated anonymized platform data, applying conservative initial bids until the ad set accumulates at least thirty conversion events.
+
+To guarantee high availability during model service hiccups, the inference workers run behind circuit breakers. If an inference worker experiences latency greater than two seconds or encounters an unhandled exception, the system automatically falls back to deterministic rule-based bidding heuristics stored in Redis, ensuring uninterrupted campaign management.
+
+---
+
+## System Design 8: External Ad Platform Webhook Ingestion & Idempotent Sync Pipeline
+**Domain Category:** Event Ingestion, Distributed Queues & Reliability
+
+### 1. Complete Problem Statement
+Design a bulletproof, high-scale webhook ingestion and reconciliation pipeline for AdsGency AI. The system must ingest millions of webhook notifications from Meta, Google, and TikTok, verify cryptographic signatures, handle bursty traffic surges, deduplicate events, and reconcile internal database state with external platform reality.
+
+### 2. High-Level Architecture Diagram
+```
+=== WEBHOOK INGESTION & IDEMPOTENT SYNC PIPELINE ===
+
+[1] External Webhooks (Meta, Google, TikTok Events)
+        │
+        ▼
+[2] Serverless Ingestion Edge (AWS Lambda / CloudFront)
+        │
+        ├── Cryptographic Signature Verification (HMAC-SHA256)
+        │
+        ▼
+[3] Raw Event Buffer (Apache Kafka Topic: 'raw-webhooks')
+        │
+        ▼
+[4] Idempotent Processing Worker Pool (FastAPI / Python)
+        │
+        ├── Redis Bloom Filter & Deduplication Set (TTL: 24h)
+        │
+        ▼
+[5] State Reconciliation & Mutation (PostgreSQL Ledger)
+        │
+        ├── Success ───> Update Campaign State & Notify UI
+        │
+        └── Failure ───> [6] Dead Letter Queue (Kafka DLQ)
+                               │
+                               ▼
+                         [7] Automated Reconciliation Cron (Re-fetch External API)
+```
+
+### 3. Functional Requirements (Conversational Walkthrough)
+Advertising networks communicate real-time updates—such as ad approvals, policy rejections, budget spend alerts, and billing events—via webhooks. The ingestion pipeline must act as an impenetrable front door that receives, authenticates, and processes these incoming notifications.
+
+The system must verify the cryptographic HMAC signature of every incoming request to guarantee that events originate from legitimate advertising partners and have not been spoofed by malicious actors.
+
+Once validated, the payload must be parsed and processed to update the internal state of campaigns, creatives, and billing records. If an external ad set is rejected due to policy violations, the system must immediately trigger an alert and launch an autonomous agent to remediate the creative copy.
+
+### 4. Non-Functional Requirements (Conversational Walkthrough)
+The ingestion edge must achieve extreme availability with five nines of uptime and sub-thirty-millisecond response latency. External platforms require webhooks to be acknowledged with an HTTP 200 OK within three seconds; otherwise, they treat the delivery as failed and initiate aggressive retry storms.
+
+The pipeline must handle massive, unpredictable traffic spikes, scaling instantly to absorb tens of thousands of requests per second during major shopping events without dropping payloads or exhausting connection pools.
+
+Data processing must guarantee exactly-once business semantics through robust idempotency, ensuring that duplicated webhook retries never corrupt campaign metrics or trigger repeated downstream actions.
+
+### 5. Core Entities & Data Modeling
+The Raw Webhook Event entity stores the unparsed JSON payload, platform origin, cryptographic signature header, receipt timestamp, and processing status.
+
+The Event Deduplication Key entity maps the unique platform event ID and entity hash to an expiration timestamp, stored in our Redis caching tier.
+
+The Reconciliation Job entity tracks background consistency audits between internal PostgreSQL state and external platform REST APIs, recording variances, resolved discrepancies, and audit logs.
+
+### 6. API & Interface Design
+The ingestion edge exposes public webhook endpoints such as POST at webhooks meta, webhooks google, and webhooks tiktok. Each endpoint verifies signatures and returns an immediate HTTP 200 OK with an empty body within fifteen milliseconds.
+
+For operational visibility, an internal endpoint at api v1 webhooks status provides real-time ingestion rates, consumer lag across Kafka partitions, and dead letter queue depths.
+
+An administrative endpoint at api v1 webhooks redrive allows engineers to re-queue failed events from the Dead Letter Queue back into active processing after resolving downstream bugs.
+
+### 7. End-to-End Data Flow
+An incoming webhook hits our AWS CloudFront distribution and is routed to an AWS Lambda ingestion function. The function calculates the HMAC-SHA256 signature using the platform's secret key and compares it against the request header.
+
+If valid, the Lambda function writes the raw payload directly into an Apache Kafka topic partitioned by advertiser account ID and returns an HTTP 200 OK within twenty milliseconds.
+
+A pool of containerized Python workers on Kubernetes consumes events from Kafka. For each event, the worker checks a Redis Bloom filter and key set for the event ID; if already processed, it drops the duplicate. For new events, the worker applies business logic, updates PostgreSQL records inside a database transaction, and notifies connected clients via Redis Pub/Sub.
+
+### 8. High-Level System Architecture (HLD)
+The architecture utilizes a serverless edge paired with a decoupled event streaming backbone. AWS Lambda provides instant, infinite horizontal scalability for the initial ingestion and signature verification, completely insulating our core servers from external traffic spikes.
+
+Apache Kafka acts as a durable, distributed buffer, decoupling webhook ingestion from downstream database mutations and preventing database connection exhaustion during traffic surges.
+
+Downstream processing is handled by Python workers on AWS EKS that interact with Redis for sub-millisecond deduplication and PostgreSQL for durable state storage, with Kafka Dead Letter Queues catching unparseable payloads.
+
+### 9. Deep Dive into Non-Functional Requirements & Resilience
+Let's look into how we achieve zero data loss and resolve eventual consistency discrepancies between our database and external ad networks. Webhooks are inherently unreliable; ad networks occasionally drop events during internal outages or deliver them out of chronological order. We solve this by implementing a two-pronged reconciliation architecture: real-time idempotent stream consumption combined with an asynchronous reconciliation auditor. Every night, an Airflow batch job queries the external ad APIs for the ground-truth state of all active campaigns and compares it against our internal PostgreSQL database. If any discrepancy is detected—such as an ad being paused on Meta directly through their native UI—our system reconciles the local state, logs an audit entry, and notifies operators.
+
+To handle transient failures during stream processing, our workers apply a three-tiered retry policy. If a database deadlock or temporary network glitch occurs, the event is retried with exponential backoff up to three times. If it still fails, the event is routed to a Dead Letter Queue topic in Kafka. An alert is sent to our on-call monitoring channel, and the payload is preserved with full error stack traces for investigation.
+
+Cryptographic verification is performed at the Lambda edge using constant-time string comparison (`hmac.compare_digest`) to prevent timing attacks. Furthermore, our Redis deduplication keys are set with a twenty-four-hour TTL, ensuring bounded memory usage while comfortably covering the maximum retry window used by external advertising platforms.
+
+---
+
+## System Design 9: Autonomous Ad Incident Remediation & Self-Healing Agent Pipeline
+**Domain Category:** Autonomous AI Agents & Reliability Engineering
+
+### 1. Complete Problem Statement
+Design an autonomous incident remediation pipeline for AdsGency AI. When an external platform rejects an ad creative, when tracking pixels fail, or when an ad account encounters a billing error, the system must autonomously diagnose the root cause, synthesize a compliant fix using LLM reasoning agents, and re-deploy the campaign without human intervention.
+
+### 2. High-Level Architecture Diagram
+```
+=== AUTONOMOUS INCIDENT REMEDIATION PIPELINE ===
+
+[1] Incident Trigger (Ad Disapproval Webhook / Anomaly Detector)
+        │
+        ▼
+[2] Incident Triage Agent (FastAPI / LangGraph)
+        │
+        ├── Parse Platform Error Code (e.g., Meta Policy 148: Creative Text)
+        │
+        ▼
+[3] Root Cause Diagnosis Agent (Context Retrieval / Policy Database)
+        │
+        ▼
+[4] Creative Remediation Agent (LLM Fix Synthesis & Guardrail Check)
+        │
+        ├── Generates Compliant Copy Alternative
+        │
+        ▼
+[5] Policy Verification Gate (Semantic Safety Check)
+        │
+        ├── Safe ───> [6] Auto-Redeployment (Marketing API Gateway)
+        │
+        └── High-Risk Violation ───> [7] Human-in-the-Loop Escalation (Slack Alert)
+```
+
+### 3. Functional Requirements (Conversational Walkthrough)
+In digital marketing, ad rejections happen constantly due to strict platform policies regarding wording, capitalization, image text ratios, and prohibited keywords. A human team takes hours or days to notice a rejection, edit the creative, and resubmit it, causing significant missed revenue.
+
+The incident remediation pipeline must automatically ingest rejection notifications from Google, Meta, and TikTok webhooks. It parses the platform-specific error code and policy violation details to classify the root cause.
+
+The remediation agent retrieves the offending ad creative, cross-references our vector policy database, and uses an LLM to synthesize compliant alternatives that preserve the original marketing intent while strictly satisfying platform guidelines. If the fix passes safety checks, the agent automatically redeploys the updated ad set.
+
+### 4. Non-Functional Requirements (Conversational Walkthrough)
+The autonomous remediation cycle should diagnose, rewrite, and resubmit rejected ad creatives within ninety seconds of receiving the rejection webhook, minimizing lost campaign flight time.
+
+Remediation must be safe and conservative. If an incident involves serious account-level suspensions or ambiguous copyright violations, the agent must recognize its limitations and immediately escalate the issue to a human operator rather than making speculative edits.
+
+Every remediation action must be fully logged and explainable, providing human operators with a clear before-and-after diff and the exact reasoning rationale used by the agent.
+
+### 5. Core Entities & Data Modeling
+The Incident Record entity stores the campaign identifier, platform name, raw platform error code, violation category, timestamp, and active status (Diagnosing, Remediating, Deployed, or Escalated).
+
+The Remediation Plan entity captures the agent's diagnostic explanation, the original creative text, the proposed compliant alternative, and confidence scores.
+
+The Policy Rule Reference entity contains platform-specific advertising policies and negative constraint patterns indexed in our vector database for fast semantic retrieval.
+
+### 6. API & Interface Design
+An operator can view all active and historical incidents via a GET endpoint at api v1 incidents, filtered by status, platform, or severity.
+
+To review an autonomous remediation plan, a GET endpoint at api v1 incidents remediation returns the before-and-after diff, agent rationale, and platform compliance score.
+
+If a human operator wishes to intervene, a POST endpoint at api v1 incidents override allows them to approve, reject, or manually edit the agent's proposed remediation before deployment.
+
+### 7. End-to-End Data Flow
+An ad rejection webhook arrives from Meta indicating that an ad was disapproved under Policy 148 for misleading text claims. The webhook triggers an incident workflow in our FastAPI service, which creates an incident record in PostgreSQL.
+
+The Incident Triage Agent analyzes the rejection code and queries pgvector for specific policy rules and compliant historical examples for that category. The Remediation Agent prompts an LLM with the original text, the specific policy constraint, and instructions to generate an alternative that preserves the marketing value proposition.
+
+The new creative passes through an automated safety verification gate. If the confidence score is above ninety percent, our marketing gateway dispatches a mutation to update the ad creative on Meta and logs the resolution to Slack; if confidence is low, it halts and pings an operator.
+
+### 8. High-Level System Architecture (HLD)
+The remediation engine is built as an asynchronous agentic microservice utilizing LangGraph for stateful multi-step reasoning. It is integrated directly with our webhook ingress tier and our marketing API gateway.
+
+The policy database and historical remediation logs are indexed in PostgreSQL using pgvector, enabling fast semantic matching against obscure platform policy guidelines.
+
+Communication with human operators is facilitated through interactive Slack apps and the Next.js dashboard, allowing operators to oversee autonomous self-healing actions seamlessly.
+
+### 9. Deep Dive into Non-Functional Requirements & Resilience
+Let's examine how we enforce safe agent boundaries and prevent remediation thrashing. Remediation thrashing occurs when an agent submits a fix, the platform rejects it for a different policy reason, and the agent enters an infinite submit-and-reject loop that risks triggering account-level penalties. We eliminate this by enforcing a strict maximum retry ceiling: an autonomous agent is permitted a maximum of two automated remediation attempts per ad creative. If the second attempt fails, the workflow immediately locks the ad and escalates the ticket to a human manager.
+
+To guarantee high-quality copy revisions, the remediation prompt uses chain-of-thought reasoning with explicit negative constraints. The agent is forced to explicitly state which words in the original ad triggered the rejection and why the proposed substitute resolves the violation without diluting the call-to-action.
+
+All remediation history is logged into an immutable append-only audit trail in PostgreSQL. This allows engineering and marketing teams to run weekly evaluation benchmarks, identifying recurring rejection patterns across platforms and updating our core prompt guidelines to prevent future rejections before campaigns ever launch.
+
+---
+
+## System Design 10: Multi-Tenant Enterprise Security & Audit Vault
+**Domain Category:** Enterprise Security, Auth & Compliance
+
+### 1. Complete Problem Statement
+Design a zero-trust, multi-tenant enterprise security architecture and audit vault for AdsGency AI. The system must enforce strict data isolation across enterprise clients, secure OAuth credentials and API keys using envelope encryption, manage granular role-based access control (RBAC), and maintain an immutable append-only audit ledger compliant with SOC 2, HIPAA, and GDPR standards.
+
+### 2. High-Level Architecture Diagram
+```
+=== MULTI-TENANT ENTERPRISE SECURITY & AUDIT VAULT ===
+
+[1] Client Request (Human Operator / Agent Worker)
+        │
+        ▼
+[2] API Gateway & Security Interceptor (FastAPI / OAuth 2.0 / JWT)
+        │
+        ├── Extract Tenant Context & Role Claims (RS256 JWT)
+        │
+        ▼
+[3] Policy Enforcement Point (Casbin / OPA / RBAC Engine)
+        │
+        ├── Authorized ───> [4] Database Layer with Row-Level Security (PostgreSQL RLS)
+        │                         │
+        │                         ├── Tenant Context Injected (`SET LOCAL app.current_tenant_id`)
+        │                         └── Envelope Encryption for Secrets (AWS KMS)
+        │
+        └── Audit Logger ───> [5] Immutable Append-Only Audit Vault (Amazon S3 / WORM / QLDB)
+```
+
+### 3. Functional Requirements (Conversational Walkthrough)
+As AdsGency AI expands into enterprise marketing accounts, clients demand uncompromising guarantees that their proprietary marketing data, ad budgets, customer audience lists, and API credentials are completely secure and isolated from other tenants.
+
+The security vault must authenticate human operators and automated agents using OAuth 2.0 and cryptographically signed JWT tokens, enforcing granular Role-Based Access Control (RBAC) across roles such as Admin, Marketing Operator, Financial Auditor, and Read-Only Viewer.
+
+The platform must securely store sensitive third-party credentials—such as Google Ads and Meta Graph API refresh tokens—using modern envelope encryption. Furthermore, every single read, write, and agent-driven mutation must be recorded in an immutable, tamper-evident audit ledger.
+
+### 4. Non-Functional Requirements (Conversational Walkthrough)
+Authentication and authorization checks must introduce less than five milliseconds of latency to every internal and external API request, ensuring zero perceptible performance overhead.
+
+Tenant data isolation must be mathematically guaranteed at the storage engine level, preventing software bugs or omitted WHERE clauses in application queries from ever exposing cross-tenant records.
+
+The audit log must satisfy strict SOC 2 Type II, GDPR, and HIPAA compliance requirements, featuring tamper-evident verification, immutable storage, and automated log retention policies.
+
+### 5. Core Entities & Data Modeling
+The Tenant Organization entity defines the enterprise client account, subscription tier, active status, and security compliance configuration.
+
+The User & Role Mapping entity associates individual human users or service accounts with specific roles and permission scopes within an organization.
+
+The Encrypted Credential Vault entity stores third-party OAuth tokens, client secrets, and webhook signing keys, referencing the unique AWS KMS Key ID and encrypted data key used for envelope encryption.
+
+Finally, the Immutable Audit Event entity records every system action, capturing timestamp, actor ID, IP address, tenant ID, action type, resource identifier, previous state, and mutated state.
+
+### 6. API & Interface Design
+Authentication is managed through standard OAuth routes at auth token, issuing cryptographically signed RS256 JWT tokens containing tenant ID and permission claims.
+
+For user management, administrative endpoints at api v1 orgs users allow administrators to invite team members, assign RBAC roles, and revoke active sessions immediately.
+
+Compliance officers access the audit vault via a GET endpoint at api v1 audit logs, allowing filtered searches by actor, resource, date range, or action type, with export capabilities to signed CSV files.
+
+### 7. End-to-End Data Flow
+When an operator or agent submits an API request, the FastAPI security dependency extracts and verifies the RS256 JWT token using our public signing key. The tenant ID and role claims are verified against the route's required permissions.
+
+Upon authorization, the database connection pool checks out a connection and immediately sets the local tenant context by executing a parameterized query. PostgreSQL Row-Level Security policies automatically apply to all subsequent queries on that connection.
+
+When third-party API credentials are needed, the service calls AWS KMS to decrypt the envelope data key in memory, decrypts the token, and dispatches the external API call. Simultaneously, an asynchronous event worker records the action details into our audit ledger, signing the entry with a cryptographic hash chain.
+
+### 8. High-Level System Architecture (HLD)
+The security architecture follows a zero-trust model implemented across the API gateway, application runtime, and database tiers. FastAPI acts as the Policy Enforcement Point, verifying JWT claims before requests reach business logic.
+
+Data isolation is enforced at the database tier using native PostgreSQL Row-Level Security (RLS), ensuring that isolation does not rely solely on application developers remembering to include tenant filters in SQL queries.
+
+Secrets management leverages AWS Key Management Service (KMS) for envelope encryption, while audit logs are streamed to Amazon S3 Object Lock storage configured in Write Once, Read Many (WORM) compliance mode.
+
+### 9. Deep Dive into Non-Functional Requirements & Resilience
+Let's look into how we achieve tamper-evident audit logging and mathematically enforced tenant isolation. In standard web applications, a junior developer forgetting a tenant WHERE clause in a raw SQL query can cause a catastrophic data breach. We eliminate this vulnerability entirely by enabling Row-Level Security on every table in PostgreSQL: policies like `CREATE POLICY tenant_isolation ON campaigns USING (tenant_id = current_setting('app.current_tenant_id'))` ensure that the database engine itself rejects access to any row belonging to a different tenant, regardless of how the application query was constructed.
+
+For secrets storage, storing plaintext credentials in the database or relying on basic environment variables is unacceptable for enterprise compliance. We implement envelope encryption with AWS KMS: each tenant's credentials are encrypted using a unique AES-256 data encryption key, which is itself encrypted under a master customer-managed key in KMS. Decryption occurs only in ephemeral worker memory, and plaintext keys are never written to disk or logs.
+
+Our audit vault uses cryptographic hash chaining similar to a blockchain ledger. Each audit log entry includes the SHA-256 hash of the preceding entry in the chain. These logs are streamed to an Amazon S3 bucket with Object Lock enabled in Compliance Mode, which legally and technologically prevents any user—including AWS root accounts—from altering, overwriting, or deleting log files for a mandated retention period of seven years, effortlessly passing SOC 2 and GDPR compliance audits.
+
+---
