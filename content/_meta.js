@@ -1,5 +1,6 @@
 export default {
   index: 'Docs Home',
+  'asha-alignment-health-prep': 'Asha Jyothi Uchula Alignment Health Prep',
   'karthik-adsgency-ai-prep': 'Karthik Ravula AdsGency AI MTS Prep',
   'ashutosh-amazon-live-events-prep': 'Ashutosh Rudraksh Amazon Live Events AI Prep',
   'karthik-kalyan-fullstack-prep': 'Karthik Kalyan Full Stack SDE Prep',
