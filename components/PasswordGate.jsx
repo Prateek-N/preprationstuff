@@ -8,6 +8,7 @@ const SLUG_TO_CANDIDATE = {
   'ashutosh-mercor-applied-ai-prep': 'Ashutosh Rudraksh',
   'ashutosh-oscar-health-prep': 'Ashutosh Rudraksh',
   'asha-alignment-health-prep': 'Asha',
+  'teja-purpose-financial-prep': 'Teja',
   'ashutosh-oscar-prep': 'Ashutosh Rudraksh',
   'karthik-adsgency-ai-prep': 'Karthik Ravula',
   'kiranmai-amazon-sde-prep': 'Venkata Satya Kiranmai Challagulla',
@@ -43,6 +44,7 @@ const SLUG_TO_CANDIDATE = {
 
 const PASSWORD_TO_CANDIDATE = {
   asha: 'Asha',
+  teja: 'Teja',
   suvishal: 'Suvishal Kalakoti',
   ashutosh: 'Ashutosh Rudraksh',
   mercor: 'Ashutosh Rudraksh',
