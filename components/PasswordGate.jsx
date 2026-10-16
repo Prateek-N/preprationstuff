@@ -13,6 +13,7 @@ const SLUG_TO_CANDIDATE = {
   'karthik-adsgency-ai-prep': 'Karthik Ravula',
   'kiranmai-amazon-sde-prep': 'Venkata Satya Kiranmai Challagulla',
   'karthik-kalyan-fullstack-prep': 'Karthik Kalyan Kakumanu',
+  'lakshmi-hitachi-vantara-prep': 'Lakshmi',
   'lakshmi-pranitha-wise-prep': 'Lakshmi Pranitha',
   'rujuwal-garg-resume-deepdive': 'Rujuwal Garg',
   'janaki-qa-automation-14day-prep': 'Janaki Ashok Kumar',
