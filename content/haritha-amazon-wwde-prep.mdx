@@ -39,12 +39,12 @@ At **Honeywell**, you engineered an equipment degradation and anomaly detection 
 
 ```mermaid
 flowchart LR
-    A[IoT Telemetry: 100K+ Records] --> B[Sliding Window FFT & Wavelets]
-    B --> C[Custom Statistical Features: Kurtosis, Crest Factor]
-    C --> D[XGBoost Classifier / Regressor]
-    D --> E[Cost-Weighted Threshold Optimization]
-    E --> F[MLflow Registry & PSI Drift Monitor]
-    F --> G[Automated Maintenance Work Orders]
+    A["IoT Telemetry: 100K+ Records"] --> B["Sliding Window FFT and Wavelets"]
+    B --> C["Custom Statistical Features: Kurtosis, Crest Factor"]
+    C --> D["XGBoost Classifier / Regressor"]
+    D --> E["Cost-Weighted Threshold Optimization"]
+    E --> F["MLflow Registry and PSI Drift Monitor"]
+    F --> G["Automated Maintenance Work Orders"]
 ```
 
 #### Custom Feature Engineering (Physics-Informed & Time-Frequency Domains)
@@ -92,13 +92,14 @@ At **Uber**, you developed time-series demand forecasting models across **180,00
 
 ```mermaid
 flowchart TD
-    A[Spatial-Temporal Mobility Data: 180K+ Records] --> B[H3 Hexagonal Spatial Binning]
-    B --> C[PyTorch Temporal Pipeline]
-    C --> D[Baseline: AutoARIMA & Prophet]
-    C --> E[PyTorch LSTM with Bahdanau Attention]
-    C --> F[Temporal Transformer with Multi-Head Attention]
-    E & F --> G[Ensemble Evaluation: 4.2% MAPE Reduction]
-    G --> H[vLLM / SageMaker Endpoint Deployment]
+    A["Spatial-Temporal Mobility Data: 180K+ Records"] --> B["H3 Hexagonal Spatial Binning"]
+    B --> C["PyTorch Temporal Pipeline"]
+    C --> D["Baseline: AutoARIMA and Prophet"]
+    C --> E["PyTorch LSTM with Bahdanau Attention"]
+    C --> F["Temporal Transformer with Multi-Head Attention"]
+    E --> G["Ensemble Evaluation: 4.2% MAPE Reduction"]
+    F --> G
+    G --> H["vLLM / SageMaker Endpoint Deployment"]
 ```
 
 #### Why Deep Learning Over Classical Methods (ARIMA, Prophet)?
@@ -132,12 +133,13 @@ At **KPMG**, you analyzed over **300,000+ unstructured regulatory documents, com
 
 ```mermaid
 flowchart LR
-    A[300K+ Regulatory Filings & Memos] --> B[Sentence-Transformers Embeddings]
-    B --> C[UMAP Dimensionality Reduction]
-    C --> D[HDBSCAN Density Clustering]
-    D --> E[c-TF-IDF Topic Representation]
-    A --> F[Fine-Tuned RoBERTa NER Head]
-    E & F --> G[Regulatory Risk Scoring & Compliance Taxonomy]
+    A["300K+ Regulatory Filings and Memos"] --> B["Sentence-Transformers Embeddings"]
+    B --> C["UMAP Dimensionality Reduction"]
+    C --> D["HDBSCAN Density Clustering"]
+    D --> E["c-TF-IDF Topic Representation"]
+    A --> F["Fine-Tuned RoBERTa NER Head"]
+    E --> G["Regulatory Risk Scoring and Compliance Taxonomy"]
+    F --> G
 ```
 
 #### How BERTopic Works (The 4-Step Pipeline)
@@ -190,11 +192,11 @@ In the **Science Application** interview, Amazon assessors give you ambiguous, o
 
 ```mermaid
 flowchart TD
-    P1[Phase 1: 5+ Clarifying Questions & Constraints] --> P2[Phase 2: Mathematical Metric Formulation]
-    P2 --> P3[Phase 3: Data Architecture & Feature Pipelines]
-    P3 --> P4[Phase 4: Baseline Heuristic to v2 ML / Deep Learning]
-    P4 --> P5[Phase 5: Offline Validation vs A/B Experimentation]
-    P5 --> P6[Phase 6: Production Deployment, Feedback Loops & Monitoring]
+    P1["Phase 1: 5+ Clarifying Questions and Constraints"] --> P2["Phase 2: Mathematical Metric Formulation"]
+    P2 --> P3["Phase 3: Data Architecture and Feature Pipelines"]
+    P3 --> P4["Phase 4: Baseline Heuristic to v2 ML / Deep Learning"]
+    P4 --> P5["Phase 5: Offline Validation vs A/B Experimentation"]
+    P5 --> P6["Phase 6: Production Deployment, Feedback Loops and Monitoring"]
 ```
 
 ---
@@ -273,13 +275,13 @@ Rather than framing this as naive binary classification (Fail / Not Fail in 7 da
 #### Phase 4: Architecture & Pipeline
 ```mermaid
 flowchart LR
-    A[PLC & Vibration Sensors] --> B[AWS IoT Greengrass / Kinesis]
-    B --> C[Feature Store: SageMaker Feature Store]
-    C --> D[Model: Survival Forest / XGBoost]
-    D --> E{P_fail_7d > Threshold}
-    E -- Yes --> F[Generate High-Priority Work Order in EAM]
-    E -- No --> G[Log Healthy Status]
-    F --> H[Technician Ground-Truth Feedback]
+    A["PLC and Vibration Sensors"] --> B["AWS IoT Greengrass / Kinesis"]
+    B --> C["Feature Store: SageMaker Feature Store"]
+    C --> D["Model: Survival Forest / XGBoost"]
+    D --> E{"P_fail_7d > Threshold"}
+    E -->|"Yes"| F["Generate High-Priority Work Order in EAM"]
+    E -->|"No"| G["Log Healthy Status"]
+    F --> H["Technician Ground-Truth Feedback"]
     H --> C
 ```
 
@@ -320,15 +322,15 @@ While your core role as a Data Scientist on the **WWDE** team centers on operati
 
 ```mermaid
 flowchart TD
-    subgraph Natural Language Operations
-        A[Operator Voice / Chat Interface] --> B[Text-to-SQL / Text-to-Metrics Engine]
-        B --> C[Amazon Redshift & Athena]
-        C --> D[Synthesized Operational Insight]
+    subgraph "Natural Language Operations"
+        A["Operator Voice / Chat Interface"] --> B["Text-to-SQL / Text-to-Metrics Engine"]
+        B --> C["Amazon Redshift and Athena"]
+        C --> D["Synthesized Operational Insight"]
     end
-    subgraph Technical Documentation & RAG
-        E[50K+ MHE Manuals & SOPs] --> F[Hybrid Search: Milvus / Pinecone]
-        F --> G[LangGraph Multi-Agent RAG]
-        G --> H[Technician Step-by-Step Diagnostic Guide]
+    subgraph "Technical Documentation and RAG"
+        E["50K+ MHE Manuals and SOPs"] --> F["Hybrid Search: Milvus / Pinecone"]
+        F --> G["LangGraph Multi-Agent RAG"]
+        G --> H["Technician Step-by-Step Diagnostic Guide"]
     end
 ```
 
@@ -363,15 +365,15 @@ Drawing from your direct experience at **Honeywell** hitting **92% retrieval pre
 
 ```mermaid
 flowchart LR
-    Q[User Query] --> R[Retriever]
-    R --> C[Retrieved Contexts]
-    C --> G[LLM Generator]
-    G --> A[Generated Response]
+    Q["User Query"] --> R["Retriever"]
+    R --> C["Retrieved Contexts"]
+    C --> G["LLM Generator"]
+    G --> A["Generated Response"]
     
-    subgraph Ragas Evaluation Core
-        C -. Context Relevance .-> Q
-        A -. Faithfulness .-> C
-        A -. Answer Relevance .-> Q
+    subgraph "Ragas Evaluation Core"
+        C -. "Context Relevance" .-> Q
+        A -. "Faithfulness" .-> C
+        A -. "Answer Relevance" .-> Q
     end
 ```
 
@@ -1799,37 +1801,37 @@ At **Amazon WWDE**, system design evaluates your ability to architect resilient,
 
 ```mermaid
 flowchart TD
-    subgraph Edge & Ingestion
-        A1[Conveyor Motors & PLC Sensors] -->|Modbus / MQTT| B1[AWS IoT Greengrass Edge Gateway]
-        A2[Robotic Arm Servo Drives] -->|OPC-UA| B1
-        B1 -->|Edge Anomaly Filter| C1[AWS Kinesis Data Streams]
+    subgraph "Edge and Ingestion"
+        A1["Conveyor Motors and PLC Sensors"] -->|"Modbus / MQTT"| B1["AWS IoT Greengrass Edge Gateway"]
+        A2["Robotic Arm Servo Drives"] -->|"OPC-UA"| B1
+        B1 -->|"Edge Anomaly Filter"| C1["AWS Kinesis Data Streams"]
     end
 
-    subgraph Streaming & Processing Layer
-        C1 --> D1[AWS Kinesis Data Analytics / Apache Flink]
-        D1 -->|Critical Threshold Alert < 2s| E1[Amazon SNS / PagerDuty]
-        D1 -->|Standard Telemetry| F1[Amazon S3 Raw Data Lake]
+    subgraph "Streaming and Processing Layer"
+        C1 --> D1["AWS Kinesis Data Analytics / Apache Flink"]
+        D1 -->|"Critical Threshold Alert < 2s"| E1["Amazon SNS / PagerDuty"]
+        D1 -->|"Standard Telemetry"| F1["Amazon S3 Raw Data Lake"]
     end
 
-    subgraph Feature Store & Storage
-        F1 --> G1[AWS Glue ETL / PySpark]
-        G1 --> H1[Amazon Redshift Serverless: Historical DW]
-        G1 --> H2[SageMaker Feature Store: Offline & Online]
+    subgraph "Feature Store and Storage"
+        F1 --> G1["AWS Glue ETL / PySpark"]
+        G1 --> H1["Amazon Redshift Serverless: Historical DW"]
+        G1 --> H2["SageMaker Feature Store: Offline & Online"]
     end
 
-    subgraph Model Training & Inference
-        H2 --> I1[SageMaker Training: XGBoost & DeepSurv]
-        I1 --> I2[MLflow Model Registry]
-        I2 --> J1[Batch Inference Worker: 6-Hour Cadence]
+    subgraph "Model Training and Inference"
+        H2 --> I1["SageMaker Training: XGBoost and DeepSurv"]
+        I1 --> I2["MLflow Model Registry"]
+        I2 --> J1["Batch Inference Worker: 6-Hour Cadence"]
         H2 --> J1
-        J1 --> K1{Failure Risk > 0.35 in 7 Days?}
-        K1 -- Yes --> L1[Amazon EAM API: Dispatch Technician Work Order]
-        K1 -- No --> L2[Log Nominal Component State]
+        J1 --> K1{"Failure Risk > 0.35 in 7 Days?"}
+        K1 -->|"Yes"| L1["Amazon EAM API: Dispatch Technician Work Order"]
+        K1 -->|"No"| L2["Log Nominal Component State"]
     end
 
-    subgraph Governance & Monitoring
-        J1 --> M1[Evidently AI / SageMaker Clarify: PSI Drift Monitor]
-        M1 -->|PSI >= 0.2| N1[Automated Airflow Retraining Trigger]
+    subgraph "Governance and Monitoring"
+        J1 --> M1["Evidently AI / SageMaker Clarify: PSI Drift Monitor"]
+        M1 -->|"PSI >= 0.2"| N1["Automated Airflow Retraining Trigger"]
     end
 ```
 
@@ -1982,20 +1984,22 @@ When a downstream pack line or sorter accumulates excessive Work-In-Progress (WI
 
 ```mermaid
 flowchart LR
-    A[Decant & Stow] --> B[Pick Towers]
-    B --> C[Tote Accumulation Conveyors]
-    C --> D{Dynamic Router}
-    D -->|Line 1: Healthy| E1[Pack Hall 1]
-    D -->|Line 2: 95% Full| E2[Pack Hall 2 (Congested)]
-    D -->|Line 3: Healthy| E3[Pack Hall 3]
-    E1 & E2 & E3 --> F[SLAM Lines]
-    F --> G[Cross-Belt Sorter]
-    G --> H[Outbound Shipping]
+    A["Decant and Stow"] --> B["Pick Towers"]
+    B --> C["Tote Accumulation Conveyors"]
+    C --> D{"Dynamic Router"}
+    D -->|"Line 1: Healthy"| E1["Pack Hall 1"]
+    D -->|"Line 2: 95% Full"| E2["Pack Hall 2 - Congested"]
+    D -->|"Line 3: Healthy"| E3["Pack Hall 3"]
+    E1 --> F["SLAM Lines"]
+    E2 --> F
+    E3 --> F
+    F --> G["Cross-Belt Sorter"]
+    G --> H["Outbound Shipping"]
 ```
 
 ##### 2. Architectural Blueprint
 - **Graph Modeling**: Model the entire warehouse conveyor topology as a **Directed Acyclic Graph (DAG)** G = (V, E), where vertices V represent workstations/scanners/diverters, and edges E represent conveyor segments with physical capacity C_e and velocity v_e.
-- **Real-Time Telemetry Engine**: Ingests optical photo-eye break signals (package presence) and barcode scans over **Amazon MSK (Kafka)** with $&lt;500$ms end-to-end latency.
+- **Real-Time Telemetry Engine**: Ingests optical photo-eye break signals (package presence) and barcode scans over **Amazon MSK (Kafka)** with &lt; 500ms end-to-end latency.
 - **Optimization Engine**: Runs a **Mixed-Integer Linear Program (MILP)** or fast **Min-Cost Flow algorithm** every 30 seconds to adjust conveyor divert switches, dynamically balancing tote distribution across pack halls.
 
 ---

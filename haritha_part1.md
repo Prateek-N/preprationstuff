@@ -11,12 +11,12 @@ At **Honeywell**, you engineered an equipment degradation and anomaly detection 
 
 ```mermaid
 flowchart LR
-    A[IoT Telemetry: 100K+ Records] --> B[Sliding Window FFT & Wavelets]
-    B --> C[Custom Statistical Features: Kurtosis, Crest Factor]
-    C --> D[XGBoost Classifier / Regressor]
-    D --> E[Cost-Weighted Threshold Optimization]
-    E --> F[MLflow Registry & PSI Drift Monitor]
-    F --> G[Automated Maintenance Work Orders]
+    A["IoT Telemetry: 100K+ Records"] --> B["Sliding Window FFT and Wavelets"]
+    B --> C["Custom Statistical Features: Kurtosis, Crest Factor"]
+    C --> D["XGBoost Classifier / Regressor"]
+    D --> E["Cost-Weighted Threshold Optimization"]
+    E --> F["MLflow Registry and PSI Drift Monitor"]
+    F --> G["Automated Maintenance Work Orders"]
 ```
 
 #### Custom Feature Engineering (Physics-Informed & Time-Frequency Domains)
@@ -64,13 +64,14 @@ At **Uber**, you developed time-series demand forecasting models across **180,00
 
 ```mermaid
 flowchart TD
-    A[Spatial-Temporal Mobility Data: 180K+ Records] --> B[H3 Hexagonal Spatial Binning]
-    B --> C[PyTorch Temporal Pipeline]
-    C --> D[Baseline: AutoARIMA & Prophet]
-    C --> E[PyTorch LSTM with Bahdanau Attention]
-    C --> F[Temporal Transformer with Multi-Head Attention]
-    E & F --> G[Ensemble Evaluation: 4.2% MAPE Reduction]
-    G --> H[vLLM / SageMaker Endpoint Deployment]
+    A["Spatial-Temporal Mobility Data: 180K+ Records"] --> B["H3 Hexagonal Spatial Binning"]
+    B --> C["PyTorch Temporal Pipeline"]
+    C --> D["Baseline: AutoARIMA and Prophet"]
+    C --> E["PyTorch LSTM with Bahdanau Attention"]
+    C --> F["Temporal Transformer with Multi-Head Attention"]
+    E --> G["Ensemble Evaluation: 4.2% MAPE Reduction"]
+    F --> G
+    G --> H["vLLM / SageMaker Endpoint Deployment"]
 ```
 
 #### Why Deep Learning Over Classical Methods (ARIMA, Prophet)?
@@ -104,12 +105,13 @@ At **KPMG**, you analyzed over **300,000+ unstructured regulatory documents, com
 
 ```mermaid
 flowchart LR
-    A[300K+ Regulatory Filings & Memos] --> B[Sentence-Transformers Embeddings]
-    B --> C[UMAP Dimensionality Reduction]
-    C --> D[HDBSCAN Density Clustering]
-    D --> E[c-TF-IDF Topic Representation]
-    A --> F[Fine-Tuned RoBERTa NER Head]
-    E & F --> G[Regulatory Risk Scoring & Compliance Taxonomy]
+    A["300K+ Regulatory Filings and Memos"] --> B["Sentence-Transformers Embeddings"]
+    B --> C["UMAP Dimensionality Reduction"]
+    C --> D["HDBSCAN Density Clustering"]
+    D --> E["c-TF-IDF Topic Representation"]
+    A --> F["Fine-Tuned RoBERTa NER Head"]
+    E --> G["Regulatory Risk Scoring and Compliance Taxonomy"]
+    F --> G
 ```
 
 #### How BERTopic Works (The 4-Step Pipeline)
@@ -162,11 +164,11 @@ In the **Science Application** interview, Amazon assessors give you ambiguous, o
 
 ```mermaid
 flowchart TD
-    P1[Phase 1: 5+ Clarifying Questions & Constraints] --> P2[Phase 2: Mathematical Metric Formulation]
-    P2 --> P3[Phase 3: Data Architecture & Feature Pipelines]
-    P3 --> P4[Phase 4: Baseline Heuristic to v2 ML / Deep Learning]
-    P4 --> P5[Phase 5: Offline Validation vs A/B Experimentation]
-    P5 --> P6[Phase 6: Production Deployment, Feedback Loops & Monitoring]
+    P1["Phase 1: 5+ Clarifying Questions and Constraints"] --> P2["Phase 2: Mathematical Metric Formulation"]
+    P2 --> P3["Phase 3: Data Architecture and Feature Pipelines"]
+    P3 --> P4["Phase 4: Baseline Heuristic to v2 ML / Deep Learning"]
+    P4 --> P5["Phase 5: Offline Validation vs A/B Experimentation"]
+    P5 --> P6["Phase 6: Production Deployment, Feedback Loops and Monitoring"]
 ```
 
 ---
@@ -245,13 +247,13 @@ Rather than framing this as naive binary classification (Fail / Not Fail in 7 da
 #### Phase 4: Architecture & Pipeline
 ```mermaid
 flowchart LR
-    A[PLC & Vibration Sensors] --> B[AWS IoT Greengrass / Kinesis]
-    B --> C[Feature Store: SageMaker Feature Store]
-    C --> D[Model: Survival Forest / XGBoost]
-    D --> E{P_fail_7d > Threshold}
-    E -- Yes --> F[Generate High-Priority Work Order in EAM]
-    E -- No --> G[Log Healthy Status]
-    F --> H[Technician Ground-Truth Feedback]
+    A["PLC and Vibration Sensors"] --> B["AWS IoT Greengrass / Kinesis"]
+    B --> C["Feature Store: SageMaker Feature Store"]
+    C --> D["Model: Survival Forest / XGBoost"]
+    D --> E{"P_fail_7d > Threshold"}
+    E -->|"Yes"| F["Generate High-Priority Work Order in EAM"]
+    E -->|"No"| G["Log Healthy Status"]
+    F --> H["Technician Ground-Truth Feedback"]
     H --> C
 ```
 
@@ -292,15 +294,15 @@ While your core role as a Data Scientist on the **WWDE** team centers on operati
 
 ```mermaid
 flowchart TD
-    subgraph Natural Language Operations
-        A[Operator Voice / Chat Interface] --> B[Text-to-SQL / Text-to-Metrics Engine]
-        B --> C[Amazon Redshift & Athena]
-        C --> D[Synthesized Operational Insight]
+    subgraph "Natural Language Operations"
+        A["Operator Voice / Chat Interface"] --> B["Text-to-SQL / Text-to-Metrics Engine"]
+        B --> C["Amazon Redshift and Athena"]
+        C --> D["Synthesized Operational Insight"]
     end
-    subgraph Technical Documentation & RAG
-        E[50K+ MHE Manuals & SOPs] --> F[Hybrid Search: Milvus / Pinecone]
-        F --> G[LangGraph Multi-Agent RAG]
-        G --> H[Technician Step-by-Step Diagnostic Guide]
+    subgraph "Technical Documentation and RAG"
+        E["50K+ MHE Manuals and SOPs"] --> F["Hybrid Search: Milvus / Pinecone"]
+        F --> G["LangGraph Multi-Agent RAG"]
+        G --> H["Technician Step-by-Step Diagnostic Guide"]
     end
 ```
 
@@ -335,15 +337,15 @@ Drawing from your direct experience at **Honeywell** hitting **92% retrieval pre
 
 ```mermaid
 flowchart LR
-    Q[User Query] --> R[Retriever]
-    R --> C[Retrieved Contexts]
-    C --> G[LLM Generator]
-    G --> A[Generated Response]
+    Q["User Query"] --> R["Retriever"]
+    R --> C["Retrieved Contexts"]
+    C --> G["LLM Generator"]
+    G --> A["Generated Response"]
     
-    subgraph Ragas Evaluation Core
-        C -. Context Relevance .-> Q
-        A -. Faithfulness .-> C
-        A -. Answer Relevance .-> Q
+    subgraph "Ragas Evaluation Core"
+        C -. "Context Relevance" .-> Q
+        A -. "Faithfulness" .-> C
+        A -. "Answer Relevance" .-> Q
     end
 ```
 

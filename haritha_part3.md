@@ -219,37 +219,37 @@ At **Amazon WWDE**, system design evaluates your ability to architect resilient,
 
 ```mermaid
 flowchart TD
-    subgraph Edge & Ingestion
-        A1[Conveyor Motors & PLC Sensors] -->|Modbus / MQTT| B1[AWS IoT Greengrass Edge Gateway]
-        A2[Robotic Arm Servo Drives] -->|OPC-UA| B1
-        B1 -->|Edge Anomaly Filter| C1[AWS Kinesis Data Streams]
+    subgraph "Edge and Ingestion"
+        A1["Conveyor Motors and PLC Sensors"] -->|"Modbus / MQTT"| B1["AWS IoT Greengrass Edge Gateway"]
+        A2["Robotic Arm Servo Drives"] -->|"OPC-UA"| B1
+        B1 -->|"Edge Anomaly Filter"| C1["AWS Kinesis Data Streams"]
     end
 
-    subgraph Streaming & Processing Layer
-        C1 --> D1[AWS Kinesis Data Analytics / Apache Flink]
-        D1 -->|Critical Threshold Alert < 2s| E1[Amazon SNS / PagerDuty]
-        D1 -->|Standard Telemetry| F1[Amazon S3 Raw Data Lake]
+    subgraph "Streaming and Processing Layer"
+        C1 --> D1["AWS Kinesis Data Analytics / Apache Flink"]
+        D1 -->|"Critical Threshold Alert < 2s"| E1["Amazon SNS / PagerDuty"]
+        D1 -->|"Standard Telemetry"| F1["Amazon S3 Raw Data Lake"]
     end
 
-    subgraph Feature Store & Storage
-        F1 --> G1[AWS Glue ETL / PySpark]
-        G1 --> H1[Amazon Redshift Serverless: Historical DW]
-        G1 --> H2[SageMaker Feature Store: Offline & Online]
+    subgraph "Feature Store and Storage"
+        F1 --> G1["AWS Glue ETL / PySpark"]
+        G1 --> H1["Amazon Redshift Serverless: Historical DW"]
+        G1 --> H2["SageMaker Feature Store: Offline & Online"]
     end
 
-    subgraph Model Training & Inference
-        H2 --> I1[SageMaker Training: XGBoost & DeepSurv]
-        I1 --> I2[MLflow Model Registry]
-        I2 --> J1[Batch Inference Worker: 6-Hour Cadence]
+    subgraph "Model Training and Inference"
+        H2 --> I1["SageMaker Training: XGBoost and DeepSurv"]
+        I1 --> I2["MLflow Model Registry"]
+        I2 --> J1["Batch Inference Worker: 6-Hour Cadence"]
         H2 --> J1
-        J1 --> K1{Failure Risk > 0.35 in 7 Days?}
-        K1 -- Yes --> L1[Amazon EAM API: Dispatch Technician Work Order]
-        K1 -- No --> L2[Log Nominal Component State]
+        J1 --> K1{"Failure Risk > 0.35 in 7 Days?"}
+        K1 -->|"Yes"| L1["Amazon EAM API: Dispatch Technician Work Order"]
+        K1 -->|"No"| L2["Log Nominal Component State"]
     end
 
-    subgraph Governance & Monitoring
-        J1 --> M1[Evidently AI / SageMaker Clarify: PSI Drift Monitor]
-        M1 -->|PSI >= 0.2| N1[Automated Airflow Retraining Trigger]
+    subgraph "Governance and Monitoring"
+        J1 --> M1["Evidently AI / SageMaker Clarify: PSI Drift Monitor"]
+        M1 -->|"PSI >= 0.2"| N1["Automated Airflow Retraining Trigger"]
     end
 ```
 
@@ -402,20 +402,22 @@ When a downstream pack line or sorter accumulates excessive Work-In-Progress (WI
 
 ```mermaid
 flowchart LR
-    A[Decant & Stow] --> B[Pick Towers]
-    B --> C[Tote Accumulation Conveyors]
-    C --> D{Dynamic Router}
-    D -->|Line 1: Healthy| E1[Pack Hall 1]
-    D -->|Line 2: 95% Full| E2[Pack Hall 2 (Congested)]
-    D -->|Line 3: Healthy| E3[Pack Hall 3]
-    E1 & E2 & E3 --> F[SLAM Lines]
-    F --> G[Cross-Belt Sorter]
-    G --> H[Outbound Shipping]
+    A["Decant and Stow"] --> B["Pick Towers"]
+    B --> C["Tote Accumulation Conveyors"]
+    C --> D{"Dynamic Router"}
+    D -->|"Line 1: Healthy"| E1["Pack Hall 1"]
+    D -->|"Line 2: 95% Full"| E2["Pack Hall 2 - Congested"]
+    D -->|"Line 3: Healthy"| E3["Pack Hall 3"]
+    E1 --> F["SLAM Lines"]
+    E2 --> F
+    E3 --> F
+    F --> G["Cross-Belt Sorter"]
+    G --> H["Outbound Shipping"]
 ```
 
 ##### 2. Architectural Blueprint
 - **Graph Modeling**: Model the entire warehouse conveyor topology as a **Directed Acyclic Graph (DAG)** G = (V, E), where vertices V represent workstations/scanners/diverters, and edges E represent conveyor segments with physical capacity C_e and velocity v_e.
-- **Real-Time Telemetry Engine**: Ingests optical photo-eye break signals (package presence) and barcode scans over **Amazon MSK (Kafka)** with $<500$ms end-to-end latency.
+- **Real-Time Telemetry Engine**: Ingests optical photo-eye break signals (package presence) and barcode scans over **Amazon MSK (Kafka)** with < 500ms end-to-end latency.
 - **Optimization Engine**: Runs a **Mixed-Integer Linear Program (MILP)** or fast **Min-Cost Flow algorithm** every 30 seconds to adjust conveyor divert switches, dynamically balancing tote distribution across pack halls.
 
 ---
