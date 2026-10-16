@@ -10,7 +10,7 @@ In Amazon’s **LiveCode** platform, candidates write code in real time without 
 In an **Amazon Fulfillment Center**, automated package scanners log barcode reading events. Given a table `scanner_events (event_id INT, category VARCHAR, scanned_at TIMESTAMP)`, write a **Redshift SQL** query to:
 1. Calculate the time elapsed (in seconds) between consecutive scan events for each category.
 2. Compute the average gap between consecutive events per category.
-3. Flag any specific event where the gap between consecutive events exceeds $3\times$ the category average gap (indicating a potential conveyor jam or scanner failure).
+3. Flag any specific event where the gap between consecutive events exceeds 3× the category average gap (indicating a potential conveyor jam or scanner failure).
 
 #### Thought Process
 1. Use the **`LAG()`** window function partitioned by `category` and ordered by `scanned_at` to access the timestamp of the immediately preceding event.
@@ -68,8 +68,8 @@ ORDER BY category, scanned_at;
 ```
 
 #### Complexity Analysis
-- **Time Complexity**: $\mathcal{O}(N \log N)$, where $N$ is the total number of scanner events. The bottleneck is sorting the dataset within the window partitions.
-- **Space Complexity**: $\mathcal{O}(N)$ scratch space for sorting and computing window aggregations across partitions.
+- **Time Complexity**: **O(N log N)**, where $N$ is the total number of scanner events. The bottleneck is sorting the dataset within the window partitions.
+- **Space Complexity**: **O(N)** scratch space for sorting and computing window aggregations across partitions.
 
 ---
 
@@ -142,8 +142,8 @@ ORDER BY max_rolling_1h_throughput DESC;
 ```
 
 #### Complexity Analysis
-- **Time Complexity**: $\mathcal{O}(N \log N)$ for the window function; $\mathcal{O}(N \cdot K)$ for the self-join where $K$ is the average number of readings per hour.
-- **Space Complexity**: $\mathcal{O}(N)$ intermediate buffer storage in Redshift query memory.
+- **Time Complexity**: **O(N log N)** for the window function; **O(N · K)** for the self-join where K is the average number of readings per hour.
+- **Space Complexity**: **O(N)** intermediate buffer storage in Redshift query memory.
 
 ---
 
@@ -211,8 +211,8 @@ ORDER BY associate_id, session_start;
 ```
 
 #### Complexity Analysis
-- **Time Complexity**: $\mathcal{O}(N \log N)$ driven by the window sort order.
-- **Space Complexity**: $\mathcal{O}(N)$ for window state tracking.
+- **Time Complexity**: **O(N log N)** driven by the window sort order.
+- **Space Complexity**: **O(N)** for window state tracking.
 
 ---
 
@@ -273,8 +273,8 @@ ORDER BY current_fault, transition_prob DESC;
 ```
 
 #### Complexity Analysis
-- **Time Complexity**: $\mathcal{O}(N \log N)$ for the window function plus $\mathcal{O}(M \log M)$ where $M$ is the number of distinct transition pairs.
-- **Space Complexity**: $\mathcal{O}(N)$ storage.
+- **Time Complexity**: **O(N log N)** for the window function plus **O(M log M)** where $M$ is the number of distinct transition pairs.
+- **Space Complexity**: **O(N)** storage.
 
 ---
 
@@ -315,8 +315,8 @@ ORDER BY p99_dwell_mins DESC;
 ```
 
 #### Complexity Analysis
-- **Time Complexity**: $\mathcal{O}(Z \cdot K \log K)$, where $Z$ is zones and $K$ is packages per zone (sorting required for exact continuous percentiles).
-- **Space Complexity**: $\mathcal{O}(N)$ intermediate buffer memory.
+- **Time Complexity**: **O(Z · K log K)**, where $Z$ is zones and $K$ is packages per zone (sorting required for exact continuous percentiles).
+- **Space Complexity**: **O(N)** intermediate buffer memory.
 
 ---
 
@@ -326,12 +326,13 @@ ORDER BY p99_dwell_mins DESC;
 Write a clean, production-grade Python implementation of **Logistic Regression** trained via **Batch Gradient Descent** from scratch using only **NumPy**. Implement the sigmoid activation, Binary Cross-Entropy loss with $L_2$ regularization (Ridge penalty), gradient computation, weight update, and prediction methods.
 
 #### Thought Process
-1. **Model Hypothesis**: $\hat{y} = \sigma(z) = \frac{1}{1 + e^{-z}}$, where $z = Xw + b$.
+1. **Model Hypothesis**: `ŷ = σ(z) = 1 / (1 + e^-z)`, where `z = Xw + b`.
 2. **Objective Function (Cost)**:
-   $$J(w, b) = -\frac{1}{m} \sum_{i=1}^m \left[ y^{(i)} \log(\hat{y}^{(i)}) + (1 - y^{(i)}) \log(1 - \hat{y}^{(i)}) \right] + \frac{\lambda}{2m} \|w\|_2^2$$
+   > **J(w, b) = - (1/m) · Σ [ y⁽ⁱ⁾ · log(ŷ⁽ⁱ⁾) + (1 - y⁽ⁱ⁾) · log(1 - ŷ⁽ⁱ⁾) ] + (λ / 2m) · ||w||²**
 3. **Gradients**:
-   $$\frac{\partial J}{\partial w} = \frac{1}{m} X^T (\hat{y} - y) + \frac{\lambda}{m} w, \quad \frac{\partial J}{\partial b} = \frac{1}{m} \sum_{i=1}^m (\hat{y}^{(i)} - y^{(i)})$$
-4. Add numerical stability clipping to sigmoid/log inputs to prevent $\log(0) \rightarrow -\infty$ or overflow.
+   > **∂J/∂w = (1/m) · Xᵀ (ŷ - y) + (λ/m) · w**
+> **∂J/∂b = (1/m) · Σ (ŷ⁽ⁱ⁾ - y⁽ⁱ⁾)**
+4. Add numerical stability clipping to sigmoid/log inputs to prevent log(0) → -∞ or overflow.
 
 #### Code (Python)
 ```python
@@ -402,8 +403,8 @@ class ScratchLogisticRegression:
 ```
 
 #### Complexity Analysis
-- **Time Complexity**: $\mathcal{O}(I \cdot m \cdot n)$, where $I$ is iterations, $m$ is number of samples, and $n$ is number of features.
-- **Space Complexity**: $\mathcal{O}(n)$ to store weights and gradients.
+- **Time Complexity**: **O(I · m · n)**, where $I$ is iterations, $m$ is number of samples, and $n$ is number of features.
+- **Space Complexity**: **O(n)** to store weights and gradients.
 
 ---
 
@@ -413,9 +414,9 @@ class ScratchLogisticRegression:
 Implement **Ridge Regression** from scratch using the closed-form **Normal Equation**. Provide an analytical solver that handles matrix inversion singularity checks, adds an intercept term, and fits optimal weights $\hat{w}$.
 
 #### Thought Process
-1. Analytical solution for Ridge Regression minimizing $\|y - Xw\|_2^2 + \lambda \|w\|_2^2$:
-   $$\hat{w} = (X^T X + \lambda I')^{-1} X^T y$$
-2. Important detail: The bias/intercept term should **not** be regularized. The identity matrix $I'$ must have a $0$ at index $(0, 0)$.
+1. Analytical solution for Ridge Regression minimizing ||y - Xw||² + λ ||w||²:
+   > **ŵ = (Xᵀ X + λ I')⁻¹ Xᵀ y**
+2. Important detail: The bias/intercept term should **not** be regularized. The identity matrix I' must have a 0 at index (0, 0).
 3. Check for matrix invertibility using `np.linalg.pinv` (Moore-Penrose pseudo-inverse) for robustness against collinear features.
 
 #### Code (Python)
@@ -461,8 +462,8 @@ class ScratchRidgeRegression:
 ```
 
 #### Complexity Analysis
-- **Time Complexity**: $\mathcal{O}(n^2 m + n^3)$ where $n$ is feature count and $m$ is sample count.
-- **Space Complexity**: $\mathcal{O}(n^2)$ for the $(n+1) \times (n+1)$ covariance matrix.
+- **Time Complexity**: **O(n² · m + n³)** where n is feature count and m is sample count.
+- **Space Complexity**: **O(n²)** for the (n + 1) × (n + 1) covariance matrix.
 
 ---
 
@@ -472,14 +473,14 @@ class ScratchRidgeRegression:
 Implement the complete **K-Means Clustering** algorithm from scratch in NumPy, including random centroid initialization, Euclidean distance calculation, iterative assignment, centroid re-estimation, and convergence criteria based on tolerance $\epsilon$.
 
 #### Thought Process
-1. Initialize $K$ centroids by randomly sampling $K$ unique observation vectors from the dataset.
+1. Initialize K centroids by randomly sampling K unique observation vectors from the dataset.
 2. In each iteration:
-   - Compute pairwise Euclidean distance between each point $x_i$ and each centroid $\mu_k$:
-     $$\text{dist}(x_i, \mu_k) = \sqrt{\sum_{j=1}^d (x_{ij} - \mu_{kj})^2}$$
-   - Assign each point to the closest centroid: $c_i = \arg\min_k \text{dist}(x_i, \mu_k)$.
-   - Update centroids to be the mean of all points assigned to that cluster: $\mu_k = \frac{1}{|S_k|} \sum_{i \in S_k} x_i$.
+   - Compute pairwise Euclidean distance between each point x_i and each centroid μ_k:
+     > **dist(x_i, μ_k) = √[ Σ (x_ij - μ_kj)² ]**
+   - Assign each point to the closest centroid: c_i = argmin_k dist(x_i, μ_k).
+   - Update centroids to be the mean of all points assigned to that cluster: μ_k = (1 / |S_k|) · Σ x_i.
    - If a cluster becomes empty, reinitialize its centroid to a random data point.
-3. Terminate when centroid movement is less than tolerance $\epsilon$ or max iterations reached.
+3. Terminate when centroid movement is less than tolerance ε or max iterations reached.
 
 #### Code (Python)
 ```python
@@ -536,21 +537,21 @@ class ScratchKMeans:
 ```
 
 #### Complexity Analysis
-- **Time Complexity**: $\mathcal{O}(T \cdot m \cdot K \cdot d)$, where $T$ is iterations, $m$ is data points, $K$ is clusters, and $d$ is feature dimensions.
-- **Space Complexity**: $\mathcal{O}(m \cdot K + K \cdot d)$ for pairwise distance matrices and centroid storage.
+- **Time Complexity**: **O(T · m · K · d)**, where $T$ is iterations, $m$ is data points, $K$ is clusters, and $d$ is feature dimensions.
+- **Space Complexity**: **O(m · K + K · d)** for pairwise distance matrices and centroid storage.
 
 ---
 
 ### Problem 9: [Python / Data Science] Rolling Z-Score Time-Series Anomaly Detection
 
 #### Problem Statement
-Given a pandas DataFrame of high-frequency conveyor motor current telemetry with timestamps `['timestamp', 'motor_current_amps']`, write a function that computes a **rolling Z-score** with a window size of $W=60$ samples. Detect anomalies where the absolute Z-score exceeds a threshold (e.g., $|Z| \ge 3.0$) and return the indices and timestamps of flagged anomalies, handling edge cases such as initial cold-start and zero standard deviation.
+Given a pandas DataFrame of high-frequency conveyor motor current telemetry with timestamps `['timestamp', 'motor_current_amps']`, write a function that computes a **rolling Z-score** with a window size of W = 60 samples. Detect anomalies where the absolute Z-score exceeds a threshold (e.g., |Z| ≥ 3.0) and return the indices and timestamps of flagged anomalies, handling edge cases such as initial cold-start and zero standard deviation.
 
 #### Thought Process
-1. $Z_t = \frac{x_t - \mu_t}{\sigma_t}$, where $\mu_t$ and $\sigma_t$ are the rolling mean and rolling standard deviation over the prior $W$ observations.
+1. `Z_t = (x_t - μ_t) / σ_t`, where μ_t and σ_t are the rolling mean and rolling standard deviation over the prior W observations.
 2. In production streaming/batch pipelines, using the current value in the mean calculation can bias the mean towards the anomaly. An anomaly-free calculation computes rolling statistics on **shifted** historical values `series.shift(1).rolling(window=W)`.
-3. Handle numerical instability: if $\sigma_t \approx 0$ (motor idle or perfectly steady), division by zero occurs. Add a small epsilon $\epsilon = 1e-6$ to the denominator.
-4. Filter out initial $W-1$ rows where rolling window statistics are incomplete.
+3. Handle numerical instability: if σ_t ≈ 0 (motor idle or perfectly steady), division by zero occurs. Add a small epsilon ε = 1e-6 to the denominator.
+4. Filter out initial W - 1 rows where rolling window statistics are incomplete.
 
 #### Code (Python)
 ```python
@@ -588,8 +589,8 @@ def detect_rolling_zscore_anomalies(
 ```
 
 #### Complexity Analysis
-- **Time Complexity**: $\mathcal{O}(N)$ using Pandas/NumPy optimized vectorized sliding window algorithms.
-- **Space Complexity**: $\mathcal{O}(N)$ for auxiliary feature columns.
+- **Time Complexity**: **O(N)** using Pandas/NumPy optimized vectorized sliding window algorithms.
+- **Space Complexity**: **O(N)** for auxiliary feature columns.
 
 ---
 
@@ -599,13 +600,13 @@ def detect_rolling_zscore_anomalies(
 In production ML at **Honeywell** and **Amazon**, models degrade over time due to feature drift. Implement a function in pure Python/NumPy to calculate the **Population Stability Index (PSI)** between a reference (expected/baseline) array and an inference (actual/current) array for a continuous feature.
 
 #### Thought Process
-1. Partition the reference distribution into $B$ quantiles (typically deciles, $B=10$).
-2. Compute bucket boundaries from the expected distribution: $[b_0, b_1, \dots, b_{10}]$.
+1. Partition the reference distribution into B quantiles (typically deciles, B = 10).
+2. Compute bucket boundaries from the expected distribution: [b_0, b_1, ..., b_10].
 3. Bin both the expected and actual arrays into these exact same bucket boundaries.
-4. Calculate the empirical proportion of samples falling in bucket $k$: $P_{exp}(k)$ and $P_{act}(k)$.
-5. Apply smoothing (epsilon) to avoid division by zero or $\ln(0)$ if an actual bucket is empty.
+4. Calculate the empirical proportion of samples falling in bucket k: P_exp(k) and P_act(k).
+5. Apply smoothing (epsilon) to avoid division by zero or ln(0) if an actual bucket is empty.
 6. Compute PSI:
-   $$PSI = \sum_{k=1}^B (P_{act}(k) - P_{exp}(k)) \times \ln\left(\frac{P_{act}(k)}{P_{exp}(k)}\right)$$
+   > **PSI = Σ [ (P_act(k) - P_exp(k)) × ln(P_act(k) / P_exp(k)) ]**
 
 #### Code (Python)
 ```python
@@ -647,25 +648,25 @@ def calculate_psi(expected: np.ndarray, actual: np.ndarray, num_buckets: int = 1
 ```
 
 #### Complexity Analysis
-- **Time Complexity**: $\mathcal{O}(N \log N + M \log B)$, where $N$ is size of expected array and $M$ is size of actual array.
-- **Space Complexity**: $\mathcal{O}(B)$ where $B$ is the number of quantile buckets.
+- **Time Complexity**: **O(N log N + M log B)**, where $N$ is size of expected array and $M$ is size of actual array.
+- **Space Complexity**: **O(B)** where $B$ is the number of quantile buckets.
 
 ---
 
 ### Problem 11: [Python / Data Science] Area Under ROC Curve (AUC-ROC) from Scratch
 
 #### Problem Statement
-Write a function to compute the **AUC-ROC** given continuous prediction probabilities `y_pred` and true binary labels `y_true \in \{0, 1\}` without importing `scikit-learn`.
+Write a function to compute the **AUC-ROC** given continuous prediction probabilities `y_pred` and true binary labels `y_true in {0, 1}` without importing `scikit-learn`.
 
 #### Thought Process
 1. **Mathematical Equivalence**: The Area Under the ROC Curve is mathematically identical to the **Wilcoxon-Mann-Whitney U-statistic**:
-   $$AUC = P(\hat{y}_{positive} > \hat{y}_{negative}) + 0.5 \times P(\hat{y}_{positive} == \hat{y}_{negative})$$
+   > **AUC = P(ŷ_pos > ŷ_neg) + 0.5 × P(ŷ_pos == ŷ_neg)**
 2. In other words, AUC represents the probability that a randomly chosen positive sample receives a higher predicted score than a randomly chosen negative sample!
 3. Ranking Approach:
    - Rank all predictions in ascending order (assigning fractional ranks for ties).
-   - Sum the ranks of all positive instances: $R_{pos}$.
+   - Sum the ranks of all positive instances: R_pos.
    - Apply the Mann-Whitney $U$ formula:
-     $$U = R_{pos} - \frac{n_{pos}(n_{pos} + 1)}{2}, \quad AUC = \frac{U}{n_{pos} \times n_{neg}}$$
+     > **U = R_pos - [ n_pos · (n_pos + 1) ] / 2,     AUC = U / (n_pos × n_neg)**
 
 #### Code (Python)
 ```python
@@ -709,20 +710,20 @@ def compute_auc_roc_from_scratch(y_true: np.ndarray, y_pred: np.ndarray) -> floa
 ```
 
 #### Complexity Analysis
-- **Time Complexity**: $\mathcal{O}(N \log N)$ dominated by sorting the predictions.
-- **Space Complexity**: $\mathcal{O}(N)$ for storing ranks.
+- **Time Complexity**: **O(N log N)** dominated by sorting the predictions.
+- **Space Complexity**: **O(N)** for storing ranks.
 
 ---
 
 ### Problem 12: [Python / Data Manipulation] Asynchronous IoT Sensor Telemetry Resampling
 
 #### Problem Statement
-IoT vibration sensors ping asynchronously with variable millisecond timestamps and intermittent packet drops. Write a python function using **Pandas** that takes raw sensor logs `['timestamp', 'sensor_id', 'vibration_x', 'vibration_y', 'vibration_z']`, resamples each sensor to a clean **100ms fixed interval**, performs linear interpolation for gaps $<1$ second, and flags any gap $\ge 1$ second as `'SENSOR_OFFLINE'`.
+IoT vibration sensors ping asynchronously with variable millisecond timestamps and intermittent packet drops. Write a python function using **Pandas** that takes raw sensor logs `['timestamp', 'sensor_id', 'vibration_x', 'vibration_y', 'vibration_z']`, resamples each sensor to a clean **100ms fixed interval**, performs linear interpolation for gaps < 1 second, and flags any gap ≥ 1 second as `'SENSOR_OFFLINE'`.
 
 #### Thought Process
 1. Group by `sensor_id`.
 2. Convert timestamp to datetime index and apply `.resample('100ms').mean()`.
-3. Use `.interpolate(method='linear', limit=10)` (since $10 \times 100\text{ms} = 1\text{ second}$).
+3. Use `.interpolate(method='linear', limit=10)` (since 10 × 100ms = 1 second).
 4. Identify missing values remaining after the limit and mark them as `'SENSOR_OFFLINE'`.
 
 #### Code (Python)
@@ -753,8 +754,8 @@ def clean_and_resample_telemetry(df: pd.DataFrame) -> pd.DataFrame:
 ```
 
 #### Complexity Analysis
-- **Time Complexity**: $\mathcal{O}(S \cdot M \log M)$ where $S$ is number of sensors and $M$ is readings per sensor.
-- **Space Complexity**: $\mathcal{O}(M_{resampled})$ for the standardized time grid.
+- **Time Complexity**: **O(S · M log M)** where $S$ is number of sensors and $M$ is readings per sensor.
+- **Space Complexity**: **O(M_resampled)** for the standardized time grid.
 
 ---
 
@@ -795,25 +796,25 @@ def pivot_fulfillment_flow(df: pd.DataFrame) -> pd.DataFrame:
 ```
 
 #### Complexity Analysis
-- **Time Complexity**: $\mathcal{O}(N)$ where $N$ is total number of movement records.
-- **Space Complexity**: $\mathcal{O}(U)$ where $U$ is unique `(fc_id, shift, flow_pair)` cells.
+- **Time Complexity**: **O(N)** where N is total number of movement records.
+- **Space Complexity**: **O(U)** where U is unique `(fc_id, shift, flow_pair)` cells.
 
 ---
 
 ### Problem 14: [Python / Algorithms] Sliding Window Maximum Package Flow Rate (LeetCode 239)
 
 #### Problem Statement
-Amazon sorters record package counts inducted per second in an array `nums`. An optical sensor evaluates the maximum package surge over a sliding window of size $k$ seconds. Return an array of the maximum surge rate for each sliding window of size $k$ across the shift.
+Amazon sorters record package counts inducted per second in an array `nums`. An optical sensor evaluates the maximum package surge over a sliding window of size k seconds. Return an array of the maximum surge rate for each sliding window of size $k$ across the shift.
 
 #### Thought Process
-1. Naive approach scans all $k$ elements in every window: $\mathcal{O}(N \cdot k)$ (Too slow for high-frequency logs).
+1. Naive approach scans all $k$ elements in every window: **O(N · k)** (Too slow for high-frequency logs).
 2. Optimal approach uses a **Monotonic Deque (Double-Ended Queue)** storing indices.
 3. Invariant: Maintain elements in the deque in **strictly decreasing order** of value. The front of the deque `q[0]` always holds the index of the maximum element in the current window!
 4. For each incoming element $nums[i]$:
-   - Pop indices from the front if they fall outside the window ($q[0] \le i - k$).
-   - Pop indices from the back if their corresponding values are smaller than $nums[i]$ ($nums[q[-1]] \le nums[i]$).
+   - Pop indices from the front if they fall outside the window (q[0] ≤ i - k).
+   - Pop indices from the back if their corresponding values are smaller than nums[i] (nums[q[-1]] ≤ nums[i]).
    - Push $i$ to the back.
-   - Once $i \ge k - 1$, append $nums[q[0]]$ to output.
+   - Once i ≥ k - 1, append $nums[q[0]]$ to output.
 
 #### Code (Python)
 ```python
@@ -848,22 +849,22 @@ class SolutionSlidingWindowMax:
 ```
 
 #### Complexity Analysis
-- **Time Complexity**: $\mathcal{O}(N)$ linear time. Every index is pushed and popped from the deque at most once.
-- **Space Complexity**: $\mathcal{O}(k)$ auxiliary memory for the deque.
+- **Time Complexity**: **O(N)** linear time. Every index is pushed and popped from the deque at most once.
+- **Space Complexity**: **O(k)** auxiliary memory for the deque.
 
 ---
 
 ### Problem 15: [Python / Algorithms] Top K Most Frequent MHE Error Codes (LeetCode 347)
 
 #### Problem Statement
-Given an array of diagnostic error codes generated by robotic arms and sorters `error_codes`, return the **$k$ most frequent error codes**. Must execute with time complexity strictly better than $\mathcal{O}(N \log N)$.
+Given an array of diagnostic error codes generated by robotic arms and sorters `error_codes`, return the **k most frequent error codes**. Must execute with time complexity strictly better than **O(N log N)**.
 
 #### Thought Process
-1. Step 1: Count error frequencies using a Hash Map: $\mathcal{O}(N)$.
-2. Step 2: Use a **Min-Heap** of fixed size $k$.
+1. Step 1: Count error frequencies using a Hash Map: **O(N)**.
+2. Step 2: Use a **Min-Heap** of fixed size k.
    - Iterate through each `(code, freq)` pair in the frequency map.
-   - Push to min-heap ordered by frequency. If heap size exceeds $k$, pop the minimum element.
-   - The heap retains the top $k$ largest elements.
+   - Push to min-heap ordered by frequency. If heap size exceeds k, pop the minimum element.
+   - The heap retains the top k largest elements.
 
 #### Code (Python)
 ```python
@@ -889,8 +890,8 @@ def top_k_frequent_error_codes(error_codes: List[str], k: int) -> List[str]:
 ```
 
 #### Complexity Analysis
-- **Time Complexity**: $\mathcal{O}(N + U \log k)$ where $N$ is array length and $U$ is unique error codes.
-- **Space Complexity**: $\mathcal{O}(U + k)$ for the frequency map and min-heap.
+- **Time Complexity**: **O(N + U log k)** where $N$ is array length and $U$ is unique error codes.
+- **Space Complexity**: **O(U + k)** for the frequency map and min-heap.
 
 ---
 
@@ -900,11 +901,11 @@ def top_k_frequent_error_codes(error_codes: List[str], k: int) -> List[str]:
 Given an array of planned equipment maintenance intervals `intervals` where `intervals[i] = [start_i, end_i]`, merge all overlapping maintenance windows, and return an array of non-overlapping intervals covering all downtime.
 
 #### Thought Process
-1. Sort intervals by their start time: $start_i$.
+1. Sort intervals by their start time: start_i.
 2. Initialize an empty merged list.
 3. For each interval:
-   - If `merged` is empty or the current interval's start is strictly greater than the end time of the previous interval in `merged` ($start > merged[-1][1]$), no overlap exists: append interval.
-   - Otherwise, an overlap exists: update $merged[-1][1] = \max(merged[-1][1], end)$.
+   - If `merged` is empty or the current interval's start is strictly greater than the end time of the previous interval in `merged` (start > merged[-1][1]), no overlap exists: append interval.
+   - Otherwise, an overlap exists: update merged[-1][1] = max(merged[-1][1], end).
 
 #### Code (Python)
 ```python
@@ -933,15 +934,15 @@ def merge_maintenance_windows(intervals: List[List[int]]) -> List[List[int]]:
 ```
 
 #### Complexity Analysis
-- **Time Complexity**: $\mathcal{O}(N \log N)$ driven by sorting the intervals.
-- **Space Complexity**: $\mathcal{O}(N)$ to store the output merged intervals.
+- **Time Complexity**: **O(N log N)** driven by sorting the intervals.
+- **Space Complexity**: **O(N)** to store the output merged intervals.
 
 ---
 
 ### Problem 17: [Python / Algorithms] Bottleneck Cycle & Topological Sort in Conveyor Network (LeetCode 207/210)
 
 #### Problem Statement
-A fulfillment center conveyor network consists of $V$ transfer junctions numbered $0$ to $V-1$. Segments flow unidirectionally from junction $u$ to junction $v$. If a cycle exists, totes loop infinitely, causing physical deadlocks. Given an adjacency list of conveyor transfers, write a function to detect whether a cycle exists and, if not, return a valid topological processing order of junctions using **Kahn's Algorithm (BFS)**.
+A fulfillment center conveyor network consists of V transfer junctions numbered 0 to V - 1. Segments flow unidirectionally from junction u to junction v. If a cycle exists, totes loop infinitely, causing physical deadlocks. Given an adjacency list of conveyor transfers, write a function to detect whether a cycle exists and, if not, return a valid topological processing order of junctions using **Kahn's Algorithm (BFS)**.
 
 #### Thought Process
 1. **Kahn's Algorithm**:
@@ -987,8 +988,8 @@ def analyze_conveyor_network(num_junctions: int, edges: List[Tuple[int, int]]) -
 ```
 
 #### Complexity Analysis
-- **Time Complexity**: $\mathcal{O}(V + E)$ where $V$ is junctions and $E$ is conveyor segments.
-- **Space Complexity**: $\mathcal{O}(V + E)$ for adjacency list and in-degree tracking.
+- **Time Complexity**: **O(V + E)** where $V$ is junctions and $E$ is conveyor segments.
+- **Space Complexity**: **O(V + E)** for adjacency list and in-degree tracking.
 
 ---
 
@@ -1034,22 +1035,22 @@ def min_agvs_required(intervals: List[List[int]]) -> int:
 ```
 
 #### Complexity Analysis
-- **Time Complexity**: $\mathcal{O}(N \log N)$ for sorting plus heap push/pop operations.
-- **Space Complexity**: $\mathcal{O}(N)$ for heap storage.
+- **Time Complexity**: **O(N log N)** for sorting plus heap push/pop operations.
+- **Space Complexity**: **O(N)** for heap storage.
 
 ---
 
 ### Problem 19: [Python / Algorithms] Binary Search for Optimal Conveyor Velocity
 
 #### Problem Statement
-Amazon engineers want to transport $N$ packages of known weights across a fulfillment sorter within $H$ hours. A conveyor motor running at variable speed $V$ (speed capacity $V$ weight units per hour) handles one batch per hour. If a package exceeds current speed, it must wait for the next hour. Find the minimum integer velocity $V$ such that all packages are transported within $H$ hours.
+Amazon engineers want to transport N packages of known weights across a fulfillment sorter within H hours. A conveyor motor running at variable speed V (speed capacity V weight units per hour) handles one batch per hour. If a package exceeds current speed, it must wait for the next hour. Find the minimum integer velocity V such that all packages are transported within $H$ hours.
 
 #### Thought Process
 1. Binary search on the answer space:
-   - Minimum possible speed: $\max(weights)$ (the conveyor must be able to move the single heaviest package).
-   - Maximum possible speed: $\sum weights$ (moving all packages in 1 hour).
-2. Monotonicity: If speed $V$ can complete the workload in $\le H$ hours, any speed $V' > V$ can also do so. If speed $V$ takes $> H$ hours, we need a faster speed.
-3. Binary search boundaries: $[\max(weights), \sum weights]$.
+   - Minimum possible speed: max(weights) (the conveyor must be able to move the single heaviest package).
+   - Maximum possible speed: sum(weights) (moving all packages in 1 hour).
+2. Monotonicity: If speed $V$ can complete the workload in ≤ H hours, any speed V' > V can also do so. If speed $V$ takes > H hours, we need a faster speed.
+3. Binary search boundaries: [max(weights), sum(weights)].
 
 #### Code (Python)
 ```python
@@ -1081,25 +1082,25 @@ def min_conveyor_velocity(weights: List[int], H: int) -> int:
 ```
 
 #### Complexity Analysis
-- **Time Complexity**: $\mathcal{O}(N \log(\sum W - \max W))$, extremely fast binary search across candidate speeds.
-- **Space Complexity**: $\mathcal{O}(1)$ auxiliary memory.
+- **Time Complexity**: **O(N log(Σ W - max W))**, extremely fast binary search across candidate speeds.
+- **Space Complexity**: **O(1)** auxiliary memory.
 
 ---
 
 ### Problem 20: [Python / Algorithms] Dynamic Programming: 0/1 Outbound Trailer Packing
 
 #### Problem Statement
-An outbound Amazon trailer has a maximum payload weight capacity $W$. You are given $N$ high-priority freight pallets, each with weight $w_i$ and business value/urgency score $v_i$. Implement a space-optimized **Dynamic Programming** solution to determine the maximum value of freight that can be packed into the trailer without exceeding capacity.
+An outbound Amazon trailer has a maximum payload weight capacity W. You are given N high-priority freight pallets, each with weight w_i and business value/urgency score v_i. Implement a space-optimized **Dynamic Programming** solution to determine the maximum value of freight that can be packed into the trailer without exceeding capacity.
 
 #### Thought Process
 1. Classic 0/1 Knapsack formulation:
-   - State: $dp[w]$ represents the maximum urgency score achievable with trailer capacity $w$.
+   - State: $dp[w]$ represents the maximum urgency score achievable with trailer capacity w.
 2. Space Optimization:
-   - A naive 2D table requires $\mathcal{O}(N \cdot W)$ space.
-   - We can optimize to a **1D array** of size $W+1$ by traversing backwards from $W$ down to $w_i$.
+   - A naive 2D table requires **O(N · W)** space.
+   - We can optimize to a **1D array** of size W + 1 by traversing backwards from W down to w_i.
    - Backward traversal ensures each pallet is chosen at most once!
 3. Recurrence relation:
-   $$dp[w] = \max(dp[w], dp[w - w_i] + v_i)$$
+   > **dp[w] = max(dp[w], dp[w - w_i] + v_i)**
 
 #### Code (Python)
 ```python
@@ -1121,24 +1122,24 @@ def optimize_trailer_packing(capacity: int, weights: List[int], values: List[int
 ```
 
 #### Complexity Analysis
-- **Time Complexity**: $\mathcal{O}(N \cdot W)$ where $N$ is pallet count and $W$ is trailer capacity.
-- **Space Complexity**: $\mathcal{O}(W)$ space-optimized 1D array.
+- **Time Complexity**: **O(N · W)** where $N$ is pallet count and $W$ is trailer capacity.
+- **Space Complexity**: **O(W)** space-optimized 1D array.
 
 ---
 
 ### Problem 21: [Python / Scratch ML] Cosine Similarity & Vector Top-K Retrieval from Scratch
 
 #### Problem Statement
-For an AI-powered MHE technical manual retrieval system, write a pure **NumPy** function to compute cosine similarity between a 768-dimensional query embedding vector $q$ and a matrix of document chunk embeddings $D \in \mathbb{R}^{M \times 768}$, and return the indices and scores of the **top $K$ most similar document chunks** using a min-heap or partial sorting.
+For an AI-powered MHE technical manual retrieval system, write a pure **NumPy** function to compute cosine similarity between a 768-dimensional query embedding vector q and a matrix of document chunk embeddings D in R^(M × 768), and return the indices and scores of the **top K most similar document chunks** using a min-heap or partial sorting.
 
 #### Thought Process
 1. **Cosine Similarity**:
-   $$\text{Sim}(q, d_i) = \frac{q \cdot d_i}{\|q\|_2 \|d_i\|_2}$$
-2. Vectorize the operation across all $M$ documents:
-   - Normalize query vector: $\tilde{q} = \frac{q}{\|q\|_2 + \epsilon}$.
-   - Row-normalize document matrix: $\tilde{D} = \frac{D}{\|D\|_2 + \epsilon}$.
-   - Matrix-vector dot product: $S = \tilde{D} \tilde{q}$.
-3. Top-$K$ selection: Use `np.argpartition` to find top $K$ in $\mathcal{O}(M)$ linear time rather than sorting all $M$ items in $\mathcal{O}(M \log M)$.
+   > **Sim(q, d_i) = (q · d_i) / ( ||q||₂ · ||d_i||₂ )**
+2. Vectorize the operation across all M documents:
+   - Normalize query vector: q_norm = q / ( ||q||₂ + ε ).
+   - Row-normalize document matrix: D_norm = D / ( ||D||₂ + ε ).
+   - Matrix-vector dot product: S = D_norm · q_norm.
+3. Top-$K$ selection: Use `np.argpartition` to find top K in **O(M)** linear time rather than sorting all M items in **O(M log M)**.
 
 #### Code (Python)
 ```python
@@ -1176,5 +1177,5 @@ def retrieve_top_k_chunks(
 ```
 
 #### Complexity Analysis
-- **Time Complexity**: $\mathcal{O}(M \cdot d + M + k \log k)$ where $M$ is chunk count, $d$ is embedding dimension ($768$), and $k$ is top chunks retrieved.
-- **Space Complexity**: $\mathcal{O}(M)$ for normalized similarities.
+- **Time Complexity**: **O(M · d + M + k log k)** where M is chunk count, d is embedding dimension (768), and k is top chunks retrieved.
+- **Space Complexity**: **O(M)** for normalized similarities.

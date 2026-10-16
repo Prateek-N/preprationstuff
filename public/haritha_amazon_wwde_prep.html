@@ -536,38 +536,38 @@ flowchart LR
 #### Custom Feature Engineering (Physics-Informed & Time-Frequency Domains)
 Rather than feeding raw high-frequency time-series directly into tree-based algorithms, you engineered domain-specific representations:
 1. **Time-Domain Statistical Moments**:
-   - **Rolling Root Mean Square (RMS)**: Measures overall energy and mechanical vibration severity ($RMS = \\sqrt{\\frac{1}{N}\\sum_{i=1}^N x_i^2}$).
-   - **Kurtosis ($4^{th}$ standardized moment)**: Sensitive to impulsive bearing impacts and early-stage crack propagation ($Kurtosis = \\frac{\\frac{1}{N}\\sum (x_i - \\bar{x})^4}{\\sigma^4}$). A healthy machine exhibits kurtosis $\\approx 3.0$; spalling or tooth breakage pushes kurtosis $> 6.0$.
-   - **Crest Factor**: $\\frac{x_{peak}}{RMS}$, signaling high-energy transient spikes relative to nominal operation.
-   - **Skewness ($3^{rd}$ moment)**: Identifies asymmetrical mechanical wear or unbalance.
+   - **Rolling Root Mean Square (RMS)**: Measures overall energy and mechanical vibration severity (RMS = √( (1/N) · Σ x_i² )).
+   - **Kurtosis (4th standardized moment)**: Sensitive to impulsive bearing impacts and early-stage crack propagation (Kurtosis = [ (1/N) · Σ (x_i - x̄)⁴ ] / σ⁴). A healthy machine exhibits kurtosis ≈ 3.0; spalling or tooth breakage pushes kurtosis > 6.0.
+   - **Crest Factor**: x_peak / RMS, signaling high-energy transient spikes relative to nominal operation.
+   - **Skewness (3rd moment)**: Identifies asymmetrical mechanical wear or unbalance.
 2. **Frequency-Domain Features via Fast Fourier Transform (FFT)**:
-   - Partitioned the frequency spectrum into distinct operational bands: Sub-synchronous ($0.1\\times - 0.9\\times$ RPM, detecting oil whirl), Synchronous ($1\\times$ RPM, detecting unbalance), Harmonic ($2\\times - 5\\times$ RPM, detecting misalignment and looseness), and High-Frequency ($>10\\times$ RPM, detecting gear mesh and bearing raceway faults).
+   - Partitioned the frequency spectrum into distinct operational bands: Sub-synchronous (0.1× – 0.9× RPM, detecting oil whirl), Synchronous (1× RPM, detecting unbalance), Harmonic (2× – 5× RPM, detecting misalignment and looseness), and High-Frequency (>10× RPM, detecting gear mesh and bearing raceway faults).
    - Computed **Spectral Entropy** and **Spectral Energy Ratios** across these frequency bins.
 3. **Operational State Normalization**:
-   - Motor vibration is confounded by motor load and RPM. You engineered **Normalized Vibration Indices**: $\\tilde{V} = \\frac{V_{measured}}{f(RPM, Load_{kW})}$. Without this normalization, a normal surge in warehouse conveyor throughput would trigger a false positive degradation alarm.
+   - Motor vibration is confounded by motor load and RPM. You engineered **Normalized Vibration Indices**: V_norm = V_measured / f(RPM, Load_kW). Without this normalization, a normal surge in warehouse conveyor throughput would trigger a false positive degradation alarm.
 
 #### Statistical Model Evaluation & Imbalance Handling
 - **The Imbalance Challenge**: Less than **0.3%** of historical sensor records corresponded to actual mechanical failure events.
-- **Resampling & Loss Weighting**: Evaluated SMOTE vs. Cost-Sensitive Loss. SMOTE in high-dimensional frequency space created unphysical synthetic transients. You chose **\`scale_pos_weight = (count(negative) / count(positive))\`** directly in the XGBoost objective function ($\\approx 330.0$).
-- **Precision-Recall AUC (PR-AUC) vs ROC-AUC**: ROC-AUC was misleadingly high ($0.985$) because the massive true negative pool masked false alarms. You selected **PR-AUC** as the primary optimization metric, reaching $0.884$ PR-AUC.
+- **Resampling & Loss Weighting**: Evaluated SMOTE vs. Cost-Sensitive Loss. SMOTE in high-dimensional frequency space created unphysical synthetic transients. You chose **\`scale_pos_weight = (count(negative) / count(positive))\`** directly in the XGBoost objective function (≈ 330.0).
+- **Precision-Recall AUC (PR-AUC) vs ROC-AUC**: ROC-AUC was misleadingly high (0.985) because the massive true negative pool masked false alarms. You selected **PR-AUC** as the primary optimization metric, reaching 0.884 PR-AUC.
 - **Cost-Weighted Threshold Optimization**:
-  - False Positive ($FP$): Maintenance technician inspects healthy equipment $\\rightarrow$ Cost $\\approx \\$150$ in labor.
-  - False Negative ($FN$): Unplanned catastrophic conveyor failure during peak shift $\\rightarrow$ Cost $\\approx \\$45,000$ in downtime and delayed package SLA.
-  - Formulated the decision threshold $\\theta^*$ via cost minimization:
-    $$\\theta^* = \\arg\\min_\\theta \\left( C_{FP} \\cdot FP(\\theta) + C_{FN} \\cdot FN(\\theta) \\right)$$
-  - This positioned the optimal operational threshold at $\\theta = 0.28$, maintaining an operational **Recall of 94.2%** while capping the **False Positive Rate under 1.8%**.
+  - **False Positive (FP)**: Maintenance technician inspects healthy equipment → Cost ≈ **$150** in labor.
+  - **False Negative (FN)**: Unplanned catastrophic conveyor failure during peak shift → Cost ≈ **$45,000** in downtime and delayed package SLA.
+  - **Formulated the decision threshold θ* via cost minimization**:
+    > **θ* = argmin_θ [ C_FP · FP(θ) + C_FN · FN(θ) ]**
+  - This positioned the optimal operational threshold at **θ = 0.28**, maintaining an operational **Recall of 94.2%** while capping the **False Positive Rate under 1.8%**.
 
 #### Why XGBoost Over Alternatives?
-- **vs. Deep Autoencoders**: Autoencoder reconstruction error was sensitive to ambient thermal drift and required GPU inference infrastructure ($4\\times$ cloud cost). XGBoost yielded millisecond inference on **AWS Lambda** (CPU).
+- **vs. Deep Autoencoders**: Autoencoder reconstruction error was sensitive to ambient thermal drift and required GPU inference infrastructure (4× cloud cost). XGBoost yielded millisecond inference on **AWS Lambda** (CPU).
 - **vs. Isolation Forest**: Isolation Forest is unguided by failure history, triggering excessive false alarms on novel but benign operating speeds. XGBoost supervised learning leveraged sparse historical failure tickets effectively.
-- **vs. One-Class SVM**: Poor scaling beyond 50K samples; $\\mathcal{O}(N^2)$ to $\\mathcal{O}(N^3)$ computational complexity made retraining prohibitive.
+- **vs. One-Class SVM**: Poor scaling beyond 50K samples; **O(N²)** to **O(N³)** computational complexity made retraining prohibitive.
 
 #### Production Drift Monitoring via PSI
 To guard against sensor calibration decay and mechanical drift, you implemented **Population Stability Index (PSI)** on inference feature distributions:
-$$PSI = \\sum_{k=1}^B \\left( P_{actual}(k) - P_{expected}(k) \\right) \\times \\ln\\left(\\frac{P_{actual}(k)}{P_{expected}(k)}\\right)$$
-- $PSI < 0.1$: Distribution stable, no action.
-- $0.1 \\le PSI < 0.2$: Moderate shift; flag for engineering review.
-- $PSI \\ge 0.2$: Severe drift; trigger automated retraining workflow via **Airflow** and **MLflow**.
+> **PSI = Σ [ (P_actual(k) - P_expected(k)) × ln(P_actual(k) / P_expected(k)) ]**
+- **PSI < 0.1**: Distribution stable, no action.
+- **0.1 ≤ PSI < 0.2**: Moderate shift; flag for engineering review.
+- **PSI ≥ 0.2**: Severe drift; trigger automated retraining workflow via **Airflow** and **MLflow**.
 
 ---
 
@@ -596,18 +596,18 @@ flowchart TD
 
 #### How the Transformer Attention Mechanism Worked
 Implemented a **Temporal Transformer** with **Multi-Head Self-Attention**:
-1. **Input Representation**: For each spatial zone $i$ at time $t$, input vector $x_{i,t} \\in \\mathbb{R}^d$ encoded: historical trip demand, rolling completion rate, weather vectors, surge price ratio, calendar embeddings, and spatial graph Laplacian positional encodings.
+1. **Input Representation**: For each spatial zone $i$ at time $t$, input vector x_(i,t) in R^d encoded: historical trip demand, rolling completion rate, weather vectors, surge price ratio, calendar embeddings, and spatial graph Laplacian positional encodings.
 2. **Self-Attention Formulation**:
-   $$Attention(Q, K, V) = \\text{softmax}\\left(\\frac{QK^T}{\\sqrt{d_k}} + M\\right)V$$
-   - Where queries $Q$, keys $K$, and values $V$ were linear projections of historical lookback windows ($T = 168$ hours).
-   - $M$ is a **causal masking matrix** where $M_{ij} = -\\infty$ for $j > i$, preventing information leakage from future time steps during autoregressive multi-horizon forecasting ($t+1$ to $t+24$ hours).
+   > **Attention(Q, K, V) = softmax( (Q · Kᵀ) / √d_k + M ) · V**
+   - Where queries $Q$, keys $K$, and values $V$ were linear projections of historical lookback windows (T = 168 hours).
+   - $M$ is a **causal masking matrix** where M_ij = -∞ for j > i, preventing information leakage from future time steps during autoregressive multi-horizon forecasting (t+1 to t+24 hours).
 3. **Why Attention Drove the 4.2% MAPE Drop**:
-   - Classical LSTMs suffer from catastrophic forgetting over long sequences ($>72$ time steps) as hidden state vector $h_t$ squashes past context.
+   - Classical LSTMs suffer from catastrophic forgetting over long sequences (> 72 time steps) as hidden state vector h_t squashes past context.
    - Self-attention created direct pairwise pathways across all 168 lookback hours. The model learned to attend specifically to the **exact same hour 7 days prior** (weekly seasonality) while dynamically modulating attention weights when sudden weather events or stadium games broke standard periodicity.
 
 #### Scale & Low-Latency Deployment
 - Models were trained on distributed GPU clusters using **PyTorch DDP (Distributed Data Parallel)** with PySpark feature generation on **Snowflake**.
-- Inference was containerized with **Docker** and deployed via **AWS SageMaker**. To serve low-latency ride-allocation dispatch systems ($<25$ms p99 SLA), forecasts were pre-computed in 5-minute rolling micro-batches and cached in **Redis**.
+- Inference was containerized with **Docker** and deployed via **AWS SageMaker**. To serve low-latency ride-allocation dispatch systems (< 25ms p99 SLA), forecasts were pre-computed in 5-minute rolling micro-batches and cached in **Redis**.
 
 ---
 
@@ -627,17 +627,17 @@ flowchart LR
 \`\`\`
 
 #### How BERTopic Works (The 4-Step Pipeline)
-1. **Document Embedding**: Ingested regulatory text chunks ($256$ tokens with $32$-token overlap) into \`sentence-transformers/all-mpnet-base-v2\`, mapping documents to 768-dimensional dense semantic vectors.
+1. **Document Embedding**: Ingested regulatory text chunks (256 tokens with 32-token overlap) into \`sentence-transformers/all-mpnet-base-v2\`, mapping documents to 768-dimensional dense semantic vectors.
 2. **Dimensionality Reduction via UMAP (Uniform Manifold Approximation and Projection)**:
    - High-dimensional vector spaces suffer from the curse of dimensionality, where distance metrics become equidistant.
-   - Reduced 768-D embeddings down to **5 dimensions** using UMAP with cosine metric ($n\\_neighbors = 15$, $min\\_dist = 0.05$). UMAP preserves both local and global manifold topology far better than t-SNE or PCA.
+   - Reduced 768-D embeddings down to **5 dimensions** using UMAP with cosine metric (n_neighbors = 15, min_dist = 0.05). UMAP preserves both local and global manifold topology far better than t-SNE or PCA.
 3. **Density-Based Clustering via HDBSCAN**:
-   - Unlike K-Means, HDBSCAN does not force every document into an arbitrary cluster and does not require pre-specifying $K$.
-   - Identified organic compliance topics while segregating generic boilerplates as noise ($min\\_cluster\\_size = 30$).
+   - Unlike K-Means, HDBSCAN does not force every document into an arbitrary cluster and does not require pre-specifying K.
+   - Identified organic compliance topics while segregating generic boilerplates as noise (min_cluster_size = 30).
 4. **Class-based TF-IDF (c-TF-IDF)**:
    - Standard TF-IDF evaluates word importance across individual documents. c-TF-IDF treats all documents in a cluster as a single meta-document:
-     $$W_{t, c} = tf_{t, c} \\times \\ln\\left(1 + \\frac{A}{tf_t}\\right)$$
-   - Where $tf_{t, c}$ is the frequency of word $t$ in cluster $c$, $tf_t$ is the total frequency of word $t$ across all clusters, and $A$ is the average number of words per cluster. This extracted precise regulatory terminology (e.g., "capital adequacy ratio", "IFRS 9 impairment") rather than common financial stop words.
+     > **W_(t, c) = tf_(t, c) × ln( 1 + A / tf_t )**
+   - Where tf_(t, c) is the frequency of word t in cluster c, tf_t is the total frequency of word t across all clusters, and A is the average number of words per cluster. This extracted precise regulatory terminology (e.g., "capital adequacy ratio", "IFRS 9 impairment") rather than common financial stop words.
 
 #### BERT Embeddings vs. Classical TF-IDF
 - **TF-IDF**: Sparse bag-of-words representation; zero semantic awareness of synonyms or word order ("asset write-down" and "impairment charge" share zero vector overlap in TF-IDF).
@@ -655,7 +655,7 @@ Having real "dead ends" demonstrates engineering maturity and integrity. Be prep
 
 1. **Failure 1: Naive K-Means Clustering on Raw Accelerometer Spectrograms (Honeywell)**
    - *Attempt*: In an early prototype for IoT anomaly detection, attempted to cluster raw 1024-point FFT spectral slices using K-Means to discover unlabelled machine operating regimes.
-   - *Why It Failed*: K-Means assumes isotropic (spherical) Euclidean clusters of equal variance. Motor speeds fluctuate continuously by $\\pm 2\\%$, causing spectral peaks to jitter horizontally along the frequency axis. Euclidean distance between two identical harmonic profiles with a $2$ Hz shift was larger than the distance between two completely different broken profiles.
+   - *Why It Failed*: K-Means assumes isotropic (spherical) Euclidean clusters of equal variance. Motor speeds fluctuate continuously by ±2%, causing spectral peaks to jitter horizontally along the frequency axis. Euclidean distance between two identical harmonic profiles with a 2 Hz shift was larger than the distance between two completely different broken profiles.
    - *Lesson & Fix*: Shifted away from raw frequency vector clustering to invariant statistical features (Kurtosis, Spectral Energy Ratios) and applied 1D Convolutional layers combined with supervised XGBoost once historical labels were curated.
 
 2. **Failure 2: Unconstrained Prophet Modeling on High-Frequency Micro-Mobility Demand (Uber)**
@@ -665,7 +665,7 @@ Having real "dead ends" demonstrates engineering maturity and integrity. Be prep
 
 3. **Failure 3: Zero-Shot Large Language Model Regulatory Extraction Without Guardrails (KPMG / R&D)**
    - *Attempt*: Tested zero-shot GPT-3.5 prompt extraction to identify compliance deadlines and penalty clauses directly from financial filings.
-   - *Why It Failed*: Regulatory filings use highly complex conditional phrasing ("Subject to subsection B, penalties not exceeding $5M shall apply unless rectified within 30 days of notice"). The LLM hallucinated unconditional penalties on 14% of sample clauses and inverted timeline conditions. Furthermore, inference costs across 300K+ filings were estimated at $>\\$40,000$ with significant token latency.
+   - *Why It Failed*: Regulatory filings use highly complex conditional phrasing ("Subject to subsection B, penalties not exceeding $5M shall apply unless rectified within 30 days of notice"). The LLM hallucinated unconditional penalties on 14% of sample clauses and inverted timeline conditions. Furthermore, inference costs across 300K+ filings were estimated at > $40,000 with significant token latency.
    - *Lesson & Fix*: Small, fine-tuned domain models beat massive generalist LLMs on structured extraction. Fine-tuned RoBERTa token classification had zero hallucination, 100x lower latency, and cost zero ongoing token fees.
 
 ---
@@ -695,16 +695,16 @@ flowchart TD
 2. **Shift Pattern**: Is the drop tied to fixed schedules (e.g., Day vs. Night shift, Weekend vs. Weekday, change-of-shift handover windows)?
 3. **Upstream vs. Downstream**: Is the bottleneck at Inbound (Decant, Stow), Core (Pick, Pack), or Outbound (SLAM, Sorter, Shipping Dock)?
 4. **Data Availability**: Do we have high-resolution event logs from Warehouse Management Systems (WMS), time-stamped barcode scans, labor badge-in/out records, and conveyor PLC (Programmable Logic Controller) photo-eye tracking?
-5. **Success Metric**: Is the goal purely identifying the causal driver, or building a real-time bottleneck prediction and alerting engine? Target: Restore UPH by $\\ge 12\\%$ within 60 days.
+5. **Success Metric**: Is the goal purely identifying the causal driver, or building a real-time bottleneck prediction and alerting engine? Target: Restore UPH by ≥ 12% within 60 days.
 
 #### Phase 2: Formulating Metrics
-- **Primary Metric**: **Units Per Hour (UPH)** = $\\frac{\\text{Total Packages Dispatched}}{\\text{Labor Hours Expended}}$.
+- **Primary Metric**: **Units Per Hour (UPH)** = **(Total Packages Dispatched) / (Labor Hours Expended)**.
 - **Diagnostic Decomposition Metrics**:
   - **Takt Time**: Pace of customer demand per workstation.
   - **Dwell Time / Buffer Accumulation**: Time inventory sits on accumulation conveyors between stations.
   - **Starvation Rate**: % of time downstream packers are waiting for pickers/totes.
   - **Blockage Rate**: % of time upstream pickers cannot induct totes because the takeaway conveyor is full.
-  - **OEE (Overall Equipment Effectiveness)**: Availability $\\times$ Performance $\\times$ Quality.
+  - **OEE (Overall Equipment Effectiveness)**: Availability × Performance × Quality.
 
 #### Phase 3: Data Engineering & Hypothesis Testing
 Using **SQL (Amazon Redshift)** and **PySpark**, ingest and join:
@@ -715,16 +715,16 @@ Using **SQL (Amazon Redshift)** and **PySpark**, ingest and join:
 
 **Root-Cause Hypotheses via Statistical Testing**:
 - *Hypothesis A (Labor Skill/Tenure)*: Night shifts have a higher ratio of seasonal temporary associates with lower pick rates.
-  - *Test*: Two-way ANOVA comparing UPH across Shift $\\times$ Associate Tenure brackets.
-- *Hypothesis B (Mechanical Micro-Stoppages)*: Unplanned micro-stoppages ($<60$ seconds) on cross-belt sorters compound during high-inflow shifts.
+  - *Test*: Two-way ANOVA comparing UPH across Shift × Associate Tenure brackets.
+- *Hypothesis B (Mechanical Micro-Stoppages)*: Unplanned micro-stoppages (< 60 seconds) on cross-belt sorters compound during high-inflow shifts.
   - *Test*: Survival analysis and Weibull renewal modeling on conveyor photo-eye blockage durations.
 - *Hypothesis C (Inventory / SKU Profile Mismatch)*: Heavy/bulky items scheduled during specific shifts cause physical conveyor jams.
-  - *Test*: Multivariate regression of UPH against SKU volumetric distribution ($P_{90}$ Package Dimensions).
+  - *Test*: Multivariate regression of UPH against SKU volumetric distribution (P90 Package Dimensions).
 
 #### Phase 4: Modeling Architecture (Baseline to v2)
 - **v0 Baseline**: Simple descriptive statistical dashboard in **Tableau** isolating UPH variance by shift, tenure, and building zone.
 - **v1 Causal Inference**: **Double Machine Learning (EconML / CausalML)** or **Synthetic Control Method** to isolate the true causal effect of staffing allocation vs. equipment downtime while controlling for SKU mix.
-- **v2 Predictive Bottleneck Engine**: Train a **LightGBM / XGBoost Regressor** predicting real-time throughput 30 minutes in advance using rolling buffer fullness, upstream pick rate, and active workstation count. If predicted UPH drops $>10\\%$, trigger automated dynamic tote diversion.
+- **v2 Predictive Bottleneck Engine**: Train a **LightGBM / XGBoost Regressor** predicting real-time throughput 30 minutes in advance using rolling buffer fullness, upstream pick rate, and active workstation count. If predicted UPH drops > 10%, trigger automated dynamic tote diversion.
 
 #### Phase 5: Operational Recommendations & Monitoring
 - **Automated Root Cause**: If the model reveals that shift handover causes a 45-minute starvation wave on pack lines due to staggered breaks, implement **staggered lunch scheduling algorithms**.
@@ -739,20 +739,20 @@ Using **SQL (Amazon Redshift)** and **PySpark**, ingest and join:
 
 #### Phase 1: Clarifying Questions & Constraints
 1. **Asset Granularity**: Are we predicting failure for entire conveyor subsystems or individual components (bearings, gearboxes, drive belts, servo drives)?
-2. **Telemetry Ingestion**: What is the sampling frequency? High-frequency vibration ($10$ kHz), low-frequency PLC status registers ($1$ Hz), or periodic maintenance logs?
-3. **Definition of Failure**: Does failure mean functional breakdown (stopped conveyor line) or performance degradation (e.g., motor drawing $20\\%$ excess current or running at reduced speed)?
+2. **Telemetry Ingestion**: What is the sampling frequency? High-frequency vibration (10 kHz), low-frequency PLC status registers (1 Hz), or periodic maintenance logs?
+3. **Definition of Failure**: Does failure mean functional breakdown (stopped conveyor line) or performance degradation (e.g., motor drawing 20% excess current or running at reduced speed)?
 4. **Maintenance Lead Time**: Why 7 days? (Because maintenance shifts and spare parts procurement are planned weekly). What is the cost of False Positives vs False Negatives?
 5. **Feedback Loop**: When a technician inspects an asset flagged by the model, how is their diagnostic confirmation captured back into the training store?
 
 #### Phase 2: Problem Formulation (Survival Analysis vs. Binary Classification)
 Rather than framing this as naive binary classification (Fail / Not Fail in 7 days), frame it as **Remaining Useful Life (RUL) Estimation** combined with **Time-to-Event Survival Analysis**:
-- **Objective Function**: Estimate the hazard function $\\lambda(t | X)$ representing the instantaneous rate of failure at time $t$ given telemetry features $X$.
+- **Objective Function**: Estimate the hazard function λ(t | X) representing the instantaneous rate of failure at time $t$ given telemetry features X.
 - Model: **Cox Proportional Hazards with Deep Neural Networks (DeepSurv)** or **Random Survival Forests**.
-- Output: The cumulative failure probability $P(T \\le t + 7\\text{ days} | T > t)$.
+- Output: The cumulative failure probability P(T ≤ t + 7 days | T > t).
 
 #### Phase 3: Feature Engineering
 1. **Vibration Spectrum**: RMS velocity, peak-to-peak acceleration, crest factor, energy in fault frequency bands (ball pass frequency outer/inner race: BPFO, BPFI).
-2. **Thermal Dynamics**: Motor winding temperature, $\\Delta T = T_{motor} - T_{ambient}$, rate of temperature rise per throughput unit.
+2. **Thermal Dynamics**: Motor winding temperature, ΔT = T_motor - T_ambient, rate of temperature rise per throughput unit.
 3. **Electrical Signature Analysis**: Current unbalance, active power factor, total harmonic distortion (THD).
 4. **Operational Stress Accumulation**: Cumulative running hours since last overhaul, total tonnage transported over the last 14 days, number of hard emergency-stop (E-Stop) cycles.
 
@@ -770,8 +770,8 @@ flowchart LR
 \`\`\`
 
 #### Phase 5: Success Metrics & Business Value
-- **Technical Metrics**: **Precision@K** (of the top 20 assets flagged each week, how many actually exhibited degradation during inspection?), **Recall** ($\\% $ of unplanned outages prevented), **Lead Time Accuracy** (did the failure occur within the 7-day planning window?).
-- **Business Impact**: Reduction in **Unplanned Downtime Hours** (target: $30\\%$ reduction), savings in emergency overtime labor costs, and zero customer package delivery SLA breaches due to sortation failures.
+- **Technical Metrics**: **Precision@K** (of the top 20 assets flagged each week, how many actually exhibited degradation during inspection?), **Recall** (% of unplanned outages prevented), **Lead Time Accuracy** (did the failure occur within the 7-day planning window?).
+- **Business Impact**: Reduction in **Unplanned Downtime Hours** (target: 30% reduction), savings in emergency overtime labor costs, and zero customer package delivery SLA breaches due to sortation failures.
 
 ---
 
@@ -782,7 +782,7 @@ flowchart LR
 
 #### Key Execution Strategy
 1. **Determining What Metrics Matter (The Pyramid Hierarchy)**:
-   - **Executive Tier (L8+)**: Network Throughput (Total Units Dispatched/Day), Cost per Unit (CPU), Network SLA Compliance ($\\text{On-Time Delivery} \\ge 99.2\\%$), Total Network Lost Hours due to MHE Downtime.
+   - **Executive Tier (L8+)**: Network Throughput (Total Units Dispatched/Day), Cost per Unit (CPU), Network SLA Compliance (On-Time Delivery ≥ 99.2%), Total Network Lost Hours due to MHE Downtime.
    - **Regional / General Manager Tier (L7)**: Building UPH vs Plan, WIP (Work In Progress) Inventory Dwell Time, Sorter Jam Rates, Truck Turnaround Times at Inbound/Outbound Docks.
    - **Operations / Area Manager Tier (L5/L6)**: Workstation Starvation %, Associate Utilization, Real-Time Chokepoints.
 2. **Data Pipeline Architecture**:
@@ -791,7 +791,7 @@ flowchart LR
    - **Caching Layer**: Pre-aggregated metric snapshots cached in **Amazon ElastiCache (Redis)** to power the executive UI with sub-second page loads.
 3. **Data Reliability & Governance**:
    - **Data Contracts**: Schema validation at ingestion using **JSON Schema / Protocol Buffers**; invalid payloads routed to a Dead-Letter Queue (DLQ) in S3.
-   - **Great Expectations / Deequ (AWS)**: Automated data quality checks run every 15 minutes: null value rate $< 0.01\\%$, timestamp monotonicity, range validity ($UPH \\ge 0$).
+   - **Great Expectations / Deequ (AWS)**: Automated data quality checks run every 15 minutes: null value rate < 0.01%, timestamp monotonicity, range validity (UPH ≥ 0).
    - **SLA & Alerting**: **PagerDuty** integrations alert the data on-call engineer if ingestion latency exceeds 3 minutes.
 
 ---
@@ -838,7 +838,7 @@ flowchart TD
 | **Knowledge Update Cadence** | Static (Frozen at training cutoff). | **Real-time / Instantaneous** (Update vector database index immediately). | Periodic (Requires retraining pipeline). |
 | **Hallucination Risk** | High for domain specifics. | **Low** (Grounded in retrieved context with citations). | Moderate (Can still generate fluent untruths). |
 | **Data Privacy & Governance** | Data sent in prompt payload. | Granular role-based access control (RBAC) at document/vector chunk level. | Embedded in model weights (Hard to erase). |
-| **Cost & Latency** | Lowest setup cost; higher per-token latency for long prompts. | Moderate setup cost; fast vector search ($\\approx 15$ms) + LLM synthesis. | High training cost; lowest inference latency per token (small specialized model). |
+| **Cost & Latency** | Lowest setup cost; higher per-token latency for long prompts. | Moderate setup cost; fast vector search (≈ 15ms) + LLM synthesis. | High training cost; lowest inference latency per token (small specialized model). |
 | **When to Choose** | Rapid prototyping or one-off tasks. | **Warehouse SOPs, equipment manuals, dynamic inventory policies.** | **Specialized internal DSLs, code generation, ultra-low-latency classification.** |
 
 ---
@@ -864,7 +864,7 @@ flowchart LR
 1. **Context Precision**: Evaluates whether all ground-truth relevant information in retrieved chunks is ranked at the top. Measures signal-to-noise ratio in vector retrieval.
 2. **Context Recall**: Evaluates whether the retriever retrieved all necessary information required to answer the query.
 3. **Faithfulness (Grounding)**: Measures the proportion of claims in the generated answer that can be inferred directly from the context. Prevents hallucination.
-   $$\\text{Faithfulness} = \\frac{|\\text{Number of claims in answer supported by context}|}{|\\text{Total claims in answer}|}$$
+   > **Faithfulness = (Number of claims in answer supported by context) / (Total claims in answer)**
 4. **Answer Relevance**: Measures whether the generated output actually addresses the user's operational question rather than deflecting or rambling.
 
 ---
@@ -876,9 +876,9 @@ flowchart LR
   - Implement output rails that verify that the generated maintenance recommendation strictly complies with OSHA and Amazon safety protocols before displaying it to the technician.
 - **Latency Optimization**:
   - Deploy quantized models (**AWQ / GPTQ 4-bit**) using **vLLM** with **PagedAttention** and continuous batching.
-  - Implement **Semantic Caching** using Redis: if another technician asks an identical troubleshooting question for the same sorter model, serve the verified cached response in $<10$ms.
+  - Implement **Semantic Caching** using Redis: if another technician asks an identical troubleshooting question for the same sorter model, serve the verified cached response in < 10ms.
 - **When NOT to Use an LLM**:
-  - **Never use an LLM for numerical time-series forecasting or real-time conveyor speed control**. Tree-based algorithms (XGBoost) and classical control theory (PID / Kalman Filters) are deterministic, mathematically provable, cost a fraction of a cent, and execute in under $2$ milliseconds with zero hallucination risk.
+  - **Never use an LLM for numerical time-series forecasting or real-time conveyor speed control**. Tree-based algorithms (XGBoost) and classical control theory (PID / Kalman Filters) are deterministic, mathematically provable, cost a fraction of a cent, and execute in under 2 milliseconds with zero hallucination risk.
 
 
 ## 4. Coding & Problem Solving: 21 LiveCode Questions
@@ -893,7 +893,7 @@ In Amazon’s **LiveCode** platform, candidates write code in real time without 
 In an **Amazon Fulfillment Center**, automated package scanners log barcode reading events. Given a table \`scanner_events (event_id INT, category VARCHAR, scanned_at TIMESTAMP)\`, write a **Redshift SQL** query to:
 1. Calculate the time elapsed (in seconds) between consecutive scan events for each category.
 2. Compute the average gap between consecutive events per category.
-3. Flag any specific event where the gap between consecutive events exceeds $3\\times$ the category average gap (indicating a potential conveyor jam or scanner failure).
+3. Flag any specific event where the gap between consecutive events exceeds 3× the category average gap (indicating a potential conveyor jam or scanner failure).
 
 #### Thought Process
 1. Use the **\`LAG()\`** window function partitioned by \`category\` and ordered by \`scanned_at\` to access the timestamp of the immediately preceding event.
@@ -951,8 +951,8 @@ ORDER BY category, scanned_at;
 \`\`\`
 
 #### Complexity Analysis
-- **Time Complexity**: $\\mathcal{O}(N \\log N)$, where $N$ is the total number of scanner events. The bottleneck is sorting the dataset within the window partitions.
-- **Space Complexity**: $\\mathcal{O}(N)$ scratch space for sorting and computing window aggregations across partitions.
+- **Time Complexity**: **O(N log N)**, where $N$ is the total number of scanner events. The bottleneck is sorting the dataset within the window partitions.
+- **Space Complexity**: **O(N)** scratch space for sorting and computing window aggregations across partitions.
 
 ---
 
@@ -1025,8 +1025,8 @@ ORDER BY max_rolling_1h_throughput DESC;
 \`\`\`
 
 #### Complexity Analysis
-- **Time Complexity**: $\\mathcal{O}(N \\log N)$ for the window function; $\\mathcal{O}(N \\cdot K)$ for the self-join where $K$ is the average number of readings per hour.
-- **Space Complexity**: $\\mathcal{O}(N)$ intermediate buffer storage in Redshift query memory.
+- **Time Complexity**: **O(N log N)** for the window function; **O(N · K)** for the self-join where K is the average number of readings per hour.
+- **Space Complexity**: **O(N)** intermediate buffer storage in Redshift query memory.
 
 ---
 
@@ -1094,8 +1094,8 @@ ORDER BY associate_id, session_start;
 \`\`\`
 
 #### Complexity Analysis
-- **Time Complexity**: $\\mathcal{O}(N \\log N)$ driven by the window sort order.
-- **Space Complexity**: $\\mathcal{O}(N)$ for window state tracking.
+- **Time Complexity**: **O(N log N)** driven by the window sort order.
+- **Space Complexity**: **O(N)** for window state tracking.
 
 ---
 
@@ -1156,8 +1156,8 @@ ORDER BY current_fault, transition_prob DESC;
 \`\`\`
 
 #### Complexity Analysis
-- **Time Complexity**: $\\mathcal{O}(N \\log N)$ for the window function plus $\\mathcal{O}(M \\log M)$ where $M$ is the number of distinct transition pairs.
-- **Space Complexity**: $\\mathcal{O}(N)$ storage.
+- **Time Complexity**: **O(N log N)** for the window function plus **O(M log M)** where $M$ is the number of distinct transition pairs.
+- **Space Complexity**: **O(N)** storage.
 
 ---
 
@@ -1198,8 +1198,8 @@ ORDER BY p99_dwell_mins DESC;
 \`\`\`
 
 #### Complexity Analysis
-- **Time Complexity**: $\\mathcal{O}(Z \\cdot K \\log K)$, where $Z$ is zones and $K$ is packages per zone (sorting required for exact continuous percentiles).
-- **Space Complexity**: $\\mathcal{O}(N)$ intermediate buffer memory.
+- **Time Complexity**: **O(Z · K log K)**, where $Z$ is zones and $K$ is packages per zone (sorting required for exact continuous percentiles).
+- **Space Complexity**: **O(N)** intermediate buffer memory.
 
 ---
 
@@ -1209,12 +1209,13 @@ ORDER BY p99_dwell_mins DESC;
 Write a clean, production-grade Python implementation of **Logistic Regression** trained via **Batch Gradient Descent** from scratch using only **NumPy**. Implement the sigmoid activation, Binary Cross-Entropy loss with $L_2$ regularization (Ridge penalty), gradient computation, weight update, and prediction methods.
 
 #### Thought Process
-1. **Model Hypothesis**: $\\hat{y} = \\sigma(z) = \\frac{1}{1 + e^{-z}}$, where $z = Xw + b$.
+1. **Model Hypothesis**: \`ŷ = σ(z) = 1 / (1 + e^-z)\`, where \`z = Xw + b\`.
 2. **Objective Function (Cost)**:
-   $$J(w, b) = -\\frac{1}{m} \\sum_{i=1}^m \\left[ y^{(i)} \\log(\\hat{y}^{(i)}) + (1 - y^{(i)}) \\log(1 - \\hat{y}^{(i)}) \\right] + \\frac{\\lambda}{2m} \\|w\\|_2^2$$
+   > **J(w, b) = - (1/m) · Σ [ y⁽ⁱ⁾ · log(ŷ⁽ⁱ⁾) + (1 - y⁽ⁱ⁾) · log(1 - ŷ⁽ⁱ⁾) ] + (λ / 2m) · ||w||²**
 3. **Gradients**:
-   $$\\frac{\\partial J}{\\partial w} = \\frac{1}{m} X^T (\\hat{y} - y) + \\frac{\\lambda}{m} w, \\quad \\frac{\\partial J}{\\partial b} = \\frac{1}{m} \\sum_{i=1}^m (\\hat{y}^{(i)} - y^{(i)})$$
-4. Add numerical stability clipping to sigmoid/log inputs to prevent $\\log(0) \\rightarrow -\\infty$ or overflow.
+   > **∂J/∂w = (1/m) · Xᵀ (ŷ - y) + (λ/m) · w**
+> **∂J/∂b = (1/m) · Σ (ŷ⁽ⁱ⁾ - y⁽ⁱ⁾)**
+4. Add numerical stability clipping to sigmoid/log inputs to prevent log(0) → -∞ or overflow.
 
 #### Code (Python)
 \`\`\`python
@@ -1285,8 +1286,8 @@ class ScratchLogisticRegression:
 \`\`\`
 
 #### Complexity Analysis
-- **Time Complexity**: $\\mathcal{O}(I \\cdot m \\cdot n)$, where $I$ is iterations, $m$ is number of samples, and $n$ is number of features.
-- **Space Complexity**: $\\mathcal{O}(n)$ to store weights and gradients.
+- **Time Complexity**: **O(I · m · n)**, where $I$ is iterations, $m$ is number of samples, and $n$ is number of features.
+- **Space Complexity**: **O(n)** to store weights and gradients.
 
 ---
 
@@ -1296,9 +1297,9 @@ class ScratchLogisticRegression:
 Implement **Ridge Regression** from scratch using the closed-form **Normal Equation**. Provide an analytical solver that handles matrix inversion singularity checks, adds an intercept term, and fits optimal weights $\\hat{w}$.
 
 #### Thought Process
-1. Analytical solution for Ridge Regression minimizing $\\|y - Xw\\|_2^2 + \\lambda \\|w\\|_2^2$:
-   $$\\hat{w} = (X^T X + \\lambda I')^{-1} X^T y$$
-2. Important detail: The bias/intercept term should **not** be regularized. The identity matrix $I'$ must have a $0$ at index $(0, 0)$.
+1. Analytical solution for Ridge Regression minimizing ||y - Xw||² + λ ||w||²:
+   > **ŵ = (Xᵀ X + λ I')⁻¹ Xᵀ y**
+2. Important detail: The bias/intercept term should **not** be regularized. The identity matrix I' must have a 0 at index (0, 0).
 3. Check for matrix invertibility using \`np.linalg.pinv\` (Moore-Penrose pseudo-inverse) for robustness against collinear features.
 
 #### Code (Python)
@@ -1344,8 +1345,8 @@ class ScratchRidgeRegression:
 \`\`\`
 
 #### Complexity Analysis
-- **Time Complexity**: $\\mathcal{O}(n^2 m + n^3)$ where $n$ is feature count and $m$ is sample count.
-- **Space Complexity**: $\\mathcal{O}(n^2)$ for the $(n+1) \\times (n+1)$ covariance matrix.
+- **Time Complexity**: **O(n² · m + n³)** where n is feature count and m is sample count.
+- **Space Complexity**: **O(n²)** for the (n + 1) × (n + 1) covariance matrix.
 
 ---
 
@@ -1355,14 +1356,14 @@ class ScratchRidgeRegression:
 Implement the complete **K-Means Clustering** algorithm from scratch in NumPy, including random centroid initialization, Euclidean distance calculation, iterative assignment, centroid re-estimation, and convergence criteria based on tolerance $\\epsilon$.
 
 #### Thought Process
-1. Initialize $K$ centroids by randomly sampling $K$ unique observation vectors from the dataset.
+1. Initialize K centroids by randomly sampling K unique observation vectors from the dataset.
 2. In each iteration:
-   - Compute pairwise Euclidean distance between each point $x_i$ and each centroid $\\mu_k$:
-     $$\\text{dist}(x_i, \\mu_k) = \\sqrt{\\sum_{j=1}^d (x_{ij} - \\mu_{kj})^2}$$
-   - Assign each point to the closest centroid: $c_i = \\arg\\min_k \\text{dist}(x_i, \\mu_k)$.
-   - Update centroids to be the mean of all points assigned to that cluster: $\\mu_k = \\frac{1}{|S_k|} \\sum_{i \\in S_k} x_i$.
+   - Compute pairwise Euclidean distance between each point x_i and each centroid μ_k:
+     > **dist(x_i, μ_k) = √[ Σ (x_ij - μ_kj)² ]**
+   - Assign each point to the closest centroid: c_i = argmin_k dist(x_i, μ_k).
+   - Update centroids to be the mean of all points assigned to that cluster: μ_k = (1 / |S_k|) · Σ x_i.
    - If a cluster becomes empty, reinitialize its centroid to a random data point.
-3. Terminate when centroid movement is less than tolerance $\\epsilon$ or max iterations reached.
+3. Terminate when centroid movement is less than tolerance ε or max iterations reached.
 
 #### Code (Python)
 \`\`\`python
@@ -1419,21 +1420,21 @@ class ScratchKMeans:
 \`\`\`
 
 #### Complexity Analysis
-- **Time Complexity**: $\\mathcal{O}(T \\cdot m \\cdot K \\cdot d)$, where $T$ is iterations, $m$ is data points, $K$ is clusters, and $d$ is feature dimensions.
-- **Space Complexity**: $\\mathcal{O}(m \\cdot K + K \\cdot d)$ for pairwise distance matrices and centroid storage.
+- **Time Complexity**: **O(T · m · K · d)**, where $T$ is iterations, $m$ is data points, $K$ is clusters, and $d$ is feature dimensions.
+- **Space Complexity**: **O(m · K + K · d)** for pairwise distance matrices and centroid storage.
 
 ---
 
 ### Problem 9: [Python / Data Science] Rolling Z-Score Time-Series Anomaly Detection
 
 #### Problem Statement
-Given a pandas DataFrame of high-frequency conveyor motor current telemetry with timestamps \`['timestamp', 'motor_current_amps']\`, write a function that computes a **rolling Z-score** with a window size of $W=60$ samples. Detect anomalies where the absolute Z-score exceeds a threshold (e.g., $|Z| \\ge 3.0$) and return the indices and timestamps of flagged anomalies, handling edge cases such as initial cold-start and zero standard deviation.
+Given a pandas DataFrame of high-frequency conveyor motor current telemetry with timestamps \`['timestamp', 'motor_current_amps']\`, write a function that computes a **rolling Z-score** with a window size of W = 60 samples. Detect anomalies where the absolute Z-score exceeds a threshold (e.g., |Z| ≥ 3.0) and return the indices and timestamps of flagged anomalies, handling edge cases such as initial cold-start and zero standard deviation.
 
 #### Thought Process
-1. $Z_t = \\frac{x_t - \\mu_t}{\\sigma_t}$, where $\\mu_t$ and $\\sigma_t$ are the rolling mean and rolling standard deviation over the prior $W$ observations.
+1. \`Z_t = (x_t - μ_t) / σ_t\`, where μ_t and σ_t are the rolling mean and rolling standard deviation over the prior W observations.
 2. In production streaming/batch pipelines, using the current value in the mean calculation can bias the mean towards the anomaly. An anomaly-free calculation computes rolling statistics on **shifted** historical values \`series.shift(1).rolling(window=W)\`.
-3. Handle numerical instability: if $\\sigma_t \\approx 0$ (motor idle or perfectly steady), division by zero occurs. Add a small epsilon $\\epsilon = 1e-6$ to the denominator.
-4. Filter out initial $W-1$ rows where rolling window statistics are incomplete.
+3. Handle numerical instability: if σ_t ≈ 0 (motor idle or perfectly steady), division by zero occurs. Add a small epsilon ε = 1e-6 to the denominator.
+4. Filter out initial W - 1 rows where rolling window statistics are incomplete.
 
 #### Code (Python)
 \`\`\`python
@@ -1471,8 +1472,8 @@ def detect_rolling_zscore_anomalies(
 \`\`\`
 
 #### Complexity Analysis
-- **Time Complexity**: $\\mathcal{O}(N)$ using Pandas/NumPy optimized vectorized sliding window algorithms.
-- **Space Complexity**: $\\mathcal{O}(N)$ for auxiliary feature columns.
+- **Time Complexity**: **O(N)** using Pandas/NumPy optimized vectorized sliding window algorithms.
+- **Space Complexity**: **O(N)** for auxiliary feature columns.
 
 ---
 
@@ -1482,13 +1483,13 @@ def detect_rolling_zscore_anomalies(
 In production ML at **Honeywell** and **Amazon**, models degrade over time due to feature drift. Implement a function in pure Python/NumPy to calculate the **Population Stability Index (PSI)** between a reference (expected/baseline) array and an inference (actual/current) array for a continuous feature.
 
 #### Thought Process
-1. Partition the reference distribution into $B$ quantiles (typically deciles, $B=10$).
-2. Compute bucket boundaries from the expected distribution: $[b_0, b_1, \\dots, b_{10}]$.
+1. Partition the reference distribution into B quantiles (typically deciles, B = 10).
+2. Compute bucket boundaries from the expected distribution: [b_0, b_1, ..., b_10].
 3. Bin both the expected and actual arrays into these exact same bucket boundaries.
-4. Calculate the empirical proportion of samples falling in bucket $k$: $P_{exp}(k)$ and $P_{act}(k)$.
-5. Apply smoothing (epsilon) to avoid division by zero or $\\ln(0)$ if an actual bucket is empty.
+4. Calculate the empirical proportion of samples falling in bucket k: P_exp(k) and P_act(k).
+5. Apply smoothing (epsilon) to avoid division by zero or ln(0) if an actual bucket is empty.
 6. Compute PSI:
-   $$PSI = \\sum_{k=1}^B (P_{act}(k) - P_{exp}(k)) \\times \\ln\\left(\\frac{P_{act}(k)}{P_{exp}(k)}\\right)$$
+   > **PSI = Σ [ (P_act(k) - P_exp(k)) × ln(P_act(k) / P_exp(k)) ]**
 
 #### Code (Python)
 \`\`\`python
@@ -1530,25 +1531,25 @@ def calculate_psi(expected: np.ndarray, actual: np.ndarray, num_buckets: int = 1
 \`\`\`
 
 #### Complexity Analysis
-- **Time Complexity**: $\\mathcal{O}(N \\log N + M \\log B)$, where $N$ is size of expected array and $M$ is size of actual array.
-- **Space Complexity**: $\\mathcal{O}(B)$ where $B$ is the number of quantile buckets.
+- **Time Complexity**: **O(N log N + M log B)**, where $N$ is size of expected array and $M$ is size of actual array.
+- **Space Complexity**: **O(B)** where $B$ is the number of quantile buckets.
 
 ---
 
 ### Problem 11: [Python / Data Science] Area Under ROC Curve (AUC-ROC) from Scratch
 
 #### Problem Statement
-Write a function to compute the **AUC-ROC** given continuous prediction probabilities \`y_pred\` and true binary labels \`y_true \\in \\{0, 1\\}\` without importing \`scikit-learn\`.
+Write a function to compute the **AUC-ROC** given continuous prediction probabilities \`y_pred\` and true binary labels \`y_true in {0, 1}\` without importing \`scikit-learn\`.
 
 #### Thought Process
 1. **Mathematical Equivalence**: The Area Under the ROC Curve is mathematically identical to the **Wilcoxon-Mann-Whitney U-statistic**:
-   $$AUC = P(\\hat{y}_{positive} > \\hat{y}_{negative}) + 0.5 \\times P(\\hat{y}_{positive} == \\hat{y}_{negative})$$
+   > **AUC = P(ŷ_pos > ŷ_neg) + 0.5 × P(ŷ_pos == ŷ_neg)**
 2. In other words, AUC represents the probability that a randomly chosen positive sample receives a higher predicted score than a randomly chosen negative sample!
 3. Ranking Approach:
    - Rank all predictions in ascending order (assigning fractional ranks for ties).
-   - Sum the ranks of all positive instances: $R_{pos}$.
+   - Sum the ranks of all positive instances: R_pos.
    - Apply the Mann-Whitney $U$ formula:
-     $$U = R_{pos} - \\frac{n_{pos}(n_{pos} + 1)}{2}, \\quad AUC = \\frac{U}{n_{pos} \\times n_{neg}}$$
+     > **U = R_pos - [ n_pos · (n_pos + 1) ] / 2,     AUC = U / (n_pos × n_neg)**
 
 #### Code (Python)
 \`\`\`python
@@ -1592,20 +1593,20 @@ def compute_auc_roc_from_scratch(y_true: np.ndarray, y_pred: np.ndarray) -> floa
 \`\`\`
 
 #### Complexity Analysis
-- **Time Complexity**: $\\mathcal{O}(N \\log N)$ dominated by sorting the predictions.
-- **Space Complexity**: $\\mathcal{O}(N)$ for storing ranks.
+- **Time Complexity**: **O(N log N)** dominated by sorting the predictions.
+- **Space Complexity**: **O(N)** for storing ranks.
 
 ---
 
 ### Problem 12: [Python / Data Manipulation] Asynchronous IoT Sensor Telemetry Resampling
 
 #### Problem Statement
-IoT vibration sensors ping asynchronously with variable millisecond timestamps and intermittent packet drops. Write a python function using **Pandas** that takes raw sensor logs \`['timestamp', 'sensor_id', 'vibration_x', 'vibration_y', 'vibration_z']\`, resamples each sensor to a clean **100ms fixed interval**, performs linear interpolation for gaps $<1$ second, and flags any gap $\\ge 1$ second as \`'SENSOR_OFFLINE'\`.
+IoT vibration sensors ping asynchronously with variable millisecond timestamps and intermittent packet drops. Write a python function using **Pandas** that takes raw sensor logs \`['timestamp', 'sensor_id', 'vibration_x', 'vibration_y', 'vibration_z']\`, resamples each sensor to a clean **100ms fixed interval**, performs linear interpolation for gaps < 1 second, and flags any gap ≥ 1 second as \`'SENSOR_OFFLINE'\`.
 
 #### Thought Process
 1. Group by \`sensor_id\`.
 2. Convert timestamp to datetime index and apply \`.resample('100ms').mean()\`.
-3. Use \`.interpolate(method='linear', limit=10)\` (since $10 \\times 100\\text{ms} = 1\\text{ second}$).
+3. Use \`.interpolate(method='linear', limit=10)\` (since 10 × 100ms = 1 second).
 4. Identify missing values remaining after the limit and mark them as \`'SENSOR_OFFLINE'\`.
 
 #### Code (Python)
@@ -1636,8 +1637,8 @@ def clean_and_resample_telemetry(df: pd.DataFrame) -> pd.DataFrame:
 \`\`\`
 
 #### Complexity Analysis
-- **Time Complexity**: $\\mathcal{O}(S \\cdot M \\log M)$ where $S$ is number of sensors and $M$ is readings per sensor.
-- **Space Complexity**: $\\mathcal{O}(M_{resampled})$ for the standardized time grid.
+- **Time Complexity**: **O(S · M log M)** where $S$ is number of sensors and $M$ is readings per sensor.
+- **Space Complexity**: **O(M_resampled)** for the standardized time grid.
 
 ---
 
@@ -1678,25 +1679,25 @@ def pivot_fulfillment_flow(df: pd.DataFrame) -> pd.DataFrame:
 \`\`\`
 
 #### Complexity Analysis
-- **Time Complexity**: $\\mathcal{O}(N)$ where $N$ is total number of movement records.
-- **Space Complexity**: $\\mathcal{O}(U)$ where $U$ is unique \`(fc_id, shift, flow_pair)\` cells.
+- **Time Complexity**: **O(N)** where N is total number of movement records.
+- **Space Complexity**: **O(U)** where U is unique \`(fc_id, shift, flow_pair)\` cells.
 
 ---
 
 ### Problem 14: [Python / Algorithms] Sliding Window Maximum Package Flow Rate (LeetCode 239)
 
 #### Problem Statement
-Amazon sorters record package counts inducted per second in an array \`nums\`. An optical sensor evaluates the maximum package surge over a sliding window of size $k$ seconds. Return an array of the maximum surge rate for each sliding window of size $k$ across the shift.
+Amazon sorters record package counts inducted per second in an array \`nums\`. An optical sensor evaluates the maximum package surge over a sliding window of size k seconds. Return an array of the maximum surge rate for each sliding window of size $k$ across the shift.
 
 #### Thought Process
-1. Naive approach scans all $k$ elements in every window: $\\mathcal{O}(N \\cdot k)$ (Too slow for high-frequency logs).
+1. Naive approach scans all $k$ elements in every window: **O(N · k)** (Too slow for high-frequency logs).
 2. Optimal approach uses a **Monotonic Deque (Double-Ended Queue)** storing indices.
 3. Invariant: Maintain elements in the deque in **strictly decreasing order** of value. The front of the deque \`q[0]\` always holds the index of the maximum element in the current window!
 4. For each incoming element $nums[i]$:
-   - Pop indices from the front if they fall outside the window ($q[0] \\le i - k$).
-   - Pop indices from the back if their corresponding values are smaller than $nums[i]$ ($nums[q[-1]] \\le nums[i]$).
+   - Pop indices from the front if they fall outside the window (q[0] ≤ i - k).
+   - Pop indices from the back if their corresponding values are smaller than nums[i] (nums[q[-1]] ≤ nums[i]).
    - Push $i$ to the back.
-   - Once $i \\ge k - 1$, append $nums[q[0]]$ to output.
+   - Once i ≥ k - 1, append $nums[q[0]]$ to output.
 
 #### Code (Python)
 \`\`\`python
@@ -1731,22 +1732,22 @@ class SolutionSlidingWindowMax:
 \`\`\`
 
 #### Complexity Analysis
-- **Time Complexity**: $\\mathcal{O}(N)$ linear time. Every index is pushed and popped from the deque at most once.
-- **Space Complexity**: $\\mathcal{O}(k)$ auxiliary memory for the deque.
+- **Time Complexity**: **O(N)** linear time. Every index is pushed and popped from the deque at most once.
+- **Space Complexity**: **O(k)** auxiliary memory for the deque.
 
 ---
 
 ### Problem 15: [Python / Algorithms] Top K Most Frequent MHE Error Codes (LeetCode 347)
 
 #### Problem Statement
-Given an array of diagnostic error codes generated by robotic arms and sorters \`error_codes\`, return the **$k$ most frequent error codes**. Must execute with time complexity strictly better than $\\mathcal{O}(N \\log N)$.
+Given an array of diagnostic error codes generated by robotic arms and sorters \`error_codes\`, return the **k most frequent error codes**. Must execute with time complexity strictly better than **O(N log N)**.
 
 #### Thought Process
-1. Step 1: Count error frequencies using a Hash Map: $\\mathcal{O}(N)$.
-2. Step 2: Use a **Min-Heap** of fixed size $k$.
+1. Step 1: Count error frequencies using a Hash Map: **O(N)**.
+2. Step 2: Use a **Min-Heap** of fixed size k.
    - Iterate through each \`(code, freq)\` pair in the frequency map.
-   - Push to min-heap ordered by frequency. If heap size exceeds $k$, pop the minimum element.
-   - The heap retains the top $k$ largest elements.
+   - Push to min-heap ordered by frequency. If heap size exceeds k, pop the minimum element.
+   - The heap retains the top k largest elements.
 
 #### Code (Python)
 \`\`\`python
@@ -1772,8 +1773,8 @@ def top_k_frequent_error_codes(error_codes: List[str], k: int) -> List[str]:
 \`\`\`
 
 #### Complexity Analysis
-- **Time Complexity**: $\\mathcal{O}(N + U \\log k)$ where $N$ is array length and $U$ is unique error codes.
-- **Space Complexity**: $\\mathcal{O}(U + k)$ for the frequency map and min-heap.
+- **Time Complexity**: **O(N + U log k)** where $N$ is array length and $U$ is unique error codes.
+- **Space Complexity**: **O(U + k)** for the frequency map and min-heap.
 
 ---
 
@@ -1783,11 +1784,11 @@ def top_k_frequent_error_codes(error_codes: List[str], k: int) -> List[str]:
 Given an array of planned equipment maintenance intervals \`intervals\` where \`intervals[i] = [start_i, end_i]\`, merge all overlapping maintenance windows, and return an array of non-overlapping intervals covering all downtime.
 
 #### Thought Process
-1. Sort intervals by their start time: $start_i$.
+1. Sort intervals by their start time: start_i.
 2. Initialize an empty merged list.
 3. For each interval:
-   - If \`merged\` is empty or the current interval's start is strictly greater than the end time of the previous interval in \`merged\` ($start > merged[-1][1]$), no overlap exists: append interval.
-   - Otherwise, an overlap exists: update $merged[-1][1] = \\max(merged[-1][1], end)$.
+   - If \`merged\` is empty or the current interval's start is strictly greater than the end time of the previous interval in \`merged\` (start > merged[-1][1]), no overlap exists: append interval.
+   - Otherwise, an overlap exists: update merged[-1][1] = max(merged[-1][1], end).
 
 #### Code (Python)
 \`\`\`python
@@ -1816,15 +1817,15 @@ def merge_maintenance_windows(intervals: List[List[int]]) -> List[List[int]]:
 \`\`\`
 
 #### Complexity Analysis
-- **Time Complexity**: $\\mathcal{O}(N \\log N)$ driven by sorting the intervals.
-- **Space Complexity**: $\\mathcal{O}(N)$ to store the output merged intervals.
+- **Time Complexity**: **O(N log N)** driven by sorting the intervals.
+- **Space Complexity**: **O(N)** to store the output merged intervals.
 
 ---
 
 ### Problem 17: [Python / Algorithms] Bottleneck Cycle & Topological Sort in Conveyor Network (LeetCode 207/210)
 
 #### Problem Statement
-A fulfillment center conveyor network consists of $V$ transfer junctions numbered $0$ to $V-1$. Segments flow unidirectionally from junction $u$ to junction $v$. If a cycle exists, totes loop infinitely, causing physical deadlocks. Given an adjacency list of conveyor transfers, write a function to detect whether a cycle exists and, if not, return a valid topological processing order of junctions using **Kahn's Algorithm (BFS)**.
+A fulfillment center conveyor network consists of V transfer junctions numbered 0 to V - 1. Segments flow unidirectionally from junction u to junction v. If a cycle exists, totes loop infinitely, causing physical deadlocks. Given an adjacency list of conveyor transfers, write a function to detect whether a cycle exists and, if not, return a valid topological processing order of junctions using **Kahn's Algorithm (BFS)**.
 
 #### Thought Process
 1. **Kahn's Algorithm**:
@@ -1870,8 +1871,8 @@ def analyze_conveyor_network(num_junctions: int, edges: List[Tuple[int, int]]) -
 \`\`\`
 
 #### Complexity Analysis
-- **Time Complexity**: $\\mathcal{O}(V + E)$ where $V$ is junctions and $E$ is conveyor segments.
-- **Space Complexity**: $\\mathcal{O}(V + E)$ for adjacency list and in-degree tracking.
+- **Time Complexity**: **O(V + E)** where $V$ is junctions and $E$ is conveyor segments.
+- **Space Complexity**: **O(V + E)** for adjacency list and in-degree tracking.
 
 ---
 
@@ -1917,22 +1918,22 @@ def min_agvs_required(intervals: List[List[int]]) -> int:
 \`\`\`
 
 #### Complexity Analysis
-- **Time Complexity**: $\\mathcal{O}(N \\log N)$ for sorting plus heap push/pop operations.
-- **Space Complexity**: $\\mathcal{O}(N)$ for heap storage.
+- **Time Complexity**: **O(N log N)** for sorting plus heap push/pop operations.
+- **Space Complexity**: **O(N)** for heap storage.
 
 ---
 
 ### Problem 19: [Python / Algorithms] Binary Search for Optimal Conveyor Velocity
 
 #### Problem Statement
-Amazon engineers want to transport $N$ packages of known weights across a fulfillment sorter within $H$ hours. A conveyor motor running at variable speed $V$ (speed capacity $V$ weight units per hour) handles one batch per hour. If a package exceeds current speed, it must wait for the next hour. Find the minimum integer velocity $V$ such that all packages are transported within $H$ hours.
+Amazon engineers want to transport N packages of known weights across a fulfillment sorter within H hours. A conveyor motor running at variable speed V (speed capacity V weight units per hour) handles one batch per hour. If a package exceeds current speed, it must wait for the next hour. Find the minimum integer velocity V such that all packages are transported within $H$ hours.
 
 #### Thought Process
 1. Binary search on the answer space:
-   - Minimum possible speed: $\\max(weights)$ (the conveyor must be able to move the single heaviest package).
-   - Maximum possible speed: $\\sum weights$ (moving all packages in 1 hour).
-2. Monotonicity: If speed $V$ can complete the workload in $\\le H$ hours, any speed $V' > V$ can also do so. If speed $V$ takes $> H$ hours, we need a faster speed.
-3. Binary search boundaries: $[\\max(weights), \\sum weights]$.
+   - Minimum possible speed: max(weights) (the conveyor must be able to move the single heaviest package).
+   - Maximum possible speed: sum(weights) (moving all packages in 1 hour).
+2. Monotonicity: If speed $V$ can complete the workload in ≤ H hours, any speed V' > V can also do so. If speed $V$ takes > H hours, we need a faster speed.
+3. Binary search boundaries: [max(weights), sum(weights)].
 
 #### Code (Python)
 \`\`\`python
@@ -1964,25 +1965,25 @@ def min_conveyor_velocity(weights: List[int], H: int) -> int:
 \`\`\`
 
 #### Complexity Analysis
-- **Time Complexity**: $\\mathcal{O}(N \\log(\\sum W - \\max W))$, extremely fast binary search across candidate speeds.
-- **Space Complexity**: $\\mathcal{O}(1)$ auxiliary memory.
+- **Time Complexity**: **O(N log(Σ W - max W))**, extremely fast binary search across candidate speeds.
+- **Space Complexity**: **O(1)** auxiliary memory.
 
 ---
 
 ### Problem 20: [Python / Algorithms] Dynamic Programming: 0/1 Outbound Trailer Packing
 
 #### Problem Statement
-An outbound Amazon trailer has a maximum payload weight capacity $W$. You are given $N$ high-priority freight pallets, each with weight $w_i$ and business value/urgency score $v_i$. Implement a space-optimized **Dynamic Programming** solution to determine the maximum value of freight that can be packed into the trailer without exceeding capacity.
+An outbound Amazon trailer has a maximum payload weight capacity W. You are given N high-priority freight pallets, each with weight w_i and business value/urgency score v_i. Implement a space-optimized **Dynamic Programming** solution to determine the maximum value of freight that can be packed into the trailer without exceeding capacity.
 
 #### Thought Process
 1. Classic 0/1 Knapsack formulation:
-   - State: $dp[w]$ represents the maximum urgency score achievable with trailer capacity $w$.
+   - State: $dp[w]$ represents the maximum urgency score achievable with trailer capacity w.
 2. Space Optimization:
-   - A naive 2D table requires $\\mathcal{O}(N \\cdot W)$ space.
-   - We can optimize to a **1D array** of size $W+1$ by traversing backwards from $W$ down to $w_i$.
+   - A naive 2D table requires **O(N · W)** space.
+   - We can optimize to a **1D array** of size W + 1 by traversing backwards from W down to w_i.
    - Backward traversal ensures each pallet is chosen at most once!
 3. Recurrence relation:
-   $$dp[w] = \\max(dp[w], dp[w - w_i] + v_i)$$
+   > **dp[w] = max(dp[w], dp[w - w_i] + v_i)**
 
 #### Code (Python)
 \`\`\`python
@@ -2004,24 +2005,24 @@ def optimize_trailer_packing(capacity: int, weights: List[int], values: List[int
 \`\`\`
 
 #### Complexity Analysis
-- **Time Complexity**: $\\mathcal{O}(N \\cdot W)$ where $N$ is pallet count and $W$ is trailer capacity.
-- **Space Complexity**: $\\mathcal{O}(W)$ space-optimized 1D array.
+- **Time Complexity**: **O(N · W)** where $N$ is pallet count and $W$ is trailer capacity.
+- **Space Complexity**: **O(W)** space-optimized 1D array.
 
 ---
 
 ### Problem 21: [Python / Scratch ML] Cosine Similarity & Vector Top-K Retrieval from Scratch
 
 #### Problem Statement
-For an AI-powered MHE technical manual retrieval system, write a pure **NumPy** function to compute cosine similarity between a 768-dimensional query embedding vector $q$ and a matrix of document chunk embeddings $D \\in \\mathbb{R}^{M \\times 768}$, and return the indices and scores of the **top $K$ most similar document chunks** using a min-heap or partial sorting.
+For an AI-powered MHE technical manual retrieval system, write a pure **NumPy** function to compute cosine similarity between a 768-dimensional query embedding vector q and a matrix of document chunk embeddings D in R^(M × 768), and return the indices and scores of the **top K most similar document chunks** using a min-heap or partial sorting.
 
 #### Thought Process
 1. **Cosine Similarity**:
-   $$\\text{Sim}(q, d_i) = \\frac{q \\cdot d_i}{\\|q\\|_2 \\|d_i\\|_2}$$
-2. Vectorize the operation across all $M$ documents:
-   - Normalize query vector: $\\tilde{q} = \\frac{q}{\\|q\\|_2 + \\epsilon}$.
-   - Row-normalize document matrix: $\\tilde{D} = \\frac{D}{\\|D\\|_2 + \\epsilon}$.
-   - Matrix-vector dot product: $S = \\tilde{D} \\tilde{q}$.
-3. Top-$K$ selection: Use \`np.argpartition\` to find top $K$ in $\\mathcal{O}(M)$ linear time rather than sorting all $M$ items in $\\mathcal{O}(M \\log M)$.
+   > **Sim(q, d_i) = (q · d_i) / ( ||q||₂ · ||d_i||₂ )**
+2. Vectorize the operation across all M documents:
+   - Normalize query vector: q_norm = q / ( ||q||₂ + ε ).
+   - Row-normalize document matrix: D_norm = D / ( ||D||₂ + ε ).
+   - Matrix-vector dot product: S = D_norm · q_norm.
+3. Top-$K$ selection: Use \`np.argpartition\` to find top K in **O(M)** linear time rather than sorting all M items in **O(M log M)**.
 
 #### Code (Python)
 \`\`\`python
@@ -2059,8 +2060,8 @@ def retrieve_top_k_chunks(
 \`\`\`
 
 #### Complexity Analysis
-- **Time Complexity**: $\\mathcal{O}(M \\cdot d + M + k \\log k)$ where $M$ is chunk count, $d$ is embedding dimension ($768$), and $k$ is top chunks retrieved.
-- **Space Complexity**: $\\mathcal{O}(M)$ for normalized similarities.
+- **Time Complexity**: **O(M · d + M + k log k)** where M is chunk count, d is embedding dimension (768), and k is top chunks retrieved.
+- **Space Complexity**: **O(M)** for normalized similarities.
 
 
 ## 5. Amazon Leadership Principles: 11 STAR Stories
@@ -2127,7 +2128,7 @@ At **Amazon**, behavioral interviews carry equal weight to technical evaluations
   1. I audited existing codebase repositories and discovered that 30% of time-series models were using randomized k-fold cross-validation instead of **Purged Temporal Walk-Forward Cross-Validation**, introducing substantial lookahead bias.
   2. I authored a standardized **Model Validation & Governance Framework** in Python, integrating automated pre-commit hooks and CI/CD pipelines.
   3. I implemented automated checks for:
-     - **Data Leakage & Target Correlation**: Flagging any feature with unphysical correlation ($>0.95$) before training.
+     - **Data Leakage & Target Correlation**: Flagging any feature with unphysical correlation (> 0.95) before training.
      - **Class Imbalance Rigor**: Mandating Precision-Recall AUC (PR-AUC) over ROC-AUC for imbalanced risk scenarios.
      - **Automated Hyperparameter Tuning**: Enforcing **Optuna** with stratified group folds to avoid manual parameter cherry-picking.
      - **Stress Testing & Perturbation Invariance**: Injecting Gaussian noise into continuous inputs to verify prediction stability.
@@ -2145,7 +2146,7 @@ At **Amazon**, behavioral interviews carry equal weight to technical evaluations
 - **Action (~65%)**:
   1. I refused to let deployed models operate unmonitored. Working across AWS Lambda and S3, I engineered a continuous monitoring daemon using **Python** and **MLflow**.
   2. I implemented statistical distribution tracking using **Population Stability Index (PSI)** and **Characteristic Selectivity Index (CSI)** across **100K+ incoming IoT sensor records**.
-  3. I defined automated drift thresholds: $PSI < 0.1$ (stable), $0.1 \\le PSI < 0.2$ (warning), and $PSI \\ge 0.2$ (critical drift).
+  3. I defined automated drift thresholds: **PSI < 0.1** (stable), **0.1 ≤ PSI < 0.2** (warning), and **PSI ≥ 0.2** (critical drift).
   4. When critical drift was detected (e.g., when a plant overhauled its physical machinery, shifting vibration frequencies), the monitoring system automatically:
      - Paged the on-call data scientist via **PagerDuty**.
      - Triggered an automated retraining pipeline via **Airflow** using freshly labelled golden datasets.
@@ -2233,8 +2234,8 @@ At **Amazon**, behavioral interviews carry equal weight to technical evaluations
   2. I benchmarked the proposed LLM prompt approach against our production **XGBoost model with physics-informed statistical features (Kurtosis, RMS, FFT)**.
   3. I compiled an objective comparison matrix evaluating:
      - **Accuracy & Hallucination**: The LLM hallucinated normal status on 18% of high-frequency vibration spikes because it lacked frequency domain awareness.
-     - **Inference Latency**: The LLM required $1,800$ ms per reading; XGBoost executed in **$1.4$ ms** on CPU.
-     - **Financial Cost**: The LLM cost $\\approx \\$0.02$ per evaluation (which across 100K sensors evaluated every minute totaled over **\\$2.8M per year** in API fees); XGBoost cost less than **\\$400 per year** on AWS Lambda.
+     - **Inference Latency**: The LLM required 1,800 ms per reading; XGBoost executed in **1.4 ms** on CPU.
+     - **Financial Cost**: The LLM cost ≈ **$0.02** per evaluation (which across 100K sensors evaluated every minute totaled over **\\$2.8M per year** in API fees); XGBoost cost less than **\\$400 per year** on AWS Lambda.
   4. I presented the findings in an executive technical review. Seeing the hard empirical data, the director acknowledged that LLMs were inappropriate for raw sensor signal processing.
   5. However, the director rightly noted that maintenance technicians wanted conversational explanations of why equipment was degrading. I proposed a hybrid compromise: keep XGBoost for real-time anomaly detection, and use the LLM solely to synthesize human-readable diagnostic work orders when an anomaly was detected. Once decided, I fully committed to building and documenting the hybrid architecture.
 - **Result (~15%)**: Saved the division over **\\$2.8M in annual cloud fees**, protected mission-critical equipment reliability, and delivered a hybrid solution that became the standard architecture across the organization.
@@ -2271,14 +2272,14 @@ At **Amazon WWDE**, system design evaluates your ability to architect resilient,
 ##### 1. Functional & Non-Functional Requirements
 - **Functional Requirements**:
   - Ingest continuous high-frequency telemetry from **150,000+ IoT sensors** (vibration, motor current, bearing temperature) across **150+ fulfillment centers**.
-  - Detect instantaneous operational anomalies (conveyor jams, thermal overloads) within **$<5$ seconds**.
-  - Predict component mechanical failure (Remaining Useful Life $<7$ days) with **Precision $\\ge 85\\%$** and **Recall $\\ge 90\\%$**.
+  - Detect instantaneous operational anomalies (conveyor jams, thermal overloads) within **< 5 seconds**.
+  - Predict component mechanical failure (Remaining Useful Life $<7$ days) with **Precision ≥ 85%** and **Recall ≥ 90%**.
   - Generate automated prioritized maintenance work orders in Amazon's Enterprise Asset Management (EAM) system.
 - **Non-Functional Requirements**:
-  - **Availability**: $99.99\\%$ uptime (critical for fulfillment center continuity during Prime Day).
-  - **Scalability**: Ingest $100,000$ events/second at peak.
+  - **Availability**: 99.99% uptime (critical for fulfillment center continuity during Prime Day).
+  - **Scalability**: Ingest 100,000 events/second at peak.
   - **Data Retention**: Raw telemetry hot storage for 14 days; downsampled hourly aggregates retained in Redshift for 3 years.
-  - **Latency**: Stream anomaly alerting $<2$s; batch predictive inference run every 6 hours.
+  - **Latency**: Stream anomaly alerting < 2s; batch predictive inference run every 6 hours.
 
 ##### 2. End-to-End System Architecture (HLD)
 
@@ -2447,10 +2448,10 @@ def predict_component_health(req: MaintenancePredictionRequest):
 
 ##### 4. Drift Monitoring Daemon & Retraining Trigger
 - Every 24 hours, an automated Python daemon pulls feature distributions from the **SageMaker Feature Store** and calculates the **Population Stability Index (PSI)** using our Problem 10 formulation.
-- If $PSI \\ge 0.20$, the daemon initiates a webhook triggering an **Airflow DAG**:
+- If **PSI ≥ 0.20**, the daemon initiates a webhook triggering an **Airflow DAG**:
   1. Extract latest 90-day telemetry with ground-truth maintenance logs.
   2. Execute stratified hyperparameter optimization using **Optuna**.
-  3. Validate model on holdout test set (requiring $PR\\text{-}AUC \\ge 0.85$).
+  3. Validate model on holdout test set (requiring **PR-AUC ≥ 0.85**).
   4. Register candidate model in **MLflow** staging.
   5. Send approval Slack/Email notification to the WWDE Data Science team before shadow deployment.
 
@@ -2462,7 +2463,7 @@ def predict_component_health(req: MaintenancePredictionRequest):
 
 ##### 1. Problem Context
 An Amazon Fulfillment Center processes millions of packages daily through sequential physical stages:
-$$\\text{Inbound} \\longrightarrow \\text{Decant} \\longrightarrow \\text{Stow} \\longrightarrow \\text{Pick} \\longrightarrow \\text{Pack} \\longrightarrow \\text{SLAM (Scan/Label/Apply/Manifest)} \\longrightarrow \\text{Sortation} \\longrightarrow \\text{Shipping Dock}$$
+> **Inbound → Decant → Stow → Pick → Pack → SLAM (Scan/Label/Apply/Manifest) → Sortation → Shipping Dock**
 When a downstream pack line or sorter accumulates excessive Work-In-Progress (WIP), upstream conveyors experience **congestive backpressure**, stalling induct stations.
 
 \`\`\`mermaid
@@ -2479,7 +2480,7 @@ flowchart LR
 \`\`\`
 
 ##### 2. Architectural Blueprint
-- **Graph Modeling**: Model the entire warehouse conveyor topology as a **Directed Acyclic Graph (DAG)** $G = (V, E)$, where vertices $V$ represent workstations/scanners/diverters, and edges $E$ represent conveyor segments with physical capacity $C_e$ and velocity $v_e$.
+- **Graph Modeling**: Model the entire warehouse conveyor topology as a **Directed Acyclic Graph (DAG)** G = (V, E), where vertices V represent workstations/scanners/diverters, and edges E represent conveyor segments with physical capacity C_e and velocity v_e.
 - **Real-Time Telemetry Engine**: Ingests optical photo-eye break signals (package presence) and barcode scans over **Amazon MSK (Kafka)** with $<500$ms end-to-end latency.
 - **Optimization Engine**: Runs a **Mixed-Integer Linear Program (MILP)** or fast **Min-Cost Flow algorithm** every 30 seconds to adjust conveyor divert switches, dynamically balancing tote distribution across pack halls.
 

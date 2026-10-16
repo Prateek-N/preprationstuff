@@ -62,7 +62,7 @@ At **Amazon**, behavioral interviews carry equal weight to technical evaluations
   1. I audited existing codebase repositories and discovered that 30% of time-series models were using randomized k-fold cross-validation instead of **Purged Temporal Walk-Forward Cross-Validation**, introducing substantial lookahead bias.
   2. I authored a standardized **Model Validation & Governance Framework** in Python, integrating automated pre-commit hooks and CI/CD pipelines.
   3. I implemented automated checks for:
-     - **Data Leakage & Target Correlation**: Flagging any feature with unphysical correlation ($>0.95$) before training.
+     - **Data Leakage & Target Correlation**: Flagging any feature with unphysical correlation (> 0.95) before training.
      - **Class Imbalance Rigor**: Mandating Precision-Recall AUC (PR-AUC) over ROC-AUC for imbalanced risk scenarios.
      - **Automated Hyperparameter Tuning**: Enforcing **Optuna** with stratified group folds to avoid manual parameter cherry-picking.
      - **Stress Testing & Perturbation Invariance**: Injecting Gaussian noise into continuous inputs to verify prediction stability.
@@ -80,7 +80,7 @@ At **Amazon**, behavioral interviews carry equal weight to technical evaluations
 - **Action (~65%)**:
   1. I refused to let deployed models operate unmonitored. Working across AWS Lambda and S3, I engineered a continuous monitoring daemon using **Python** and **MLflow**.
   2. I implemented statistical distribution tracking using **Population Stability Index (PSI)** and **Characteristic Selectivity Index (CSI)** across **100K+ incoming IoT sensor records**.
-  3. I defined automated drift thresholds: $PSI < 0.1$ (stable), $0.1 \le PSI < 0.2$ (warning), and $PSI \ge 0.2$ (critical drift).
+  3. I defined automated drift thresholds: **PSI < 0.1** (stable), **0.1 ≤ PSI < 0.2** (warning), and **PSI ≥ 0.2** (critical drift).
   4. When critical drift was detected (e.g., when a plant overhauled its physical machinery, shifting vibration frequencies), the monitoring system automatically:
      - Paged the on-call data scientist via **PagerDuty**.
      - Triggered an automated retraining pipeline via **Airflow** using freshly labelled golden datasets.
@@ -168,8 +168,8 @@ At **Amazon**, behavioral interviews carry equal weight to technical evaluations
   2. I benchmarked the proposed LLM prompt approach against our production **XGBoost model with physics-informed statistical features (Kurtosis, RMS, FFT)**.
   3. I compiled an objective comparison matrix evaluating:
      - **Accuracy & Hallucination**: The LLM hallucinated normal status on 18% of high-frequency vibration spikes because it lacked frequency domain awareness.
-     - **Inference Latency**: The LLM required $1,800$ ms per reading; XGBoost executed in **$1.4$ ms** on CPU.
-     - **Financial Cost**: The LLM cost $\approx \$0.02$ per evaluation (which across 100K sensors evaluated every minute totaled over **\$2.8M per year** in API fees); XGBoost cost less than **\$400 per year** on AWS Lambda.
+     - **Inference Latency**: The LLM required 1,800 ms per reading; XGBoost executed in **1.4 ms** on CPU.
+     - **Financial Cost**: The LLM cost ≈ **$0.02** per evaluation (which across 100K sensors evaluated every minute totaled over **\$2.8M per year** in API fees); XGBoost cost less than **\$400 per year** on AWS Lambda.
   4. I presented the findings in an executive technical review. Seeing the hard empirical data, the director acknowledged that LLMs were inappropriate for raw sensor signal processing.
   5. However, the director rightly noted that maintenance technicians wanted conversational explanations of why equipment was degrading. I proposed a hybrid compromise: keep XGBoost for real-time anomaly detection, and use the LLM solely to synthesize human-readable diagnostic work orders when an anomaly was detected. Once decided, I fully committed to building and documenting the hybrid architecture.
 - **Result (~15%)**: Saved the division over **\$2.8M in annual cloud fees**, protected mission-critical equipment reliability, and delivered a hybrid solution that became the standard architecture across the organization.
@@ -206,14 +206,14 @@ At **Amazon WWDE**, system design evaluates your ability to architect resilient,
 ##### 1. Functional & Non-Functional Requirements
 - **Functional Requirements**:
   - Ingest continuous high-frequency telemetry from **150,000+ IoT sensors** (vibration, motor current, bearing temperature) across **150+ fulfillment centers**.
-  - Detect instantaneous operational anomalies (conveyor jams, thermal overloads) within **$<5$ seconds**.
-  - Predict component mechanical failure (Remaining Useful Life $<7$ days) with **Precision $\ge 85\%$** and **Recall $\ge 90\%$**.
+  - Detect instantaneous operational anomalies (conveyor jams, thermal overloads) within **< 5 seconds**.
+  - Predict component mechanical failure (Remaining Useful Life $<7$ days) with **Precision ≥ 85%** and **Recall ≥ 90%**.
   - Generate automated prioritized maintenance work orders in Amazon's Enterprise Asset Management (EAM) system.
 - **Non-Functional Requirements**:
-  - **Availability**: $99.99\%$ uptime (critical for fulfillment center continuity during Prime Day).
-  - **Scalability**: Ingest $100,000$ events/second at peak.
+  - **Availability**: 99.99% uptime (critical for fulfillment center continuity during Prime Day).
+  - **Scalability**: Ingest 100,000 events/second at peak.
   - **Data Retention**: Raw telemetry hot storage for 14 days; downsampled hourly aggregates retained in Redshift for 3 years.
-  - **Latency**: Stream anomaly alerting $<2$s; batch predictive inference run every 6 hours.
+  - **Latency**: Stream anomaly alerting < 2s; batch predictive inference run every 6 hours.
 
 ##### 2. End-to-End System Architecture (HLD)
 
@@ -382,10 +382,10 @@ def predict_component_health(req: MaintenancePredictionRequest):
 
 ##### 4. Drift Monitoring Daemon & Retraining Trigger
 - Every 24 hours, an automated Python daemon pulls feature distributions from the **SageMaker Feature Store** and calculates the **Population Stability Index (PSI)** using our Problem 10 formulation.
-- If $PSI \ge 0.20$, the daemon initiates a webhook triggering an **Airflow DAG**:
+- If **PSI ≥ 0.20**, the daemon initiates a webhook triggering an **Airflow DAG**:
   1. Extract latest 90-day telemetry with ground-truth maintenance logs.
   2. Execute stratified hyperparameter optimization using **Optuna**.
-  3. Validate model on holdout test set (requiring $PR\text{-}AUC \ge 0.85$).
+  3. Validate model on holdout test set (requiring **PR-AUC ≥ 0.85**).
   4. Register candidate model in **MLflow** staging.
   5. Send approval Slack/Email notification to the WWDE Data Science team before shadow deployment.
 
@@ -397,7 +397,7 @@ def predict_component_health(req: MaintenancePredictionRequest):
 
 ##### 1. Problem Context
 An Amazon Fulfillment Center processes millions of packages daily through sequential physical stages:
-$$\text{Inbound} \longrightarrow \text{Decant} \longrightarrow \text{Stow} \longrightarrow \text{Pick} \longrightarrow \text{Pack} \longrightarrow \text{SLAM (Scan/Label/Apply/Manifest)} \longrightarrow \text{Sortation} \longrightarrow \text{Shipping Dock}$$
+> **Inbound → Decant → Stow → Pick → Pack → SLAM (Scan/Label/Apply/Manifest) → Sortation → Shipping Dock**
 When a downstream pack line or sorter accumulates excessive Work-In-Progress (WIP), upstream conveyors experience **congestive backpressure**, stalling induct stations.
 
 ```mermaid
@@ -414,7 +414,7 @@ flowchart LR
 ```
 
 ##### 2. Architectural Blueprint
-- **Graph Modeling**: Model the entire warehouse conveyor topology as a **Directed Acyclic Graph (DAG)** $G = (V, E)$, where vertices $V$ represent workstations/scanners/diverters, and edges $E$ represent conveyor segments with physical capacity $C_e$ and velocity $v_e$.
+- **Graph Modeling**: Model the entire warehouse conveyor topology as a **Directed Acyclic Graph (DAG)** G = (V, E), where vertices V represent workstations/scanners/diverters, and edges E represent conveyor segments with physical capacity C_e and velocity v_e.
 - **Real-Time Telemetry Engine**: Ingests optical photo-eye break signals (package presence) and barcode scans over **Amazon MSK (Kafka)** with $<500$ms end-to-end latency.
 - **Optimization Engine**: Runs a **Mixed-Integer Linear Program (MILP)** or fast **Min-Cost Flow algorithm** every 30 seconds to adjust conveyor divert switches, dynamically balancing tote distribution across pack halls.
 
