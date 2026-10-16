@@ -39,11 +39,13 @@ const SLUG_TO_CANDIDATE = {
   'venkata-chaitanya-aws-glue-prep': 'Venkata Chaitanya',
   'venkata-chaitanya-citi-prep': 'Venkata Chaitanya',
   'haritha-anand-bcg-prep': 'Haritha Anand',
+  'haritha-amazon-wwde-prep': 'Haritha',
   'vaishnavi-torc-mcu-applications-prep': 'Vaishnavi',
   'harnish-frontend-backend-coding-prep': 'Harnish Savadia',
 }
 
 const PASSWORD_TO_CANDIDATE = {
+  haritha: 'Haritha',
   asha: 'Asha',
   teja: 'Teja',
   suvishal: 'Suvishal Kalakoti',

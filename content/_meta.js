@@ -1,5 +1,6 @@
 export default {
   index: 'Docs Home',
+  'haritha-amazon-wwde-prep': 'Haritha Anand Amazon WWDE Data Scientist Prep',
   'lakshmi-hitachi-vantara-prep': 'Lakshmi Pranitha Hitachi Vantara BI Prep',
   'teja-purpose-financial-prep': 'Teja Talluri Purpose Financial Prep',
   'asha-alignment-health-prep': 'Asha Jyothi Uchula Alignment Health Prep',
