@@ -9,6 +9,7 @@ const SLUG_TO_CANDIDATE = {
   'ashutosh-oscar-health-prep': 'Ashutosh Rudraksh',
   'asha-alignment-health-prep': 'Asha',
   'teja-purpose-financial-prep': 'Teja',
+  'teja-walmart-transportation-prep': 'Teja',
   'ashutosh-oscar-prep': 'Ashutosh Rudraksh',
   'karthik-adsgency-ai-prep': 'Karthik Ravula',
   'kiranmai-amazon-sde-prep': 'Venkata Satya Kiranmai Challagulla',
