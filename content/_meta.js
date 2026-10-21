@@ -4,6 +4,7 @@ export default {
   'lakshmi-hitachi-vantara-prep': 'Lakshmi Pranitha Hitachi Vantara BI Prep',
   'teja-purpose-financial-prep': 'Teja Talluri Purpose Financial Prep',
   'teja-walmart-transportation-prep': 'Teja Talluri Walmart Transportation Prep',
+  'nikitha-ramesh-tpm-prep': 'Nikitha Ramesh Technical Product Manager Prep',
   'asha-alignment-health-prep': 'Asha Jyothi Uchula Alignment Health Prep',
   'karthik-adsgency-ai-prep': 'Karthik Ravula AdsGency AI MTS Prep',
   'ashutosh-amazon-live-events-prep': 'Ashutosh Rudraksh Amazon Live Events AI Prep',
