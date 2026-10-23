@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "dev": "next dev",
-    "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next build",
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 next build",
     "postbuild": "pagefind --site .next/server/app --output-path public/_pagefind",
     "start": "next start"
   },

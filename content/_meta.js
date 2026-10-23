@@ -15,6 +15,7 @@ export default {
   'janaki-qa-automation-14day-prep': 'Janaki Ashok Kumar QA Automation Prep',
   'ashutosh-mercor-applied-ai-prep': 'Ashutosh Rudraksh Mercor Applied AI Prep',
   'pavan-fal-senior-data-engineer-prep': 'Pavan Chandramouleswara fal.ai Data Engineer Prep',
+  'pavan-chandramouleswara-data-engineer-prep': 'Pavan Chandramouleswara Data Engineer Prep',
   'lawrence-cybersecurity-analyst-prep': 'Lawrence Doh Cybersecurity Analyst Prep',
   'ashish-fedex-data-scientist-prep': 'Sai Ashish Chavali FedEx Data Scientist Prep',
   'charan-amazon-sysde-prep': 'Charan Kumar Amazon SysDE Prep',

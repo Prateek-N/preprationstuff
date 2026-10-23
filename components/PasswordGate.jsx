@@ -22,6 +22,7 @@ const SLUG_TO_CANDIDATE = {
   'janaki-qa-automation-14day-prep': 'Janaki Ashok Kumar',
   'janaki-oracle-prep': 'Janaki Ashok Kumar',
   'pavan-fal-senior-data-engineer-prep': 'Pavan Chandramouleswara',
+  'pavan-chandramouleswara-data-engineer-prep': 'Pavan Chandramouleswara',
   'lawrence-cybersecurity-analyst-prep': 'Lawrence Doh',
   'ashish-fedex-data-scientist-prep': 'Sai Ashish Chavali',
   'charan-amazon-sysde-prep': 'Charan Kumar Kundavarapu',
