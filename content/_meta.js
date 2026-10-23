@@ -1,5 +1,6 @@
 export default {
   index: 'Docs Home',
+  'sandeep-kasiraju-indegene-prep': 'Sandeep Kasiraju Indegene Data Scientist Prep',
   'haritha-amazon-wwde-prep': 'Haritha Anand Amazon WWDE Data Scientist Prep',
   'lakshmi-hitachi-vantara-prep': 'Lakshmi Pranitha Hitachi Vantara BI Prep',
   'teja-purpose-financial-prep': 'Teja Talluri Purpose Financial Prep',
