@@ -35,6 +35,50 @@
 
 ---
 
+## Core System Architecture Blueprints
+
+### Blueprint 1: Uber Real-Time Marketplace Event Streaming Topology
+```mermaid
+flowchart LR
+    A["Marketplace Telemetry: Driver GPS, Trips, Surge"] --> B["Kafka Topics: Partitioned by driver_id, trip_id"]
+    B --> C["Python Async Streaming Workers: Micro-batching 10s / 5K events"]
+    C --> D["BigQuery Storage Write API: Committed Exactly-Once Mode"]
+    D --> E["BigQuery Staging Tables: Partitioned on Timestamp, Clustered on Region"]
+    E --> F["dbt Core Transformation: Incremental Models & Semantic Marts"]
+    E --> G["Great Expectations Gatekeeper: 8 Tier-1 Datasets (10TB+)"]
+    F --> H["Curated Analytical Marts & ML Feature Stores"]
+    G -->|"2,000+ Daily Anomalies"| I["Quarantined Audit Table & PagerDuty Alerts"]
+```
+
+### Blueprint 2: Dell Technologies Enterprise Modernization & Snowflake Tuning
+```mermaid
+flowchart TD
+    A["50+ Heterogeneous Systems: On-Prem Oracle, SQL Server, APIs, Flat Files"] --> B["Ingestion Tier: Sqoop, Python Workers & Azure Data Factory"]
+    B --> C["Raw Data Lake: Amazon S3 & HDFS with Hive External SerDes"]
+    C --> D["Distributed Compute: Apache Spark on AWS EMR Auto-Scaling Clusters"]
+    D --> E["Data Harmonization: Canonical Data Models (CDM) & Snappy Parquet"]
+    E --> F["Optimized Snowflake Warehouse: 5TB+ Volume, Query Tuning 45m to 2m"]
+    E --> G["Governance & Lineage: AWS Glue Data Catalog & PII Masking"]
+```
+
+### Blueprint 3: GenAI Enterprise Knowledge Assistant RAG Pipeline
+```mermaid
+flowchart TD
+    A["15K+ Enterprise Documents: SOPs, PDFs, Architecture Specs"] --> B["Semantic Recursive Chunking: 800 Tokens, 150 Overlap"]
+    B --> C["OpenAI Embedding Generation: text-embedding-3-large"]
+    C --> D["Vector Database: HNSW Indexing on Pinecone/Milvus"]
+    E["User Search Query"] --> F{"Hybrid Intent Router"}
+    F -->|"Dense Vector Search"| D
+    F -->|"Sparse BM25 Keyword Search"| G["Lexical Inverted Index"]
+    D --> H["Cross-Encoder Re-Ranker: Top-5 Most Relevant Chunks"]
+    G --> H
+    H --> I["Enterprise Guardrails: RBAC Check & Grounded Context Assembly"]
+    I --> J["Foundation LLM: Deterministic Generation (T=0.0)"]
+    J --> K["Validated Answer with Strict Source Citations"]
+```
+
+---
+
 # Section 1: Top 30 Senior Data Engineer Interview Questions & Expert Answers
 ### Every answer is strictly 300+ words, first-person perspective, with important keywords and tech stack in bold.
 
@@ -3162,4 +3206,16 @@ if __name__ == "__main__":
 - **Space Complexity:** O(V) to store the DSU parent and rank arrays.
 
 ---
+
+# Section 3: Candidate Experience Defense & Behavioral Leadership
+
+### 1. Uber — Marketplace Streaming Platform Defense
+- **Talking Points:** Talk about processing 5M+ daily events, why you shifted from batch files to Kafka streaming, how the GCP BigQuery Storage Write API provided committed exactly-once semantics, and how 10 Airflow DAGs with dynamic YAML generation reclaimed 40 engineering hours monthly.
+- **Handling Skeptical Interviewers:** If asked 'How did latency go from 24h to 16h instead of seconds?', explain that 16h represents the guaranteed SLA for cold dimensional storage and financial reconciliation across the entire global marketplace, whereas real-time streaming buffers allow hot queries in sub-second time.
+
+### 2. Dell Technologies — Enterprise Data Modernization & Snowflake Tuning
+- **Talking Points:** Detail the 50+ heterogeneous system integration on Hadoop/Hive/Spark/EMR, how you identified remote disk spilling in Snowflake, cluster key selection on transaction timestamp and customer tenant, and cutting audit prep time by 2 weeks with AWS Glue and Great Expectations.
+
+### 3. Adani — Industrial Telemetry Automation & Cost Optimization
+- **Talking Points:** Describe automated NiFi flow files, containerized R reporting cutting turnaround from 3h to 30m, 500K+ daily record validation in Alteryx, and federated querying across HDFS and Oracle via Apache Drill unlocking $1.5M+ in verified savings.
 

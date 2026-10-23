@@ -5,15 +5,15 @@ Master Build Script for Pavan Chandramouleswara Senior Data Engineer Interview P
 Generates:
 1. pavan_chandramouleswara_de_prep.md
 2. content/pavan-chandramouleswara-data-engineer-prep.mdx
-3. pavan_chandramouleswara_de_prep.html
-4. public/pavan_chandramouleswara_de_prep.html
+3. pavan_chandramouleswara_de_prep.html (Signature Dark-Mode SPA with marked.js & mermaid.js)
+4. public/pavan_chandramouleswara_de_prep.html (Production Static Serving)
 
-Also validates question word counts and coding problem schemas.
+Protected with password lock: "Pavan"
 """
 
 import os
 import re
-import html
+import json
 from pavan_data_questions_part1 import QUESTIONS_PART1
 from pavan_data_questions_part2 import QUESTIONS_PART2
 from pavan_data_coding_part1 import CODING_PROBLEMS_PART1
@@ -61,6 +61,50 @@ def generate_markdown() -> str:
 
     md.append("---\n\n")
 
+    md.append("## Core System Architecture Blueprints\n\n")
+    
+    md.append("### Blueprint 1: Uber Real-Time Marketplace Event Streaming Topology\n")
+    md.append("```mermaid\n")
+    md.append("flowchart LR\n")
+    md.append("    A[\"Marketplace Telemetry: Driver GPS, Trips, Surge\"] --> B[\"Kafka Topics: Partitioned by driver_id, trip_id\"]\n")
+    md.append("    B --> C[\"Python Async Streaming Workers: Micro-batching 10s / 5K events\"]\n")
+    md.append("    C --> D[\"BigQuery Storage Write API: Committed Exactly-Once Mode\"]\n")
+    md.append("    D --> E[\"BigQuery Staging Tables: Partitioned on Timestamp, Clustered on Region\"]\n")
+    md.append("    E --> F[\"dbt Core Transformation: Incremental Models & Semantic Marts\"]\n")
+    md.append("    E --> G[\"Great Expectations Gatekeeper: 8 Tier-1 Datasets (10TB+)\"]\n")
+    md.append("    F --> H[\"Curated Analytical Marts & ML Feature Stores\"]\n")
+    md.append("    G -->|\"2,000+ Daily Anomalies\"| I[\"Quarantined Audit Table & PagerDuty Alerts\"]\n")
+    md.append("```\n\n")
+
+    md.append("### Blueprint 2: Dell Technologies Enterprise Modernization & Snowflake Tuning\n")
+    md.append("```mermaid\n")
+    md.append("flowchart TD\n")
+    md.append("    A[\"50+ Heterogeneous Systems: On-Prem Oracle, SQL Server, APIs, Flat Files\"] --> B[\"Ingestion Tier: Sqoop, Python Workers & Azure Data Factory\"]\n")
+    md.append("    B --> C[\"Raw Data Lake: Amazon S3 & HDFS with Hive External SerDes\"]\n")
+    md.append("    C --> D[\"Distributed Compute: Apache Spark on AWS EMR Auto-Scaling Clusters\"]\n")
+    md.append("    D --> E[\"Data Harmonization: Canonical Data Models (CDM) & Snappy Parquet\"]\n")
+    md.append("    E --> F[\"Optimized Snowflake Warehouse: 5TB+ Volume, Query Tuning 45m to 2m\"]\n")
+    md.append("    E --> G[\"Governance & Lineage: AWS Glue Data Catalog & PII Masking\"]\n")
+    md.append("```\n\n")
+
+    md.append("### Blueprint 3: GenAI Enterprise Knowledge Assistant RAG Pipeline\n")
+    md.append("```mermaid\n")
+    md.append("flowchart TD\n")
+    md.append("    A[\"15K+ Enterprise Documents: SOPs, PDFs, Architecture Specs\"] --> B[\"Semantic Recursive Chunking: 800 Tokens, 150 Overlap\"]\n")
+    md.append("    B --> C[\"OpenAI Embedding Generation: text-embedding-3-large\"]\n")
+    md.append("    C --> D[\"Vector Database: HNSW Indexing on Pinecone/Milvus\"]\n")
+    md.append("    E[\"User Search Query\"] --> F{\"Hybrid Intent Router\"}\n")
+    md.append("    F -->|\"Dense Vector Search\"| D\n")
+    md.append("    F -->|\"Sparse BM25 Keyword Search\"| G[\"Lexical Inverted Index\"]\n")
+    md.append("    D --> H[\"Cross-Encoder Re-Ranker: Top-5 Most Relevant Chunks\"]\n")
+    md.append("    G --> H\n")
+    md.append("    H --> I[\"Enterprise Guardrails: RBAC Check & Grounded Context Assembly\"]\n")
+    md.append("    I --> J[\"Foundation LLM: Deterministic Generation (T=0.0)\"]\n")
+    md.append("    J --> K[\"Validated Answer with Strict Source Citations\"]\n")
+    md.append("```\n\n")
+
+    md.append("---\n\n")
+
     # SECTION 1: 30 QUESTIONS
     md.append("# Section 1: Top 30 Senior Data Engineer Interview Questions & Expert Answers\n")
     md.append("### Every answer is strictly 300+ words, first-person perspective, with important keywords and tech stack in bold.\n\n")
@@ -104,24 +148,31 @@ def generate_markdown() -> str:
         md.append(f"- **Space Complexity:** {p['space_complexity']}\n\n")
         md.append("---\n\n")
 
+    # SECTION 3: RESUME DEFENSE & ARCHITECTURAL DEEP-DIVE
+    md.append("# Section 3: Candidate Experience Defense & Behavioral Leadership\n\n")
+    md.append("### 1. Uber — Marketplace Streaming Platform Defense\n")
+    md.append("- **Talking Points:** Talk about processing 5M+ daily events, why you shifted from batch files to Kafka streaming, how the GCP BigQuery Storage Write API provided committed exactly-once semantics, and how 10 Airflow DAGs with dynamic YAML generation reclaimed 40 engineering hours monthly.\n")
+    md.append("- **Handling Skeptical Interviewers:** If asked 'How did latency go from 24h to 16h instead of seconds?', explain that 16h represents the guaranteed SLA for cold dimensional storage and financial reconciliation across the entire global marketplace, whereas real-time streaming buffers allow hot queries in sub-second time.\n\n")
+
+    md.append("### 2. Dell Technologies — Enterprise Data Modernization & Snowflake Tuning\n")
+    md.append("- **Talking Points:** Detail the 50+ heterogeneous system integration on Hadoop/Hive/Spark/EMR, how you identified remote disk spilling in Snowflake, cluster key selection on transaction timestamp and customer tenant, and cutting audit prep time by 2 weeks with AWS Glue and Great Expectations.\n\n")
+
+    md.append("### 3. Adani — Industrial Telemetry Automation & Cost Optimization\n")
+    md.append("- **Talking Points:** Describe automated NiFi flow files, containerized R reporting cutting turnaround from 3h to 30m, 500K+ daily record validation in Alteryx, and federated querying across HDFS and Oracle via Apache Drill unlocking $1.5M+ in verified savings.\n\n")
+
     return "".join(md)
 
 # =============================================================================
 # 2. GENERATE NEXTRA MDX (content/pavan-chandramouleswara-data-engineer-prep.mdx)
 # =============================================================================
 def escape_for_mdx(text: str) -> str:
-    """Escapes characters that break Nextra MDX compilation while preserving code blocks."""
-    # We split by code blocks ```...``` to only escape outside code blocks
     parts = re.split(r'(```[\s\S]*?```)', text)
     escaped_parts = []
     for part in parts:
         if part.startswith('```'):
-            # Inside code block: preserve as is
             escaped_parts.append(part)
         else:
-            # Outside code block: escape curly braces and loose angle brackets
             p = part.replace('{', '&#123;').replace('}', '&#125;')
-            # Escape <= and >=
             p = p.replace('<=', '&le;').replace('>=', '&ge;')
             escaped_parts.append(p)
     return "".join(escaped_parts)
@@ -141,906 +192,510 @@ def generate_mdx() -> str:
     return "".join(mdx)
 
 # =============================================================================
-# 3. GENERATE STANDALONE HTML (pavan_chandramouleswara_de_prep.html)
+# 3. GENERATE SIGNATURE STANDALONE HTML (Exact Repository Standard)
 # =============================================================================
-def generate_html() -> str:
-    # Build JSON data strings for embedding
-    questions_json = []
-    for q in ALL_QUESTIONS:
-        questions_json.append({
-            "num": q["num"],
-            "category": q["category"],
-            "title": q["title"],
-            "question": q["question"],
-            "answer": q["answer"],
-            "words": len(q["answer"].split())
-        })
-        
-    problems_json = []
-    for p in ALL_PROBLEMS:
-        problems_json.append({
-            "num": p["num"],
-            "category": p["category"],
-            "title": p["title"],
-            "problem_statement": p["problem_statement"],
-            "thought_process": p["thought_process"],
-            "code": p["code"],
-            "time_complexity": p["time_complexity"],
-            "space_complexity": p["space_complexity"]
-        })
+def generate_signature_html() -> str:
+    raw_markdown = generate_markdown()
+    json_markdown = json.dumps(raw_markdown)
 
-    import json
-    q_data_str = json.dumps(questions_json)
-    p_data_str = json.dumps(problems_json)
-
-    html_template = f"""<!DOCTYPE html>
-<html lang="en">
+    html_content = f"""<!DOCTYPE html>
+<html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pavan Chandramouleswara | Senior Data Engineer Master Prep Suite</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root {{
-      --bg-dark: #0a0d14;
-      --card-bg: #111622;
-      --card-border: #1e2638;
-      --card-hover: #171f30;
-      --text-main: #f1f5f9;
-      --text-muted: #94a3b8;
-      --accent-cyan: #06b6d4;
-      --accent-blue: #3b82f6;
-      --accent-purple: #8b5cf6;
-      --accent-emerald: #10b981;
-      --accent-amber: #f59e0b;
-      --accent-rose: #f43f5e;
-      --code-bg: #07090e;
-    }}
-    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-    body {{
-      background: var(--bg-dark);
-      color: var(--text-main);
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      line-height: 1.6;
-      min-height: 100vh;
-    }}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pavan Chandramouleswara — Senior Data Engineer Master Prep Suite</title>
+    <meta name="description" content="Senior Data Engineer Master Preparation Suite for Pavan Chandramouleswara covering 30 Technical Q&As (300+ words each) and Top 25 Python Coding Problems.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Marked.js for fast Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Mermaid.js for architectural diagrams -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+    <style>
+        :root {{
+            --bg-primary: #090d16;
+            --bg-secondary: #0f172a;
+            --bg-card: rgba(15, 23, 42, 0.75);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --accent-cyan: #06b6d4;
+            --accent-blue: #3b82f6;
+            --accent-indigo: #6366f1;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --code-bg: #030712;
+        }}
 
-    /* Password Modal */
-    #lock-modal {{
-      position: fixed;
-      inset: 0;
-      background: rgba(10, 13, 20, 0.95);
-      backdrop-filter: blur(12px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-    }}
-    .lock-box {{
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 40px;
-      width: 90%;
-      max-width: 440px;
-      text-align: center;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(6, 182, 212, 0.15);
-    }}
-    .lock-box h2 {{
-      font-size: 24px;
-      margin-bottom: 8px;
-      background: linear-gradient(135deg, #06b6d4, #3b82f6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }}
-    .lock-box p {{
-      color: var(--text-muted);
-      font-size: 14px;
-      margin-bottom: 24px;
-    }}
-    .lock-input {{
-      width: 100%;
-      padding: 14px 18px;
-      background: var(--bg-dark);
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      color: #fff;
-      font-size: 16px;
-      text-align: center;
-      letter-spacing: 2px;
-      outline: none;
-      transition: all 0.2s;
-    }}
-    .lock-input:focus {{
-      border-color: var(--accent-cyan);
-      box-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
-    }}
-    .lock-btn {{
-      width: 100%;
-      margin-top: 16px;
-      padding: 14px;
-      background: linear-gradient(135deg, #06b6d4, #3b82f6);
-      border: none;
-      border-radius: 8px;
-      color: #fff;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.1s, opacity 0.2s;
-    }}
-    .lock-btn:hover {{ opacity: 0.9; transform: translateY(-1px); }}
-    .error-msg {{ color: var(--accent-rose); font-size: 13px; margin-top: 10px; display: none; }}
+        * {{
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }}
 
-    /* Layout */
-    .container {{
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 32px 24px 80px;
-    }}
+        body {{
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            padding: 0;
+            margin: 0;
+            min-height: 100vh;
+        }}
 
-    /* Top Nav */
-    header {{
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-bottom: 24px;
-      border-bottom: 1px solid var(--card-border);
-      margin-bottom: 32px;
-    }}
-    .candidate-brand {{
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }}
-    .avatar {{
-      width: 52px;
-      height: 52px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #06b6d4, #8b5cf6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 20px;
-      color: #fff;
-      box-shadow: 0 4px 20px rgba(6, 182, 212, 0.3);
-    }}
-    .candidate-info h1 {{
-      font-size: 22px;
-      font-weight: 700;
-    }}
-    .candidate-info p {{
-      color: var(--text-muted);
-      font-size: 13px;
-    }}
-    .header-actions {{
-      display: flex;
-      gap: 12px;
-    }}
-    .btn-outline {{
-      background: transparent;
-      border: 1px solid var(--card-border);
-      color: var(--text-muted);
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }}
-    .btn-outline:hover {{
-      color: var(--text-main);
-      border-color: var(--accent-cyan);
-    }}
+        /* Header Navigation */
+        header {{
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(9, 13, 22, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }}
 
-    /* Metrics Hero Grid */
-    .metrics-grid {{
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-      margin-bottom: 36px;
-    }}
-    .metric-card {{
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 20px;
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.2s;
-    }}
-    .metric-card:hover {{ transform: translateY(-3px); }}
-    .metric-card::before {{
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
-    }}
-    .metric-val {{
-      font-size: 28px;
-      font-weight: 800;
-      color: #fff;
-      margin-bottom: 4px;
-    }}
-    .metric-label {{
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--accent-cyan);
-      font-weight: 600;
-      margin-bottom: 6px;
-    }}
-    .metric-sub {{
-      font-size: 12px;
-      color: var(--text-muted);
-    }}
+        .brand {{
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }}
 
-    /* Navigation Tabs */
-    .tabs {{
-      display: flex;
-      gap: 12px;
-      border-bottom: 1px solid var(--card-border);
-      margin-bottom: 28px;
-    }}
-    .tab-btn {{
-      padding: 12px 20px;
-      background: transparent;
-      border: none;
-      border-bottom: 2px solid transparent;
-      color: var(--text-muted);
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s;
-    }}
-    .tab-btn:hover {{ color: var(--text-main); }}
-    .tab-btn.active {{
-      color: var(--accent-cyan);
-      border-bottom-color: var(--accent-cyan);
-    }}
-    .tab-badge {{
-      background: #1e293b;
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-size: 11px;
-    }}
+        .spark {{
+            color: var(--accent-cyan);
+            font-size: 1.6rem;
+            font-weight: 900;
+        }}
 
-    /* Search & Filter Toolbar */
-    .toolbar {{
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
-      justify-content: space-between;
-      margin-bottom: 24px;
-    }}
-    .search-input {{
-      flex: 1;
-      min-width: 280px;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 10px 16px;
-      color: #fff;
-      font-size: 14px;
-      outline: none;
-    }}
-    .search-input:focus {{
-      border-color: var(--accent-cyan);
-    }}
-    .filter-pills {{
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }}
-    .pill {{
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 500;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all 0.15s;
-    }}
-    .pill:hover {{
-      color: var(--text-main);
-      border-color: var(--accent-cyan);
-    }}
-    .pill.active {{
-      background: rgba(6, 182, 212, 0.15);
-      border-color: var(--accent-cyan);
-      color: var(--accent-cyan);
-    }}
+        .brand-title {{
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #ffffff 0%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }}
 
-    /* Item Accordions */
-    .item-card {{
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      margin-bottom: 16px;
-      overflow: hidden;
-      transition: border-color 0.2s;
-    }}
-    .item-card:hover {{
-      border-color: #334155;
-    }}
-    .item-header {{
-      padding: 18px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-      user-select: none;
-    }}
-    .item-title-wrap {{
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      flex: 1;
-    }}
-    .item-num {{
-      font-family: 'Fira Code', monospace;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--accent-cyan);
-      background: rgba(6, 182, 212, 0.1);
-      padding: 4px 10px;
-      border-radius: 6px;
-    }}
-    .item-title {{
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text-main);
-    }}
-    .item-meta {{
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }}
-    .category-badge {{
-      font-size: 11px;
-      font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 6px;
-      background: #1e293b;
-      color: #94a3b8;
-    }}
-    .word-badge {{
-      font-family: 'Fira Code', monospace;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 8px;
-      border-radius: 6px;
-      background: rgba(16, 185, 129, 0.1);
-      color: var(--accent-emerald);
-      border: 1px solid rgba(16, 185, 129, 0.2);
-    }}
-    .arrow-icon {{
-      font-size: 14px;
-      color: var(--text-muted);
-      transition: transform 0.2s;
-    }}
-    .item-card.open .arrow-icon {{
-      transform: rotate(180deg);
-    }}
-    .item-body {{
-      display: none;
-      padding: 0 24px 24px;
-      border-top: 1px solid #1e2638;
-      background: rgba(10, 13, 20, 0.4);
-    }}
-    .item-card.open .item-body {{
-      display: block;
-    }}
-    .question-prompt {{
-      margin: 18px 0;
-      padding: 14px 18px;
-      background: rgba(59, 130, 246, 0.08);
-      border-left: 3px solid var(--accent-blue);
-      border-radius: 4px;
-      color: #cbd5e1;
-      font-style: italic;
-    }}
-    .answer-text {{
-      color: #cbd5e1;
-      font-size: 15px;
-      line-height: 1.75;
-      white-space: pre-line;
-    }}
-    .answer-text strong {{
-      color: #38bdf8;
-      font-weight: 600;
-    }}
-    .answer-text code {{
-      font-family: 'Fira Code', monospace;
-      background: #1e293b;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 13px;
-      color: #e2e8f0;
-    }}
+        .header-controls {{
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }}
 
-    /* Coding Section Elements */
-    .code-section-block {{
-      margin-top: 18px;
-    }}
-    .section-label {{
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--accent-cyan);
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }}
-    .thought-process-box {{
-      background: #0d121d;
-      border: 1px solid #1f293d;
-      border-radius: 8px;
-      padding: 16px 20px;
-      color: #cbd5e1;
-      font-size: 14px;
-      line-height: 1.7;
-      white-space: pre-line;
-    }}
-    .code-wrapper {{
-      position: relative;
-      margin-top: 8px;
-    }}
-    pre.code-block {{
-      background: var(--code-bg);
-      border: 1px solid #1f293d;
-      border-radius: 8px;
-      padding: 18px;
-      overflow-x: auto;
-      font-family: 'Fira Code', monospace;
-      font-size: 13px;
-      line-height: 1.6;
-      color: #e2e8f0;
-    }}
-    .copy-btn {{
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: #1e293b;
-      border: 1px solid #334155;
-      color: #94a3b8;
-      padding: 5px 10px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-family: 'Inter', sans-serif;
-      cursor: pointer;
-      transition: all 0.2s;
-    }}
-    .copy-btn:hover {{
-      color: #fff;
-      border-color: var(--accent-cyan);
-    }}
-    .complexity-pills {{
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 16px;
-    }}
-    .comp-pill {{
-      background: #0f172a;
-      border: 1px solid #1e293b;
-      border-radius: 8px;
-      padding: 8px 14px;
-      font-size: 13px;
-      color: #cbd5e1;
-    }}
-    .comp-pill strong {{
-      color: var(--accent-amber);
-      font-family: 'Fira Code', monospace;
-    }}
+        .search-box {{
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            width: 280px;
+            outline: none;
+            transition: all 0.2s ease;
+        }}
 
-    /* Resume Deep Dive & Reference Tab */
-    .resume-section {{
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 24px;
-    }}
-    .resume-section h3 {{
-      font-size: 18px;
-      color: #38bdf8;
-      margin-bottom: 12px;
-    }}
-    .resume-section ul {{
-      padding-left: 20px;
-      color: #cbd5e1;
-      font-size: 14px;
-      line-height: 1.8;
-    }}
-  </style>
+        .search-box:focus {{
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.25);
+            width: 340px;
+        }}
+
+        .badge-locked {{
+            background: rgba(6, 182, 212, 0.15);
+            color: #67e8f9;
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }}
+
+        /* Security Gate Modal */
+        #password-overlay {{
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(9, 13, 22, 0.94);
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }}
+
+        .auth-card {{
+            background: var(--bg-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            padding: 2.5rem;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 440px;
+            text-align: center;
+        }}
+
+        .auth-icon {{
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+        }}
+
+        .auth-title {{
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #ffffff;
+        }}
+
+        .auth-desc {{
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.8rem;
+        }}
+
+        .auth-input {{
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            padding: 14px;
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 1rem;
+            text-align: center;
+            letter-spacing: 0.1em;
+            margin-bottom: 1.2rem;
+            outline: none;
+            transition: all 0.2s;
+        }}
+
+        .auth-input:focus {{
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.3);
+        }}
+
+        .auth-btn {{
+            width: 100%;
+            background: linear-gradient(135deg, #06b6d4 0%, #2563eb 100%);
+            color: #ffffff;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }}
+
+        .auth-btn:hover {{
+            filter: brightness(1.15);
+            transform: translateY(-1px);
+        }}
+
+        .auth-error {{
+            color: #ef4444;
+            font-size: 0.825rem;
+            margin-top: 10px;
+            display: none;
+        }}
+
+        /* Content Container */
+        .container {{
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 3rem 2rem 6rem;
+        }}
+
+        /* Typography & Markdown Styling */
+        h1 {{
+            font-size: 2.25rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+            color: #ffffff;
+        }}
+
+        h2 {{
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-top: 2.5rem;
+            margin-bottom: 1.25rem;
+            color: #f8fafc;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }}
+
+        h3 {{
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+            color: #e2e8f0;
+        }}
+
+        h4 {{
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent-cyan);
+        }}
+
+        p {{
+            margin-bottom: 1.25rem;
+            color: #cbd5e1;
+        }}
+
+        strong {{
+            color: #ffffff;
+            font-weight: 600;
+        }}
+
+        blockquote {{
+            border-left: 4px solid var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.08);
+            padding: 1rem 1.5rem;
+            border-radius: 0 12px 12px 0;
+            margin: 1.5rem 0;
+            color: #e2e8f0;
+        }}
+
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }}
+
+        th, td {{
+            padding: 12px 18px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }}
+
+        th {{
+            background: rgba(255, 255, 255, 0.04);
+            font-weight: 600;
+            color: #ffffff;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }}
+
+        tr:last-child td {{
+            border-bottom: none;
+        }}
+
+        tr:hover td {{
+            background: rgba(255, 255, 255, 0.02);
+        }}
+
+        code {{
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875em;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 2px 6px;
+            border-radius: 6px;
+            color: #38bdf8;
+        }}
+
+        pre {{
+            background: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            position: relative;
+        }}
+
+        pre code {{
+            background: transparent;
+            padding: 0;
+            color: #e2e8f0;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }}
+
+        hr {{
+            border: none;
+            height: 1px;
+            background: var(--border-color);
+            margin: 3rem 0;
+        }}
+
+        .copy-btn {{
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: var(--text-secondary);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }}
+
+        .copy-btn:hover {{
+            background: var(--accent-cyan);
+            color: #030712;
+        }}
+
+        .mermaid {{
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            display: flex;
+            justify-content: center;
+        }}
+
+        @media (max-width: 768px) {{
+            .container {{
+                padding: 1.5rem 1rem;
+            }}
+            .search-box {{
+                display: none;
+            }}
+        }}
+    </style>
 </head>
 <body>
 
-  <!-- Password Gate Modal -->
-  <div id="lock-modal">
-    <div class="lock-box">
-      <div style="font-size: 36px; margin-bottom: 12px;">🔒</div>
-      <h2>Candidate Portal Locked</h2>
-      <p>Enter the candidate passcode to unlock Pavan Chandramouleswara's Master Preparation Suite.</p>
-      <input type="password" id="passcode-input" class="lock-input" placeholder="Enter Passcode..." autofocus>
-      <button onclick="checkPasscode()" class="lock-btn">Unlock Suite</button>
-      <div id="error-msg" class="error-msg">Incorrect passcode. Please try again.</div>
-    </div>
-  </div>
-
-  <div class="container" id="main-content" style="display: none;">
-    
-    <!-- Header -->
-    <header>
-      <div class="candidate-brand">
-        <div class="avatar">PC</div>
-        <div class="candidate-info">
-          <h1>Pavan Chandramouleswara</h1>
-          <p>Senior Data Engineer · Master Interview Preparation Suite (Uber · Dell · Adani)</p>
+    <!-- Security Gate Modal -->
+    <div id="password-overlay">
+        <div class="auth-card">
+            <div class="auth-icon">🔒</div>
+            <h2 class="auth-title">Restricted Access</h2>
+            <p class="auth-desc">Senior Data Engineer Master Preparation Suite<br>Candidate: <strong>Pavan Chandramouleswara</strong></p>
+            <form id="auth-form" onsubmit="event.preventDefault(); verifyPassword();">
+                <input type="password" id="pass-input" class="auth-input" placeholder="ENTER PASSCODE" autocomplete="off" autofocus>
+                <button type="submit" class="auth-btn">Unlock Preparation Suite</button>
+                <div id="auth-error" class="auth-error">Incorrect passcode. Please enter 'Pavan'.</div>
+            </form>
         </div>
-      </div>
-      <div class="header-actions">
-        <button class="btn-outline" onclick="expandAll(true)">Expand All</button>
-        <button class="btn-outline" onclick="expandAll(false)">Collapse All</button>
-        <button class="btn-outline" onclick="lockPortal()">🔒 Lock</button>
-      </div>
+    </div>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="brand">
+            <span class="spark">⚡</span>
+            <span class="brand-title">Pavan Chandramouleswara — Senior Data Engineer Master Prep Suite</span>
+        </div>
+        <div class="header-controls">
+            <input type="text" id="filter-input" class="search-box" placeholder="Search questions, tech stack, Kafka, BigQuery...">
+            <span class="badge-locked" id="status-badge">Locked</span>
+        </div>
     </header>
 
-    <!-- Metrics Hero Grid -->
-    <div class="metrics-grid">
-      <div class="metric-card">
-        <div class="metric-label">Uber Streaming Ingestion</div>
-        <div class="metric-val">5M+</div>
-        <div class="metric-sub">Daily Marketplace Events (Kafka & BigQuery)</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Latency Reduction</div>
-        <div class="metric-val">24h → 16h</div>
-        <div class="metric-sub">End-to-End Delivery to Storage</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Engineering Reclaimed</div>
-        <div class="metric-val">40 Hrs/mo</div>
-        <div class="metric-sub">10 Airflow DAGs & 12 ETL/ELT Automated</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Data Quality Firewalls</div>
-        <div class="metric-val">2,000+</div>
-        <div class="metric-sub">Daily Anomalies Caught (Great Expectations)</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Dell Snowflake Tuning</div>
-        <div class="metric-val">45m → 2m</div>
-        <div class="metric-sub">Query Execution Time at 5TB+ Monthly</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Adani Operational Savings</div>
-        <div class="metric-val">$1.5M+</div>
-        <div class="metric-sub">Cost Savings via SAS & Apache Drill</div>
-      </div>
-    </div>
+    <!-- Main Content Container -->
+    <main class="container" id="content-container" style="display: none;"></main>
 
-    <!-- Tab Navigation -->
-    <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('questions')">
-        <span>30 Interview Q&As</span>
-        <span class="tab-badge">300+ Words Each</span>
-      </button>
-      <button class="tab-btn" onclick="switchTab('coding')">
-        <span>Top 25 Python Coding Problems</span>
-        <span class="tab-badge">LeetCode / Production</span>
-      </button>
-      <button class="tab-btn" onclick="switchTab('resume')">
-        <span>Resume Defense & System Architecture</span>
-        <span class="tab-badge">Uber · Dell · Adani</span>
-      </button>
-    </div>
+    <script>
+        const RAW_MARKDOWN = {json_markdown};
 
-    <!-- TAB 1: 30 QUESTIONS -->
-    <div id="tab-questions">
-      <div class="toolbar">
-        <input type="text" id="q-search" class="search-input" placeholder="Search questions by keyword, technology, or title..." oninput="filterQuestions()">
-        <div class="filter-pills" id="q-pills">
-          <button class="pill active" onclick="setQCategory('ALL')">All Categories</button>
-          <button class="pill" onclick="setQCategory('Distributed Streaming')">Distributed Streaming</button>
-          <button class="pill" onclick="setQCategory('Data Modeling')">Data Modeling & Warehousing</button>
-          <button class="pill" onclick="setQCategory('Big Data Processing')">Spark & Big Data</button>
-          <button class="pill" onclick="setQCategory('Workflow Orchestration')">Airflow & Quality</button>
-          <button class="pill" onclick="setQCategory('Multi-Cloud')">Multi-Cloud Ingestion</button>
-          <button class="pill" onclick="setQCategory('AI/ML Engineering')">GenAI & Leadership</button>
-        </div>
-      </div>
-      <div id="questions-container"></div>
-    </div>
+        const CORRECT_PASS = "Pavan";
+        const STORAGE_KEY = "pavan_de_prep_verified";
 
-    <!-- TAB 2: 25 CODING PROBLEMS -->
-    <div id="tab-coding" style="display: none;">
-      <div class="toolbar">
-        <input type="text" id="code-search" class="search-input" placeholder="Search coding problems by name, data structure, or algorithm..." oninput="filterProblems()">
-        <div class="filter-pills" id="code-pills">
-          <button class="pill active" onclick="setCodeCategory('ALL')">All Types</button>
-          <button class="pill" onclick="setCodeCategory('Streaming')">Streaming & Windows</button>
-          <button class="pill" onclick="setCodeCategory('Data Structures')">Heaps & Caching</button>
-          <button class="pill" onclick="setCodeCategory('Graph')">Graphs & DAGs</button>
-          <button class="pill" onclick="setCodeCategory('ETL')">ETL & Data Modeling</button>
-          <button class="pill" onclick="setCodeCategory('System Design')">Distributed System Design</button>
-        </div>
-      </div>
-      <div id="coding-container"></div>
-    </div>
+        function checkAuth() {{
+            const isAuth = sessionStorage.getItem(STORAGE_KEY);
+            if (isAuth === 'true') {{
+                unlockContent();
+            }}
+        }}
 
-    <!-- TAB 3: RESUME DEFENSE & CHEAT SHEET -->
-    <div id="tab-resume" style="display: none;">
-      <div class="resume-section">
-        <h3>1. Uber (April 2026 – Present) — Real-Time Marketplace Data Platform</h3>
-        <ul>
-          <li><strong>Architecture:</strong> Python consumers, Apache Kafka, GCP BigQuery Storage Write API, dbt core models, 10 Apache Airflow DAGs.</li>
-          <li><strong>Key Metric Defense:</strong> Slashing marketplace delivery latency from 24h to 16h by eliminating legacy overnight batch files and shifting to streaming micro-batching into partitioned/clustered BigQuery tables.</li>
-          <li><strong>Data Quality Firewall:</strong> Integrated Great Expectations checkpoints directly into Airflow pipelines on 8 tier-1 datasets (10TB+), catching 2,000+ daily anomalies before reaching analytics and downstream machine learning models.</li>
-          <li><strong>Productivity Gain:</strong> Dynamic DAG factory in Python + automated CI/CD deployment reclaimed 40 engineering hours monthly from manual firefighting.</li>
-        </ul>
-      </div>
-
-      <div class="resume-section">
-        <h3>2. Dell Technologies (November 2021 – December 2023) — Enterprise Data Modernization</h3>
-        <ul>
-          <li><strong>Architecture:</strong> Hadoop, Hive, Apache Spark, AWS EMR, Snowflake, Azure Data Factory, AWS Glue.</li>
-          <li><strong>Snowflake Query Tuning:</strong> Diagnosed severe warehouse spill-to-remote disk and unclustered scans; implemented clustering keys, warehouse right-sizing, and materialized views, cutting runtimes from 45 minutes to under 2 minutes at 5TB+ monthly volume.</li>
-          <li><strong>Supply Chain Modernization:</strong> Re-architected monolithic SQL Server extraction via Azure Data Factory with dynamic partitioning and high-watermark CDC, processing 2M+ records daily and reducing latency from 24h to 6h.</li>
-          <li><strong>Governance & Audit Defense:</strong> Enforced automated schema crawling, PII tokenization, and audit provenance logging via AWS Glue and Airflow, cutting annual audit preparation time by 2 weeks.</li>
-        </ul>
-      </div>
-
-      <div class="resume-section">
-        <h3>3. Adani Group (May 2019 – October 2021) — Industrial Telemetry & Automation</h3>
-        <ul>
-          <li><strong>Architecture:</strong> Apache NiFi, R, Alteryx, SAS, Apache Drill, HDFS, SAP BusinessObjects, QlikView.</li>
-          <li><strong>Automated Reporting:</strong> Automated 15+ daily reports using NiFi and containerized R scripts, cutting generation time from 3 hours to 30 minutes.</li>
-          <li><strong>Cost Optimization ($1.5M+ Savings):</strong> Leveraged Apache Drill to perform schema-free SQL joins across vessel telemetry in HDFS and Oracle freight contracts, modeling predictive maintenance and fuel burn in SAS to unlock $1.5M+ in savings.</li>
-        </ul>
-      </div>
-
-      <div class="resume-section">
-        <h3>4. Academic & Professional Credentials</h3>
-        <ul>
-          <li><strong>Education:</strong> Master of Science in Information Technology and Management, Illinois Institute of Technology (Chicago, IL).</li>
-          <li><strong>Certifications:</strong> Oracle Cloud Infrastructure 2025 Certified Generative AI Professional; OCI 2025 Certified Data Science Professional; Python for Data Science; DAX Certification.</li>
-          <li><strong>GenAI RAG Project:</strong> Engineered LangChain RAG pipeline with Vector DB (Pinecone) indexing 15K+ enterprise documents, automating 300+ weekly search queries.</li>
-        </ul>
-      </div>
-    </div>
-
-  </div>
-
-  <script>
-    const QUESTIONS = {q_data_str};
-    const PROBLEMS = {p_data_str};
-
-    let activeQCat = 'ALL';
-    let activeCodeCat = 'ALL';
-
-    // Authentication
-    function checkPasscode() {{
-      const val = document.getElementById('passcode-input').value.trim();
-      if (val.toLowerCase() === 'pavan') {{
-        localStorage.setItem('pavan_de_prep_auth', 'true');
-        document.getElementById('lock-modal').style.display = 'none';
-        document.getElementById('main-content').style.display = 'block';
-        renderQuestions();
-        renderProblems();
-      }} else {{
-        document.getElementById('error-msg').style.display = 'block';
-      }}
-    }}
-
-    function lockPortal() {{
-      localStorage.removeItem('pavan_de_prep_auth');
-      document.getElementById('main-content').style.display = 'none';
-      document.getElementById('lock-modal').style.display = 'flex';
-      document.getElementById('passcode-input').value = '';
-      document.getElementById('error-msg').style.display = 'none';
-    }}
-
-    window.addEventListener('DOMContentLoaded', () => {{
-      document.getElementById('passcode-input').addEventListener('keypress', (e) => {{
-        if (e.key === 'Enter') checkPasscode();
-      }});
-      if (localStorage.getItem('pavan_de_prep_auth') === 'true') {{
-        document.getElementById('lock-modal').style.display = 'none';
-        document.getElementById('main-content').style.display = 'block';
-        renderQuestions();
-        renderProblems();
-      }}
-    }});
-
-    // Tab Navigation
-    function switchTab(tab) {{
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.getElementById('tab-questions').style.display = (tab === 'questions') ? 'block' : 'none';
-      document.getElementById('tab-coding').style.display = (tab === 'coding') ? 'block' : 'none';
-      document.getElementById('tab-resume').style.display = (tab === 'resume') ? 'block' : 'none';
-      
-      const tabIndices = {{ questions: 0, coding: 1, resume: 2 }};
-      document.querySelectorAll('.tab-btn')[tabIndices[tab]].classList.add('active');
-    }}
-
-    // Render Questions
-    function renderQuestions() {{
-      const container = document.getElementById('questions-container');
-      const search = (document.getElementById('q-search')?.value || '').toLowerCase();
-      
-      const filtered = QUESTIONS.filter(q => {{
-        const matchCat = (activeQCat === 'ALL') || q.category.toLowerCase().includes(activeQCat.toLowerCase());
-        const matchSearch = q.title.toLowerCase().includes(search) || 
-                            q.question.toLowerCase().includes(search) || 
-                            q.answer.toLowerCase().includes(search);
-        return matchCat && matchSearch;
-      }});
-
-      if (filtered.length === 0) {{
-        container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 40px;">No questions match your filter criteria.</div>';
-        return;
-      }}
-
-      container.innerHTML = filtered.map(q => `
-        <div class="item-card" id="q-card-${{q.num}}">
-          <div class="item-header" onclick="toggleCard('q-card-${{q.num}}')">
-            <div class="item-title-wrap">
-              <span class="item-num">Q${{String(q.num).padStart(2, '0')}}</span>
-              <span class="item-title">${{escapeHtml(q.title)}}</span>
-            </div>
-            <div class="item-meta">
-              <span class="category-badge">${{escapeHtml(q.category)}}</span>
-              <span class="word-badge">${{q.words}} words</span>
-              <span class="arrow-icon">▼</span>
-            </div>
-          </div>
-          <div class="item-body">
-            <div class="question-prompt">"${{escapeHtml(q.question)}}"</div>
-            <div class="answer-text">${{formatAnswer(q.answer)}}</div>
-          </div>
-        </div>
-      `).join('');
-    }}
-
-    // Render Coding Problems
-    function renderProblems() {{
-      const container = document.getElementById('coding-container');
-      const search = (document.getElementById('code-search')?.value || '').toLowerCase();
-
-      const filtered = PROBLEMS.filter(p => {{
-        const matchCat = (activeCodeCat === 'ALL') || p.category.toLowerCase().includes(activeCodeCat.toLowerCase());
-        const matchSearch = p.title.toLowerCase().includes(search) || 
-                            p.problem_statement.toLowerCase().includes(search) || 
-                            p.thought_process.toLowerCase().includes(search);
-        return matchCat && matchSearch;
-      }});
-
-      if (filtered.length === 0) {{
-        container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 40px;">No coding problems match your filter criteria.</div>';
-        return;
-      }}
-
-      container.innerHTML = filtered.map(p => `
-        <div class="item-card" id="code-card-${{p.num}}">
-          <div class="item-header" onclick="toggleCard('code-card-${{p.num}}')">
-            <div class="item-title-wrap">
-              <span class="item-num">P${{String(p.num).padStart(2, '0')}}</span>
-              <span class="item-title">${{escapeHtml(p.title)}}</span>
-            </div>
-            <div class="item-meta">
-              <span class="category-badge">${{escapeHtml(p.category)}}</span>
-              <span class="arrow-icon">▼</span>
-            </div>
-          </div>
-          <div class="item-body">
+        function verifyPassword() {{
+            const input = document.getElementById('pass-input').value.trim();
+            const errorEl = document.getElementById('auth-error');
             
-            <div class="code-section-block">
-              <div class="section-label">1. Problem Statement & Example</div>
-              <div class="thought-process-box">${{escapeHtml(p.problem_statement)}}</div>
-            </div>
+            if (input.toLowerCase() === CORRECT_PASS.toLowerCase()) {{
+                sessionStorage.setItem(STORAGE_KEY, 'true');
+                unlockContent();
+            }} else {{
+                errorEl.style.display = 'block';
+                document.getElementById('pass-input').focus();
+            }}
+        }}
 
-            <div class="code-section-block">
-              <div class="section-label">2. Algorithmic Thought Process & Tradeoffs</div>
-              <div class="thought-process-box">${{escapeHtml(p.thought_process)}}</div>
-            </div>
+        function unlockContent() {{
+            document.getElementById('password-overlay').style.display = 'none';
+            const container = document.getElementById('content-container');
+            container.style.display = 'block';
+            document.getElementById('status-badge').textContent = 'Verified: Pavan';
+            document.getElementById('status-badge').style.background = 'rgba(16, 185, 129, 0.15)';
+            document.getElementById('status-badge').style.color = '#10b981';
+            document.getElementById('status-badge').style.borderColor = 'rgba(16, 185, 129, 0.3)';
 
-            <div class="code-section-block">
-              <div class="section-label">3. Production-Grade Python Code</div>
-              <div class="code-wrapper">
-                <button class="copy-btn" onclick="copyCode(this, 'code-raw-${{p.num}}')">Copy Code</button>
-                <pre class="code-block"><code id="code-raw-${{p.num}}">${{escapeHtml(p.code.trim())}}</code></pre>
-              </div>
-            </div>
+            // Render Markdown using marked.js
+            container.innerHTML = marked.parse(RAW_MARKDOWN);
 
-            <div class="code-section-block">
-              <div class="section-label">4. Complexity Analysis</div>
-              <div class="complexity-pills">
-                <div class="comp-pill"><strong>Time:</strong> ${{escapeHtml(p.time_complexity)}}</div>
-                <div class="comp-pill"><strong>Space:</strong> ${{escapeHtml(p.space_complexity)}}</div>
-              </div>
-            </div>
+            // Re-render Mermaid diagrams
+            document.querySelectorAll('pre code.language-mermaid').forEach(block => {{
+                const pre = block.parentElement;
+                const div = document.createElement('div');
+                div.className = 'mermaid';
+                div.textContent = block.textContent;
+                pre.parentElement.replaceChild(div, pre);
+            }});
+            mermaid.run();
 
-          </div>
-        </div>
-      `).join('');
-    }}
+            attachCodeCopyButtons();
+        }}
 
-    function toggleCard(id) {{
-      const card = document.getElementById(id);
-      if (card) card.classList.toggle('open');
-    }}
+        function attachCodeCopyButtons() {{
+            document.querySelectorAll('pre').forEach(pre => {{
+                if (pre.querySelector('.copy-btn')) return;
+                const btn = document.createElement('button');
+                btn.className = 'copy-btn';
+                btn.textContent = 'Copy';
+                btn.addEventListener('click', () => {{
+                    const code = pre.querySelector('code') ? pre.querySelector('code').innerText : pre.innerText;
+                    navigator.clipboard.writeText(code).then(() => {{
+                        btn.textContent = 'Copied!';
+                        setTimeout(() => btn.textContent = 'Copy', 2000);
+                    }});
+                }});
+                pre.appendChild(btn);
+            }});
+        }}
 
-    function expandAll(expand) {{
-      document.querySelectorAll('.item-card').forEach(c => {{
-        if (expand) c.classList.add('open');
-        else c.classList.remove('open');
-      }});
-    }}
+        // Quick Search Filter
+        document.getElementById('filter-input').addEventListener('input', (e) => {{
+            const term = e.target.value.toLowerCase();
+            const elements = document.querySelectorAll('h2, h3, p, pre, table');
+            if (!term) {{
+                elements.forEach(el => el.style.opacity = '1');
+                return;
+            }}
+            elements.forEach(el => {{
+                if (el.innerText.toLowerCase().includes(term)) {{
+                    el.style.opacity = '1';
+                }} else {{
+                    el.style.opacity = '0.35';
+                }}
+            }});
+        }});
 
-    function setQCategory(cat) {{
-      activeQCat = cat;
-      document.querySelectorAll('#q-pills .pill').forEach(p => p.classList.remove('active'));
-      event.target.classList.add('active');
-      renderQuestions();
-    }}
-
-    function setCodeCategory(cat) {{
-      activeCodeCat = cat;
-      document.querySelectorAll('#code-pills .pill').forEach(p => p.classList.remove('active'));
-      event.target.classList.add('active');
-      renderProblems();
-    }}
-
-    function filterQuestions() {{ renderQuestions(); }}
-    function filterProblems() {{ renderProblems(); }}
-
-    function copyCode(btn, codeId) {{
-      const text = document.getElementById(codeId).innerText;
-      navigator.clipboard.writeText(text).then(() => {{
-        const original = btn.innerText;
-        btn.innerText = 'Copied!';
-        btn.style.borderColor = 'var(--accent-emerald)';
-        btn.style.color = 'var(--accent-emerald)';
-        setTimeout(() => {{
-          btn.innerText = original;
-          btn.style.borderColor = '';
-          btn.style.color = '';
-        }}, 2000);
-      }});
-    }}
-
-    function escapeHtml(str) {{
-      if (!str) return '';
-      return str.replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-    }}
-
-    function formatAnswer(text) {{
-      let t = escapeHtml(text);
-      // Format markdown bold
-      t = t.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>');
-      // Format markdown code
-      t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
-      return t;
-    }}
-  </script>
+        window.addEventListener('DOMContentLoaded', checkAuth);
+    </script>
 </body>
-</html>"""
-    return html_template
+</html>
+"""
+    return html_content
 
 # =============================================================================
 # BUILD COMPILATION
@@ -1061,15 +716,15 @@ if __name__ == "__main__":
         f.write(mdx_content)
     print("Generated: content/pavan-chandramouleswara-data-engineer-prep.mdx")
 
-    # 3. Write HTML files
-    html_content = generate_html()
+    # 3. Write Signature Standalone HTML files
+    signature_html = generate_signature_html()
     with open("pavan_chandramouleswara_de_prep.html", "w", encoding="utf-8") as f:
-        f.write(html_content)
-    print("Generated: pavan_chandramouleswara_de_prep.html")
+        f.write(signature_html)
+    print("Generated: pavan_chandramouleswara_de_prep.html (Signature Template)")
 
     os.makedirs("public", exist_ok=True)
     with open("public/pavan_chandramouleswara_de_prep.html", "w", encoding="utf-8") as f:
-        f.write(html_content)
-    print("Generated: public/pavan_chandramouleswara_de_prep.html")
+        f.write(signature_html)
+    print("Generated: public/pavan_chandramouleswara_de_prep.html (Signature Template)")
 
-    print("\nAll files successfully generated!")
+    print("\nAll files successfully generated and aligned with repository standard!")
