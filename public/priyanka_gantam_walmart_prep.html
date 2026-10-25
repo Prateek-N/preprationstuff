@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Walmart — Data Engineer Prep Suite · Priyanka Gantam</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg-base: #06090e;
+      --bg-surface: #0c121c;
+      --bg-card: #121a28;
+      --bg-card-hover: #192438;
+      --border: #1f2e48;
+      --border-accent: #0071dc;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --walmart-blue: #0071dc;
+      --walmart-yellow: #ffc220;
+      --walmart-cyan: #38bdf8;
+      --walmart-emerald: #10b981;
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.65;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* LOCK SCREEN */
+    #lockScreen {
+      position: fixed; inset: 0;
+      background: radial-gradient(circle at center, #091a33 0%, #03060a 100%);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 99999; padding: 1.5rem;
+    }
+    .lock-box {
+      background: rgba(12, 18, 28, 0.96);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(0, 113, 220, 0.4);
+      border-radius: 22px;
+      padding: 2.75rem 2.5rem;
+      max-width: 490px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9), 0 0 50px rgba(0, 113, 220, 0.25);
+    }
+    .lock-logo-mark {
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-bottom: 1.25rem; font-size: 2.2rem; font-weight: 900; letter-spacing: -0.04em;
+    }
+    .lock-txt-1 { color: #ffffff; }
+    .lock-txt-2 { color: #ffc220; }
+    .lock-badge-pill {
+      background: linear-gradient(135deg, rgba(0, 113, 220, 0.25), rgba(255, 194, 32, 0.25));
+      border: 1px solid rgba(255, 194, 32, 0.4);
+      padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; color: #ffc220;
+      font-family: var(--font-mono); margin-left: 8px; font-weight: 700;
+    }
+    .lock-box h2 { font-size: 1.45rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+    .lock-box p { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.75rem; }
+    .input-group { position: relative; margin-bottom: 1.25rem; }
+    .input-group input {
+      width: 100%;
+      background: rgba(6, 9, 14, 0.92);
+      border: 1px solid var(--border);
+      padding: 0.95rem 1.2rem;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 1.05rem;
+      outline: none;
+      transition: all 0.2s;
+      text-align: center;
+      letter-spacing: 0.12em;
+    }
+    .input-group input:focus {
+      border-color: var(--walmart-blue);
+      box-shadow: 0 0 0 3px rgba(0, 113, 220, 0.25);
+    }
+    .unlock-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #0071dc, #005bb5);
+      color: #ffffff;
+      border: none;
+      padding: 0.95rem;
+      border-radius: 12px;
+      font-size: 0.98rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.04em;
+    }
+    .unlock-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 25px -5px rgba(0, 113, 220, 0.5);
+      background: linear-gradient(135deg, #0080f8, #0071dc);
+    }
+    .error-msg {
+      color: #f87171; font-size: 0.85rem; margin-top: 0.9rem; display: none; font-weight: 500;
+    }
+
+    /* MAIN APP */
+    #app { display: none; }
+    .page-wrapper { max-width: 1400px; margin: 0 auto; padding: 2rem 2.5rem 5rem; }
+
+    /* HEADER */
+    .top-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.25rem 0; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem;
+    }
+    .brand-mark {
+      display: flex; align-items: center; gap: 14px; font-weight: 800; font-size: 1.35rem; letter-spacing: -0.03em;
+    }
+    .brand-badge {
+      background: rgba(0, 113, 220, 0.15); border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #7dd3fc; font-family: var(--font-mono); font-size: 0.72rem;
+      font-weight: 600; padding: 4px 10px; border-radius: 6px;
+    }
+    .header-links { display: flex; align-items: center; gap: 1rem; }
+    .header-btn {
+      background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border);
+      color: var(--text-muted); padding: 0.55rem 1.1rem; border-radius: 8px;
+      font-size: 0.85rem; font-weight: 600; text-decoration: none; transition: all 0.2s;
+      cursor: pointer;
+    }
+    .header-btn:hover { background: rgba(255, 255, 255, 0.1); color: #fff; border-color: var(--border-accent); }
+
+    /* HERO BANNER */
+    .hero-banner {
+      background: linear-gradient(135deg, rgba(9, 26, 51, 0.9) 0%, rgba(6, 15, 28, 0.95) 100%);
+      border: 1px solid rgba(0, 113, 220, 0.35);
+      border-radius: 20px; padding: 2.75rem; margin-bottom: 2.5rem;
+      box-shadow: 0 20px 40px -15px rgba(0,0,0,0.7); position: relative; overflow: hidden;
+    }
+    .hero-banner::after {
+      content: ""; position: absolute; right: -80px; top: -80px; width: 320px; height: 320px;
+      background: radial-gradient(circle, rgba(0, 113, 220, 0.2) 0%, transparent 70%);
+      pointer-events: none; border-radius: 50%;
+    }
+    .hero-eyebrow {
+      font-family: var(--font-mono); font-size: 0.8rem; text-transform: uppercase;
+      color: #ffc220; font-weight: 700; letter-spacing: 0.08em; margin-bottom: 0.75rem;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .hero-eyebrow::before {
+      content: ""; display: inline-block; width: 8px; height: 8px; background: #ffc220; border-radius: 50%;
+      box-shadow: 0 0 10px #ffc220;
+    }
+    .hero-title {
+      font-size: 2.45rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 1rem; line-height: 1.25;
+    }
+    .hero-title span {
+      background: linear-gradient(135deg, #ffffff 40%, #ffc220 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-subtitle {
+      color: var(--text-muted); font-size: 1.05rem; max-width: 950px; line-height: 1.7; margin-bottom: 2rem;
+    }
+    .hero-stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1.25rem;
+    }
+    .stat-card {
+      background: rgba(6, 9, 14, 0.75); border: 1px solid var(--border);
+      padding: 1.2rem; border-radius: 12px; transition: border-color 0.2s;
+    }
+    .stat-card:hover { border-color: var(--walmart-blue); }
+    .stat-val {
+      font-size: 1.65rem; font-weight: 800; color: #f8fafc; font-family: var(--font-mono); margin-bottom: 0.25rem;
+    }
+    .stat-label { color: var(--text-dim); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+
+    /* BLUEPRINTS */
+    .blueprint-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
+      padding: 1.75rem; margin-bottom: 2.5rem;
+    }
+    .blueprint-title {
+      font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 10px;
+    }
+    .mermaid-container {
+      background: #090e17; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px;
+      padding: 1.5rem; overflow-x: auto; margin-bottom: 1.5rem;
+    }
+
+    /* CONTROLS */
+    .controls-wrapper {
+      position: sticky; top: 1rem; z-index: 50;
+      background: rgba(12, 18, 28, 0.95); backdrop-filter: blur(20px);
+      border: 1px solid var(--border); border-radius: 16px; padding: 1.25rem; margin-bottom: 2rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 1rem;
+    }
+    .controls-top {
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+    }
+    .search-input-wrap { position: relative; flex: 1; min-width: 280px; }
+    .search-input-wrap input {
+      width: 100%; background: rgba(6, 9, 14, 0.9); border: 1px solid var(--border);
+      padding: 0.75rem 1rem 0.75rem 2.6rem; border-radius: 10px; color: #fff; font-size: 0.92rem;
+      outline: none; transition: border-color 0.2s;
+    }
+    .search-input-wrap input:focus { border-color: var(--walmart-blue); }
+    .search-icon {
+      position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%);
+      color: var(--text-dim); pointer-events: none; font-size: 0.95rem;
+    }
+    .progress-box {
+      display: flex; align-items: center; gap: 14px; background: rgba(6, 9, 14, 0.6);
+      padding: 0.5rem 1rem; border-radius: 10px; border: 1px solid var(--border);
+    }
+    .progress-bar-track {
+      width: 130px; height: 8px; background: rgba(255,255,255,0.08); border-radius: 99px; overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%; width: 0%; background: linear-gradient(90deg, #0071dc, #ffc220);
+      border-radius: 99px; transition: width 0.3s ease;
+    }
+    .progress-text { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
+
+    .pills-container {
+      display: flex; align-items: center; gap: 8px; overflow-x: auto; padding-bottom: 4px;
+    }
+    .pill-btn {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      color: var(--text-muted); font-size: 0.78rem; font-weight: 600; padding: 0.45rem 0.9rem;
+      border-radius: 8px; cursor: pointer; white-space: nowrap; transition: all 0.2s;
+    }
+    .pill-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .pill-btn.active {
+      background: rgba(0, 113, 220, 0.25); border-color: var(--walmart-blue); color: #ffc220;
+    }
+
+    /* CARDS */
+    .q-list { display: flex; flex-direction: column; gap: 1.25rem; }
+    .q-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      transition: all 0.25s ease;
+    }
+    .q-card:hover {
+      border-color: rgba(0, 113, 220, 0.4);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+    .q-card.completed {
+      border-color: rgba(16, 185, 129, 0.45);
+      background: rgba(16, 185, 129, 0.03);
+    }
+
+    .q-header {
+      padding: 1.25rem 1.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1.25rem;
+      user-select: none;
+    }
+    .q-header-left { display: flex; align-items: flex-start; gap: 14px; flex: 1; }
+    .q-num-badge {
+      background: rgba(0, 113, 220, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #7dd3fc;
+      font-family: var(--font-mono);
+      font-size: 0.82rem; font-weight: 700;
+      padding: 6px 12px; border-radius: 10px;
+      white-space: nowrap; margin-top: 2px;
+    }
+    .q-num-badge.coding-badge {
+      background: rgba(255, 194, 32, 0.15);
+      border-color: rgba(255, 194, 32, 0.4);
+      color: #ffc220;
+    }
+    .q-card.completed .q-num-badge {
+      background: rgba(16, 185, 129, 0.25);
+      border-color: var(--walmart-emerald);
+      color: #6ee7b7;
+    }
+
+    .q-meta-group { display: flex; flex-direction: column; gap: 4px; }
+    .q-cat-tag {
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em;
+      color: #ffc220; font-weight: 700;
+    }
+    .q-title-text {
+      font-size: 1.05rem; font-weight: 700; color: #f1f5f9; line-height: 1.45;
+    }
+    .q-prompt-sub {
+      font-size: 0.88rem; color: var(--text-muted); font-style: italic; margin-top: 4px;
+    }
+
+    .q-header-right {
+      display: flex; align-items: center; gap: 12px; margin-top: 4px;
+    }
+    .word-badge {
+      background: rgba(0, 113, 220, 0.15); border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #7dd3fc; font-family: var(--font-mono); font-size: 0.75rem;
+      padding: 4px 8px; border-radius: 6px; white-space: nowrap;
+    }
+    .q-checkbox {
+      width: 18px; height: 18px; cursor: pointer; accent-color: #0071dc;
+    }
+    .chevron {
+      color: var(--text-dim); font-size: 0.75rem; transition: transform 0.25s ease;
+    }
+    .q-card.open .chevron { transform: rotate(180deg); color: #ffc220; }
+
+    .q-body {
+      display: none;
+      padding: 0 1.5rem 1.5rem 1.5rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      background: rgba(6, 9, 14, 0.5);
+    }
+    .q-card.open .q-body { display: block; }
+
+    .answer-content {
+      padding-top: 1.25rem;
+      color: #e2e8f0;
+      font-size: 0.96rem;
+      line-height: 1.8;
+    }
+    .answer-content p { margin-bottom: 1.15rem; }
+    .answer-content p:last-child { margin-bottom: 0; }
+    .answer-content strong { color: #ffffff; font-weight: 700; }
+    .answer-content pre {
+      background: #090e17; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+      padding: 1.2rem; overflow-x: auto; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.88rem;
+    }
+    .answer-content code {
+      font-family: var(--font-mono); font-size: 0.88rem; background: rgba(255,255,255,0.06);
+      padding: 2px 6px; border-radius: 4px; color: #ffc220;
+    }
+    .answer-content pre code { background: transparent; padding: 0; color: #e2e8f0; }
+
+    .q-footer-bar {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; flex-wrap: wrap;
+    }
+    .copy-ans-btn {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      color: var(--text-muted); font-size: 0.78rem; font-weight: 600; padding: 6px 14px;
+      border-radius: 6px; cursor: pointer; transition: all 0.2s;
+    }
+    .copy-ans-btn:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: var(--walmart-blue); }
+    .copy-toast {
+      font-size: 0.78rem; color: #6ee7b7; font-family: var(--font-mono); opacity: 0; transition: opacity 0.3s;
+    }
+    .copy-toast.show { opacity: 1; }
+
+    @media (max-width: 768px) {
+      .page-wrapper { padding: 1rem 1rem 4rem; }
+      .hero-title { font-size: 1.85rem; }
+      .hero-banner { padding: 1.5rem; }
+      .q-header { padding: 1rem; flex-direction: column; align-items: flex-start; }
+      .q-header-right { align-self: flex-end; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PASSCODE GATE OVERLAY -->
+  <div id="lockScreen">
+    <div class="lock-box">
+      <div class="lock-logo-mark">
+        <span class="lock-txt-1">Walmart</span><span class="lock-txt-2">·Tech</span>
+        <span class="lock-badge-pill">PREP PORTAL</span>
+      </div>
+      <h2>Data Engineer Interview Suite</h2>
+      <p>Enter the candidate passcode to unlock the 15-question technical guide, 5 coding problems, and Lakehouse blueprints.</p>
+      <div class="input-group">
+        <input type="password" id="passInput" placeholder="Passcode" autocomplete="off" autofocus>
+      </div>
+      <button class="unlock-btn" onclick="checkPass()">Unlock Interview Suite</button>
+      <div class="error-msg" id="errMsg">Passcode incorrect. Please enter the valid candidate access key.</div>
+    </div>
+  </div>
+
+  <!-- MAIN APPLICATION CONTENT -->
+  <div id="app">
+    <div class="page-wrapper">
+      
+      <!-- TOP NAV -->
+      <div class="top-bar">
+        <div class="brand-mark">
+          <span>Walmart · Data Engineer</span>
+          <span class="brand-badge">Priyanka Gantam</span>
+        </div>
+        <div class="header-links">
+          <button class="header-btn" onclick="expandAll(true)">Expand All</button>
+          <button class="header-btn" onclick="expandAll(false)">Collapse All</button>
+          <a class="header-btn" href="#blueprints">Architecture Blueprints</a>
+          <button class="header-btn" onclick="lockPage()">Lock</button>
+        </div>
+      </div>
+
+      <!-- HERO BANNER -->
+      <div class="hero-banner">
+        <div class="hero-eyebrow">Enterprise Omnichannel Retail & Lakehouse Engineering</div>
+        <h1 class="hero-title">Data Engineer — <span>Walmart Global Tech</span></h1>
+        <p class="hero-subtitle">
+          Prepared for <strong>Priyanka Gantam</strong> targeting the <strong>Data Engineer</strong> position at <strong>Walmart</strong>. 
+          Grounding 4+ years of data engineering experience across <strong>Palantir Foundry (50% faster AI/ML time-to-insight)</strong>, 
+          <strong>Navan Lakehouse (Delta Lake Medallion, Kafka streaming, -45% incidents)</strong>, and <strong>Infosys Finacle (5M+ daily banking transactions, 99.9% uptime)</strong> directly into Walmart's massive omnichannel retail and supply chain ecosystem.
+        </p>
+        <div class="hero-stats-grid">
+          <div class="stat-card">
+            <div class="stat-val">15</div>
+            <div class="stat-label">In-Depth Q&As (300+ Wds · No Bullets)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val">5</div>
+            <div class="stat-label">Production Coding Problems</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val">3</div>
+            <div class="stat-label">Enterprise Architecture Blueprints</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val">5M+</div>
+            <div class="stat-label">Daily Event Stream Processing Scale</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ARCHITECTURAL BLUEPRINTS -->
+      <div id="blueprints" class="blueprint-card">
+        <div class="blueprint-title">
+          <span>🏛️ Enterprise System Architecture Blueprints</span>
+        </div>
+        
+        <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 1.25rem;">
+          These three system architecture blueprints provide an end-to-end visual representation of Priyanka's experience applied to Walmart's mission-critical workloads: Omnichannel retail Lakehouse ingestion on Delta Lake & Spark, Palantir Foundry semantic ontology integration, and Enterprise data quality firewalls.
+        </p>
+
+        <h4 style="color: #ffc220; margin-bottom: 0.75rem; font-size: 1rem;">Blueprint 1: Walmart Omnichannel Retail Streaming & Lakehouse Pipeline</h4>
+        <div class="mermaid-container">
+          <pre class="mermaid">
+graph TD
+    subgraph Sources [Omnichannel Retail Ingestion]
+        S1[Store POS Registers: 4,700+ Stores] --> K[Apache Kafka Streaming Cluster]
+        S2[E-Commerce & Mobile App Sessions] --> K
+        S3[Distribution Center WMS Telemetry] --> K
+        S4[Supplier ASNs & EDI 850/856 Feeds] --> S3Landing[AWS S3 Raw Landing Bucket]
+    end
+    subgraph StreamProcessing [Real-Time Processing & Bronze Lakehouse]
+        K --> SSS[Spark Structured Streaming on AWS EMR]
+        SSS -->|Event-Time Watermark 10m| DEDUP[Stateful Deduplication RocksDB]
+        DEDUP --> BRONZE[(Delta Lake Bronze Layer Append-Only Raw Files)]
+        S3Landing --> GX[Great Expectations Ingestion Firewall]
+        GX -->|Valid ASNs| BRONZE
+        GX -->|Schema Violations| QUARANTINE[(S3 Quarantine Error Lake)]
+    end
+    subgraph Curation [Silver & Gold Lakehouse Medallion]
+        BRONZE --> SILVER_JOB[PySpark Silver Curation: Schema Validation & Normalization]
+        SILVER_JOB --> SILVER[(Delta Lake Silver Layer ACID Tables)]
+        SILVER --> DBT_JOB[dbt Core Transformation & SCD Type 2 Snapshots]
+        DBT_JOB --> GOLD[(Delta Lake / Snowflake Gold Dimensional Marts)]
+    end
+    subgraph Consumption [Downstream Enterprise Activation]
+        GOLD --> BI[Executive Inventory & Sales Looker Dashboards]
+        GOLD --> ML[Replenishment & Dynamic Pricing Feature Stores]
+        GOLD --> VEC[Product Catalog Vector DB for GenAI Search]
+    end
+          </pre>
+        </div>
+
+        <h4 style="color: #ffc220; margin: 1.5rem 0 0.75rem 0; font-size: 1rem;">Blueprint 2: Palantir Foundry / Delta Lake Medallion Architecture with Ontology Integration</h4>
+        <div class="mermaid-container">
+          <pre class="mermaid">
+graph LR
+    subgraph Ingest [AWS Cloud Foundation]
+        A[Multi-Source Enterprise Data: S3, Kafka, RDBMS] --> B[AWS Glue Crawlers & Data Catalog]
+        B --> C[AWS EMR Distributed PySpark Compute]
+    end
+    subgraph Lakehouse [Medallion Curation]
+        C --> D[(Bronze: Raw Ingestion with Z-Order Compaction)]
+        D --> E[(Silver: Cleansed, Deduplicated, ACID Delta Tables)]
+        E --> F[(Gold: Dimensional Star Schemas & Business Marts)]
+    end
+    subgraph Ontology [Palantir Foundry Semantic Layer]
+        F --> G[Ontology Object Mappings: Stores, SKUs, Shipments]
+        G --> H[Semantic Relationships & Live Time-Series Attributes]
+        H --> I[50% Faster Time-to-Insight for Enterprise AI/ML Workflows]
+    end
+          </pre>
+        </div>
+
+        <h4 style="color: #ffc220; margin: 1.5rem 0 0.75rem 0; font-size: 1rem;">Blueprint 3: Enterprise Data Quality Firewall & Observability Pipeline</h4>
+        <div class="mermaid-container">
+          <pre class="mermaid">
+graph TD
+    subgraph Ingress [Data Ingress]
+        RawFile[Incoming Vendor ASN / POS Transaction File] --> Gatekeeper[Great Expectations Pre-Ingestion Validator]
+    end
+    subgraph ContractChecks [Automated Contract Rules]
+        Gatekeeper --> C1[Check 1: Primary Key Unique & Non-Null]
+        Gatekeeper --> C2[Check 2: Quantities > 0 & Prices Valid]
+        Gatekeeper --> C3[Check 3: Temporal Sequence: Shipped <= Delivery]
+        Gatekeeper --> C4[Check 4: Categorical Codes Match Master Data]
+    end
+    subgraph Routing [Automated Routing & Observability]
+        C1 & C2 & C3 & C4 -->|All Passed| LoadBronze[Approve for Lakehouse Ingestion]
+        C1 | C2 | C3 | C4 -->|Any Failure| Quarantine[Divert to S3 Quarantine + PagerDuty Alert]
+        LoadBronze --> Telemetry[Emit Metrics: Freshness, Row Counts, Latency]
+        Telemetry --> ObsDashboard[Centralized Data Observability & SLA Monitor]
+    end
+          </pre>
+        </div>
+      </div>
+
+      <!-- FILTER CONTROLS -->
+      <div class="controls-wrapper">
+        <div class="controls-top">
+          <div class="search-input-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Search keywords (e.g., PySpark, Delta Lake, SCD, Kafka, Foundry, skew, Great Expectations)..." oninput="applyFilters()">
+          </div>
+          <div class="progress-box">
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">0 / 20 Reviewed</div>
+          </div>
+        </div>
+        <div class="pills-container" id="categoryPills">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- QUESTIONS CONTAINER -->
+      <div class="q-list" id="questionList">
+        <!-- Rendered by JS -->
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const CORRECT_PASS = "Priyanka";
+    const itemsData = [{"type": "question", "num": 1, "category": "Resume Deep-Dive & Architecture", "title": "Palantir Foundry Ontology & Unified Data Lakehouse on AWS", "question": "At Palantir, you architected an enterprise data platform on AWS (S3, EMR, Glue) and Palantir Foundry, integrating multi-source datasets into governed ontology objects and reducing time-to-insight for AI/ML by 50%. How does an ontology-based architecture work, and how would you apply it to Walmart's supply chain and store physical inventory?", "words": 336, "answer": "In my current role at **Palantir**, enterprise data was historically locked inside siloed analytical stores, transactional databases, and unstructured feeds. To solve this, I designed a cloud-native architecture leveraging **AWS S3** as the raw immutable data lake, orchestrated with **AWS Glue** for cataloging and **AWS EMR** running distributed **PySpark** jobs for heavy extract-transform-load processing. The foundational innovation was mapping these transformed datasets directly into **Palantir Foundry ontology objects**, which bridge the semantic gap between physical database tables and operational business concepts.\n\nAn ontology abstracts relational foreign keys into dynamic semantic objects, relationships, and actionable properties. Rather than requiring downstream machine learning engineers or supply chain directors to write complex multi-table joins across dozens of normalized tables, the ontology presents cohesive objects like Shipments, Warehouses, and Suppliers. Each object encapsulates real-time status attributes, historical time-series telemetry, and governed analytical methods. This semantic layer reduced our time-to-insight for artificial intelligence and machine learning initiatives by **50%**, because data scientists could directly query feature-rich business entities rather than spending eighty percent of their cycles on bespoke data munging.\n\nApplying this architecture to **Walmart** would transform store physical inventory management and omnichannel supply chain replenishment. At Walmart scale, physical stores, regional distribution centers, fulfillment centers, and third-party marketplace suppliers generate billions of transactional telemetry records daily. I would ingest inventory movement feeds from warehouse management systems, point-of-sale store registers, and electronic data interchange shipping notices into **Amazon S3** using **Apache Spark Structured Streaming** and **AWS EMR**.\n\nWe would construct a unified **Walmart Retail Ontology** where core objects represent physical Stores, Stock Keeping Units, Truck Trailers, and Distribution Routes. When a distribution center scans an outbound pallet, the ontology object automatically transitions state, recalculating available-to-promise inventory levels across adjacent fulfillment nodes. Downstream predictive restocking models and demand planning systems consume these live ontology states without recomputing historical ledger aggregations, allowing Walmart store managers and autonomous replenishment algorithms to take real-time operational actions with absolute data consistency."}, {"type": "question", "num": 2, "category": "Spark Optimization & Distributed Compute", "title": "PySpark Partition Optimization, Data Skew & Cost Reduction", "question": "In your Palantir experience, you engineered distributed ETL workflows in PySpark with incremental processing, cutting data synchronization latency by 30% and cloud costs by 20%. How do you diagnose and eliminate severe data skew, and how do you optimize Spark memory and shuffle operations at Walmart scale?", "words": 359, "answer": "Distributed data processing in **Apache Spark** and **PySpark** frequently suffers from severe performance degradation caused by data skew, where uneven data distribution forces a handful of worker tasks to process massive record volumes while other executors sit idle. In my work at **Palantir**, I spearheaded performance tuning initiatives that cut synchronization latency by **30%** and reduced cloud processing expenditures on **AWS EMR** by **20%**. I began by monitoring the Spark Web UI, closely analyzing task execution timelines, shuffle read and write distributions, and garbage collection overhead.\n\nWhen inspecting the event timeline, data skew immediately reveals itself when ninety-nine percent of tasks finish within seconds, but a single lagging task runs for several minutes or crashes with an out-of-memory executor error. To eliminate join skew, I avoid naive distributed joins on high-cardinality keys that possess disproportionate event frequency. If joining a large transactional table with a smaller dimensional table containing fewer than a few hundred megabytes, I enforce a **Broadcast Hash Join**, which distributes the lookup table across all executors and completely bypasses the costly network shuffle phase.\n\nWhen both joining datasets are massive, such as joining billions of **Walmart store point-of-sale transactions** with customer loyalty profiles, broadcast joins are impossible. In this scenario, I implement a programmatic **Key Salting technique** in PySpark. I generate a random integer column bounded between zero and a chosen factor, appending it to the skewed join key on the primary fact table. On the dimension table, I explode the matching keys across all possible salt values. This synthetic distribution disperses previously concentrated records uniformly across all Spark partitions, preventing single-executor bottlenecking.\n\nBeyond salting, I optimize Spark memory management by appropriately sizing executor memory, tuning the memory fraction parameter, and setting the shuffle partition count dynamically using **Adaptive Query Execution**. Enabling adaptive query execution allows Spark to coalesce post-shuffle partitions automatically and convert sort-merge joins into broadcast joins at runtime. Finally, I implement incremental watermarking and partition pruning based on transaction date and geographic store region, ensuring that daily batch and micro-batch jobs scan only newly arrived delta records rather than executing full table scans."}, {"type": "question", "num": 3, "category": "Lakehouse Architecture & Delta Lake", "title": "Lakehouse Medallion Architecture (Bronze/Silver/Gold) on Databricks & Delta Lake", "question": "At Navan, you implemented 8+ production ELT workflows using Databricks, Delta Lake, PySpark, and Kafka into a Medallion Architecture that cut BI latency by 40%. Explain your architectural strategy for ACID transactions, compaction, Time Travel, and scaling this for Walmart's omnichannel sales.", "words": 329, "answer": "Modern enterprise analytics requires unifying streaming real-time event ingestion with reliable batch historical reporting under a single platform. At **Navan**, I designed and implemented eight production data workflows using **Databricks**, **Delta Lake**, **PySpark**, and **Apache Kafka**, structuring financial travel and corporate expense data into a standardized **Medallion Architecture**. This Lakehouse design eliminated brittle, decoupled data warehouse syncing processes, reducing data delivery latency to finance and business intelligence teams by **40%**.\n\nThe Bronze layer serves as the raw, append-only ingestion sink. Transactional feeds from Kafka topics and Change Data Capture logs land directly into Delta Lake tables in their native JSON or Avro formats with complete audit metadata, including ingestion timestamps and source file paths. Because raw streaming writes produce a massive proliferation of tiny files that degrade downstream query throughput, I schedule automated **OPTIMIZE** compaction jobs with **Z-ORDER clustering** on high-cardinality query columns like account identifier or booking reference.\n\nThe Silver layer enforces enterprise schema validation, deduplication, and data hygiene. Using **PySpark** and **Delta Lake ACID transactions**, I execute incremental merge operations that join newly arrived streaming records against existing silver tables. The underlying write-ahead transaction log guarantees atomicity and isolation, preventing dirty reads while downstream analytical jobs read from the table concurrently. It is in this layer that business validation rules strip corrupt records into dead-letter tables, while standardizing datatypes, currencies, and timestamps into unified UTC standards.\n\nThe Gold layer contains business-ready dimensional marts, star schemas, and aggregated feature sets tailored for executive consumption and machine learning models. Leveraging **Delta Lake Time Travel**, we retain historical table versions via transaction logs, which allows our engineering teams to reproduce audit reports at specific historical timestamps and effortlessly rollback accidental corruptions. For **Walmart omnichannel sales**, this architecture guarantees that in-store point-of-sale purchases, e-commerce web carts, and mobile app interactions merge into a single verified ledger without concurrency collisions or data loss, delivering dependable analytics across thousands of retail stores."}, {"type": "question", "num": 4, "category": "Streaming & Real-Time Processing", "title": "Real-Time Streaming Ingestion with Spark Structured Streaming, Kafka & CDC", "question": "At Navan, you cut fraud-detection latency by 35% processing high-volume financial events with Spark Structured Streaming, Kafka, CDC, and Airflow. How do you handle schema evolution, late-arriving events, watermarking, and exactly-once processing guarantees at Walmart scale?", "words": 337, "answer": "In high-throughput financial and retail platforms, delaying event processing directly exposes the business to malicious fraud and inventory stockouts. While engineering data pipelines at **Navan**, I orchestrated distributed streaming workflows using **Apache Kafka**, **Spark Structured Streaming**, **Debezium Change Data Capture**, and **Apache Airflow**. This streaming pipeline processed corporate card transactions and flight reservations in near-real-time, successfully compressing our fraud-detection scoring latency by **35%** and ensuring suspicious expenditures were flagged within seconds rather than hours.\n\nAchieving end-to-end exactly-once processing semantics requires seamless coordination between the message broker, the distributed compute engine, and the storage sink. I configure Kafka message consumers with explicit offset management, ensuring that consumer offsets are checkpointed durably within the Spark write-ahead log located on cloud object storage. In **Spark Structured Streaming**, I pair idempotent delta sinks with unique transaction identifiers, guaranteeing that in the event of an executor failure or network disconnect, reprocessed micro-batches overwrite rather than duplicate previously processed records.\n\nHandling late-arriving telemetry is critical when processing events from mobile applications and remote retail point-of-sale registers that may suffer from transient network outages. I define robust event-time **watermarking thresholds** in PySpark, instructing the streaming engine how long to wait for delayed records before finalizing stateful aggregations. For example, applying a fifteen-minute watermark allows the pipeline to update rolling sliding-window transaction counts accurately, after which straggling events are gracefully redirected to dead-letter reconciliation queues without stalling the primary streaming loop.\n\nSchema evolution is governed through **Confluent Schema Registry** with strict backward compatibility rules enforced at the Kafka topic boundary. When an upstream engineering team adds an optional attribute to a purchase event, Delta Lake automatically incorporates the column during write operations using the schema merge option. If an incompatible breaking change arrives, automated validation interceptors isolate the malformed payload, triggering real-time alert notifications while preventing stream crashes. At **Walmart scale**, this architecture processes millions of simultaneous digital shopping sessions and store checkout scans reliably without pipeline downtime."}, {"type": "question", "num": 5, "category": "Data Modeling & Data Warehousing", "title": "Dimensional Modeling, Star Schema & SCD Type 2 with dbt & Snowflake", "question": "Across your experience at Navan and Infosys Finacle, you built dimensional data warehouse structures using dbt, star schema principles, and SCD patterns in Snowflake. How do you design an enterprise-grade SCD Type 2 dimension for Walmart's product catalog and store hierarchies, ensuring idempotency and query performance?", "words": 372, "answer": "Enterprise data platforms must balance rapid historical reporting with meticulous change auditing over time. Across my engagements at **Navan** and **Infosys Finacle**, I established dimensional warehouses in **Snowflake** using **dbt**, implementing resilient star schema architectures and **Slowly Changing Dimensions (SCD)** that slashed manual business reporting overhead by **50%**. A well-structured dimensional model insulates downstream business analysts and BI dashboards from chaotic operational database updates while preserving point-in-time analytical truth.\n\nWhen architecting a **Slowly Changing Dimension Type 2** for **Walmart's product catalog**, attributes such as product retail price, packaging dimension, merchandising department, and promotional tier change continuously. To capture this evolution without overwriting historical revenue attribution, I create a product dimension table with surrogate primary keys generated via cryptographic hashes of the natural product code combined with the record start timestamp. Each record incorporates effective start dates, effective end dates, and an active current-flag indicator for high-speed filtering.\n\nUsing **dbt snapshots**, I configure automated change detection utilizing row-level hash digests. During each scheduled pipeline execution, dbt compares incoming source system attributes against the active historical records. If an attribute modification is detected, dbt executes an atomic merge statement that updates the existing active record by setting its expiration timestamp to the current transaction time and marking the current-flag to false, while simultaneously inserting a brand new record representing the latest product state.\n\nTo guarantee blazing-fast analytical query performance across billions of sales transactions, I cluster the underlying **Snowflake tables** along temporal and organizational keys. Fact sales tables join strictly against the product surrogate key rather than natural product codes, ensuring that historical sales in previous quarters reflect the exact historical pricing and categorization active at that moment in time. Furthermore, I implement semantic views that automatically filter on the active record flag, allowing daily dashboard users to access the freshest product dimensions without writing complex temporal join constraints.\n\nFinally, I enforce referential integrity and surrogate key uniqueness through automated **dbt tests** executed post-merge. If an upstream supplier mistakenly transmits duplicate updates within the exact same micro-batch timestamp, our defensive merge script quarantines the duplicate candidates into a review buffer, guaranteeing that the dimensional warehouse preserves perfect temporal continuity and exact ledger reproducibility."}, {"type": "question", "num": 6, "category": "Data Governance & Quality", "title": "Data Observability, Data Contracts & Automated Quality Firewalls (Great Expectations + dbt)", "question": "At Navan, you reduced production data incidents by 45% using Great Expectations, dbt tests, schema validation, and freshness SLAs for SOX and PCI DSS compliance. How would you design an end-to-end data contract and quality observability firewall for Walmart's vendor and store supply chain feeds?", "words": 362, "answer": "In large-scale retail ecosystems, downstream machine learning models and executive dashboards are highly vulnerable to silent upstream data corruption, missing files, and unexpected schema mutations. While serving as a Data Engineer at **Navan**, I implemented comprehensive data quality firewalls and observability frameworks using **Great Expectations**, **dbt testing**, and automated SLA monitors. This disciplined governance initiative directly reduced production data incidents by **45%** and satisfied stringent **SOX** and **PCI DSS** audit standards.\n\nThe foundation of my data governance approach is establishing strict **Data Contracts** between upstream data producers and downstream data engineering platforms. In a **Walmart supply chain environment**, thousands of external suppliers, distribution centers, and electronic data interchange brokers transmit product inventories, advance shipping notices, and billing invoices. I formalize these interfaces using standardized JSON Schema or Protocol Buffer contracts stored in version-controlled Git repositories, explicitly defining field datatypes, nullable constraints, allowed categorical enumerations, and expected volume thresholds.\n\nDuring ingestion, I implement a multi-stage validation firewall before any untrusted external feed touches our core Lakehouse. As files land in cloud object storage, event-driven validation workers execute **Great Expectations** checkpoint suites. We validate that primary keys contain zero nulls and no duplicate values, that transaction amounts are non-negative, and that categorical fields conform to enterprise master data standards. If a vendor transmits a malformed shipment feed, our automated quarantine mechanism intercepts the payload, diverts it to an error lake, and logs a defect ticket without corrupting downstream pipelines.\n\nDownstream transformation workflows in **dbt** layer secondary operational tests, evaluating source table freshness, referential integrity between fact and dimension tables, and customized distribution anomaly tests. We emit operational telemetry into centralized observability dashboards that track pipeline throughput, data latency, and SLA adherence. Integrating automated PagerDuty and Slack alerting ensures our engineering teams identify and remediate data anomalies within minutes, ensuring that Walmart store managers and regional logisticians operate on indisputably trusted information.\n\nMoreover, I establish automated reconciliation assertions that compare raw record counts arriving at the edge with transformed records loaded into analytical marts. By tracking record lineage and volume deltas across every transformation stage, we eliminate data loss blind spots, giving leadership complete audit visibility into operational data fidelity."}, {"type": "question", "num": 7, "category": "Orchestration & DevOps", "title": "Workflow Orchestration, Dynamic DAGs & CI/CD Delivery", "question": "You automated production data orchestration and deployment workflows with Apache Airflow, Jenkins, and GitLab CI/CD, accelerating delivery cycles by 25%. How do you architect resilient, idempotent Airflow DAGs that handle upstream backfills, SLA alerts, and dynamic task generation across thousands of retail pipelines?", "words": 356, "answer": "Managing thousands of interrelated enterprise data workflows requires decoupling pipeline orchestration from underlying compute engines while enforcing strict pipeline idempotency. Throughout my tenures at **Palantir** and **Navan**, I architected production orchestration platforms using **Apache Airflow**, **Jenkins**, **GitLab CI/CD**, and containerized execution environments. By introducing automated testing suites and standardized deployment pipelines, I accelerated data feature delivery cycles by **25%** while eliminating manual release failures.\n\nThe golden rule of resilient pipeline architecture is **idempotency**: executing a workflow multiple times with the exact same execution date parameter must produce the identical database state without generating duplicate rows or partial updates. To achieve this in **Airflow**, I strictly avoid relying on non-deterministic system timestamps inside data extraction queries, instead parameterizing every task with Airflow logical execution dates and data interval windows. My database write operations utilize partition-level overwrites or transactional merge statements rather than naive appends.\n\nTo support the immense operational breadth of **Walmart**, where individual workflows must ingest telemetry across thousands of physical retail stores, I design **Dynamic DAGs** generated programmatically from metadata configuration files. Rather than manually authoring separate DAG scripts for each store or supplier, an automated factory pattern parses centralized YAML configurations, instantiating task graphs with appropriate concurrency pools, retry policies, and exponential backoff parameters. This prevents orchestrator bloat while allowing engineering teams to onboard new store feeds simply by committing configuration updates.\n\nHandling historical backfills requires isolating task execution dependencies. I configure upstream task sensors with soft-fail timeouts and leverage cross-DAG execution dependencies to coordinate complex pipeline handoffs without deadlock. For deployment reliability, our **GitLab CI/CD** pipeline runs automated linting with SQLFluff and Flake8, unit tests with pytest, and validates DAG integrity through automated parsing checks before code merges into production branches. Automated SLA callback functions monitor task durations, escalating threshold breaches to on-call engineers before business reporting deadlines are compromised.\n\nAdditionally, I implement dedicated worker pool quotas and task priority weights in Airflow to prevent resource starvation during peak hours. High-priority retail revenue reconciliation pipelines receive dedicated executor slots, ensuring that unexpected batch reprocessing jobs for historical analytics never delay critical operational store replenishment workflows."}, {"type": "question", "num": 8, "category": "MLOps & AI Integration", "title": "Production Machine Learning Feature Engineering & Lineage (MLflow & Unity Catalog)", "question": "At Navan and Palantir, you built feature engineering and anomaly detection pipelines connected to MLflow and Unity Catalog. How do you prevent training-serving skew, manage feature stores, and enforce auditability for automated retail pricing or fraud detection models?", "words": 368, "answer": "In enterprise machine learning systems, data engineering is the critical backbone determining whether predictive models succeed or fail in production. While at **Navan** and **Palantir**, I engineered end-to-end feature extraction and anomaly detection workflows using **Python**, **PySpark**, **MLflow**, and **Databricks Unity Catalog**. My primary focus was building governed, reproducible feature generation pipelines that bridged data science experimentation with high-throughput production inference.\n\nThe most catastrophic failure mode in applied machine learning is **training-serving skew**, which occurs when features computed during model training diverge from features generated in real-time inference environments. To eliminate this discrepancy, I implement standardized feature definition libraries in Python, ensuring that the exact same feature transformation logic is shared across historical batch training workflows and live streaming prediction services. Raw entity attributes are stored alongside temporal transaction logs in our feature store, enabling point-in-time correct lookups that completely prevent target feature leakage.\n\nFor high-volume retail operations like **Walmart dynamic pricing** or payment fraud prevention, feature freshness is paramount. I construct dual-tier feature architectures where static customer attributes and historical thirty-day purchasing summaries are computed in batch overnight and cached in distributed stores, while real-time velocity features—such as the number of transactions attempted in the last ten minutes—are computed using **Spark Structured Streaming** and pushed into low-latency in-memory databases like Redis.\n\nGovernance and compliance are enforced through **Databricks Unity Catalog** and **MLflow**. Every training run logs the exact version of the feature dataset, pipeline commit hash, hyperparameter configuration, and model artifact within the MLflow registry. Unity Catalog provides fine-grained data lineage tracking, mapping every feature column back through its underlying Silver and Bronze table transformations to the initial ingestion source. This end-to-end lineage satisfies strict regulatory audits, ensuring that Walmart can definitively explain and verify why an algorithmic pricing adjustment or fraud block was triggered on any historical date.\n\nFurthermore, I embed statistical data drift monitors into our production feature serving pipelines. By tracking continuous Kolmogorov-Smirnov tests and Population Stability Index metrics across serving feature distributions, our platform detects behavioral consumer shifts or broken upstream sensors in real time, automatically notifying data scientists before model prediction accuracy degrades."}, {"type": "question", "num": 9, "category": "Legacy Migration & High-Throughput Banking", "title": "High-Volume Transaction Processing & Legacy Migration (Infosys Finacle)", "question": "At Infosys Finacle, you processed 5M+ daily banking transactions (~500GB/day) across ISO 20022 and SWIFT MT formats with sub-5-minute latency and 99.9% uptime, while migrating Oracle to AWS S3 and Snowflake. How did you ensure data reconciliation, zero data loss, and cut query costs by 20%?", "words": 319, "answer": "Core banking environments represent the ultimate trial for data engineering resilience, where even a momentary data drop or ledger mismatch can lead to catastrophic financial penalties and regulatory sanctions. During my tenure at **Infosys Finacle**, I developed and maintained high-throughput data processing pipelines handling over **5 million daily banking transactions** totaling approximately **500 gigabytes daily**. I engineered distributed ingestion workflows in **PySpark** and **Kafka** that transformed complex semi-structured **ISO 20022 XML** and legacy **SWIFT MT** messaging standards, consistently delivering sub-5-minute processing latency and maintaining **99.9% system uptime**.\n\nA major milestone of my tenure was migrating mission-critical reporting and general ledger reconciliation datasets from legacy on-premises **Oracle databases** to a modern cloud architecture on **AWS S3** and **Snowflake**. To execute this migration without impacting ongoing banking operations, I employed a phased parallel-run strategy. We utilized Change Data Capture agents to capture row-level redo log modifications from Oracle, streaming changes into Kafka topics before landing them in partitioned S3 buckets.\n\nEnsuring absolute zero data loss required building an automated **Financial Reconciliation Engine** in PySpark. At the end of every processing cycle, our reconciliation jobs computed dual-ledger cryptographic checksums, transaction counts, and aggregated debit-credit balances across both the legacy Oracle tables and the newly loaded Snowflake warehouse. Any balance discrepancy exceeding zero cents automatically halted the release of dependent downstream GL reports, alerting the engineering on-call rotation to investigate discrepancies before reports reached regulatory auditors.\n\nTo optimize query performance and reduce operational cloud expenditures by **20%**, I overhauled the warehouse schema in Snowflake. Legacy Oracle tables contained deeply nested hierarchical relationships that caused massive CPU bottlenecks when queried. I restructured these into optimized dimensional star schemas, applied appropriate clustering keys on transaction date and currency account codes, and configured warehouse auto-suspension policies. These architectural enhancements cut analytical query runtimes by **35%**, providing financial analysts with near-instantaneous ledger transparency."}, {"type": "question", "num": 10, "category": "Attitude & Adaptability", "title": "Attitude, Adaptability & Embracing Technological Shifts", "question": "Walmart's data ecosystem spans hybrid cloud and legacy systems. Describe a situation where business requirements changed abruptly or a chosen technology stack proved insufficient. How did you adapt your mindset, collaborate with cross-functional stakeholders, and deliver without compromising SLAs?", "words": 349, "answer": "In enterprise data engineering, rigid attachment to a specific tool or architectural preference is a recipe for failure. My professional philosophy centers on operational humility, continuous learning, and prioritizing business outcomes over dogmatic technical loyalty. During my tenure at **Navan**, we initially architected a centralized batch ETL pipeline in PySpark to process corporate travel and credit card reconciliation data on a four-hour schedule. However, as our international footprint expanded rapidly, business leadership announced an immediate shift toward real-time fraud intervention, requiring suspicious transaction detection to occur in under thirty seconds.\n\nRather than viewing this abrupt pivot as an insurmountable disruption, I embraced the challenge as an opportunity to modernize our streaming architecture. Our existing batch architecture was fundamentally incapable of meeting the sub-minute SLA due to high JVM spin-up overhead and file landing delays. I quickly organized technical discovery sessions with our fraud risk analysts, backend engineering teams, and platform architects to map out latency bottlenecks and formalize new streaming data contracts.\n\nI adapted our pipeline architecture by introducing **Spark Structured Streaming** integrated directly with **Apache Kafka** topic partitions, switching our compute paradigm from scheduled batch processing to continuous micro-batch streaming. Because our team had limited prior production experience with streaming stateful watermarking and Delta Lake streaming sinks, I developed internal documentation, conducted pair programming sessions, and built reusable local integration tests to accelerate team onboarding.\n\nWe delivered the fully functional real-time streaming pipeline two weeks ahead of the compliance deadline, cutting fraud detection latency by **35%** while maintaining full backwards compatibility for existing historical finance reports. This experience solidified my belief that genuine engineering seniority is measured not by resisting organizational change, but by maintaining a proactive, solution-oriented attitude, learning emerging frameworks rapidly, and keeping cross-functional stakeholders informed with transparent, empathetic communication.\n\nAt a global retail leader like **Walmart**, where technological ecosystems continuously evolve across multi-cloud environments, on-premises systems, and edge store devices, I bring this exact adaptable mindset. I welcome evolving architectural paradigms, readily master proprietary internal platforms, and relentlessly align technical execution with retail business value."}, {"type": "question", "num": 11, "category": "Thought Process & System Design", "title": "Engineering Thought Process: Designing an Omnichannel Retail Data Lakehouse", "question": "Walk us through your mental framework when designing an enterprise retail data ingestion and transformation platform from scratch. How do you balance trade-offs between batch vs. streaming, storage format (Delta vs. Iceberg), compute engines, and governance at Walmart scale?", "words": 334, "answer": "When architecting an enterprise data platform from the ground up, my structured engineering methodology follows five clear phases: requirement decomposition, ingestion strategy, storage format selection, compute orchestration, and governance guardrails. I begin by conducting thorough discovery with business stakeholders, product managers, and downstream analytical consumers to categorize data assets by latency tolerance, access patterns, and regulatory criticality. For instance, customer supply chain tracking demands near-real-time streaming, whereas end-of-month supplier financial billing is naturally suited for idempotent batch compute.\n\nFor data ingestion, I favor a unified Lakehouse model that accommodates both streaming and batch paradigms. At **Walmart scale**, I would ingest high-velocity store register telemetry and mobile shopping events through distributed **Apache Kafka** or **AWS Kinesis** streams into a raw object storage landing zone. For massive third-party vendor inventory feeds and legacy mainframe files, I deploy scheduled batch pipelines using **AWS Glue** or containerized Python extractors. Decoupling ingestion from downstream transformation ensures that upstream source fluctuations never degrade internal analytical consumers.\n\nWhen evaluating open table storage formats, I weigh the trade-offs between **Delta Lake** and **Apache Iceberg**. If the enterprise ecosystem is heavily anchored in **Databricks**, Delta Lake offers unparalleled optimization with native liquid clustering, predictive I/O, and tight Unity Catalog governance. Conversely, if Walmart requires multi-engine flexibility where Snowflake, Google BigQuery, Presto, and AWS EMR query the exact same underlying object storage files without vendor lock-in, Apache Iceberg's vendor-neutral metadata specification provides superior interoperability.\n\nFor transformation compute, distributed engines like **Apache Spark** running on **AWS EMR** or Databricks handle heavy bronze-to-silver curation, while **dbt** paired with **Snowflake** or **Trino** orchestrates dimensional modeling in the gold layer. Governance must be embedded on day one rather than retrofitted as an afterthought. I enforce automated data quality firewalls using **Great Expectations**, centralize metadata cataloging and column-level RBAC via Unity Catalog or AWS Lake Formation, and monitor pipeline freshness with automated SLA tracking, ensuring the resulting platform remains robust, scalable, and audit-ready."}, {"type": "question", "num": 12, "category": "Scenario & Incident Triage", "title": "Production Incident Triage & High-Pressure Root Cause Analysis", "question": "A tier-1 Walmart executive inventory dashboard displays corrupted negative stock quantities right before a major promotional event. Walk through your step-by-step diagnostic thought process to isolate the failure across ingestion, transformation, and BI layers, hotfix the pipeline, and conduct a blameless post-mortem.", "words": 360, "answer": "Facing a mission-critical production data outage requires a calm, structured incident management protocol focused on rapid containment, systematic root cause analysis, transparent stakeholder communication, and defensive hardening. If an executive inventory dashboard displayed corrupted negative stock quantities hours before a major Walmart sales event, my immediate first action would be containment and communication. I would post a prompt status update in the incident response channel, notifying commercial stakeholders that data investigation is underway, while pinning the dashboard view to the last verified healthy snapshot using **Delta Lake Time Travel** to prevent erroneous automated decisions.\n\nTo systematically isolate the failure across our architectural layers, I work backward from the presentation layer to the raw ingestion sources. I examine the business intelligence reporting query in Looker or Tableau to verify whether an erroneous metric calculation, incorrect join condition, or newly deployed dashboard filter caused the negative numbers. If the BI SQL query is valid, I inspect the Gold and Silver layer dimensional tables, checking row-level audit columns, update timestamps, and surrogate key mappings to determine the exact batch or streaming micro-batch that introduced the corrupt values.\n\nNext, I inspect the ingestion and transformation logs in **Apache Airflow** and **Databricks**. In a previous real-world incident at Navan, I encountered a similar anomaly where an upstream store inventory feed introduced an unannounced format modification: warehouse return records were transmitted with inverted credit-debit signs, causing subtraction logic to compound negatively. If an upstream schema drift or missing file caused the issue, I deploy a tested hotfix to our transformation pipeline that encapsulates incoming quantities in protective absolute-value validation logic and recalculates the corrupted inventory partitions using idempotent overwrites.\n\nOnce downstream dashboards are validated and operational green status is restored, I lead a comprehensive, blameless post-mortem. We document the incident timeline, root cause, detection gap, and mitigation steps. To permanently eliminate this vulnerability, I implement an automated **Great Expectations** pre-condition test in our dbt pipeline that asserts inventory stock counts must be greater than or equal to zero, automatically quarantining offending supplier files and raising high-priority PagerDuty alerts before corrupt records can ever reach executive reporting layers."}, {"type": "question", "num": 13, "category": "Security, Governance & Compliance", "title": "Data Security, Governance, RBAC & Regulatory Compliance (SOX, PCI DSS, GDPR)", "question": "In your financial roles at Navan and Infosys Finacle, you enforced strict SOX and PCI DSS controls through AWS IAM, Snowflake RBAC, and data contracts. How do you implement column-level masking, row-level security, and tokenization of customer PII in Walmart's analytics lakehouse?", "words": 351, "answer": "In enterprise data platforms handling millions of financial and consumer transactions, data security and regulatory compliance cannot exist as optional checkboxes; they must be foundational architectural constraints. During my work at **Navan** and **Infosys Finacle**, I was responsible for designing data pipelines that handled sensitive corporate card expenditures, employee travel itineraries, and international banking transactions. I established multi-layered security controls that strictly complied with **SOX**, **PCI DSS**, and global data privacy standards like **GDPR** and **CCPA**.\n\nProtecting customer **Personally Identifiable Information (PII)** and payment card data begins at the earliest ingestion boundary. In our raw ingestion landing zone on **AWS S3**, all data is encrypted at rest using AWS Key Management Service with customer-managed keys, and encrypted in transit using TLS 1.3. For high-risk attributes like payment card primary account numbers, social security identifiers, and customer phone numbers, I implement format-preserving tokenization during initial PySpark ETL processing. Raw identifiers are replaced with irreversible cryptographic hashes, and the lookup vault is quarantined in an isolated, access-restricted enclave.\n\nWithin the analytics data warehouse in **Snowflake**, I enforce fine-grained access control through a robust **Role-Based Access Control (RBAC)** hierarchy. I design functional roles aligned with business job functions, such as Marketing Analyst, Financial Auditor, or Data Scientist, decoupled from individual user accounts. I implement native Snowflake **Dynamic Data Masking** policies on sensitive columns. When an unauthorized analyst queries customer profiles, email addresses appear partially masked and credit card numbers display only the final four digits, while authorized fraud compliance officers view the full plain-text attributes.\n\nTo enforce geographic and organizational boundary compliance, I implement **Row-Level Security** using entitlement mapping tables. In a **Walmart retail context**, a store manager in Texas should only query sales records and employee schedules belonging to their specific store district, whereas national supply chain directors access aggregated nationwide data. Row access policies automatically evaluate the querying user's session context against entitlement tables, dynamically filtering query results at execution time without requiring duplicate physical tables. Finally, automated audit logging tracks all administrative access and schema modifications, ensuring seamless audit readiness."}, {"type": "question", "num": 14, "category": "Cross-Functional Collaboration & Influence", "title": "Cross-Functional Collaboration, Stakeholder Alignment & Business Value", "question": "At Palantir and Navan, you published reusable data products for 5+ business units and cut manual reporting by 50%. How do you communicate complex data engineering constraints to non-technical business leaders and resolve conflicting priorities between product managers, data scientists, and infrastructure teams?", "words": 367, "answer": "A high-performing Data Engineer must serve as an effective translator and bridge between deep technical infrastructure constraints and strategic commercial objectives. Throughout my career at **Palantir** and **Navan**, I have collaborated across cross-functional boundaries with product managers, financial analysts, executive directors, and machine learning researchers. By standardizing reusable dimensional data models and self-service BI marts, my work directly empowered over five business units to query governed data independently, eliminating ad-hoc manual reporting requests by **50%**.\n\nWhen communicating technical constraints to non-technical business stakeholders, I avoid alienating jargon like shuffle partitions, memory spills, or DAG deadlocks. Instead, I frame discussions entirely in terms of business trade-offs, financial costs, operational risk, and delivery timelines. If a commercial stakeholder requests a real-time sub-second streaming dashboard that would require significant cloud compute expenditures, I present a clear cost-benefit matrix contrasting sub-second streaming against a five-minute micro-batch architecture. By demonstrating that a five-minute latency fulfills ninety-nine percent of commercial requirements while saving tens of thousands of dollars in cloud infrastructure, stakeholders feel informed and empowered to make pragmatic decisions.\n\nResolving conflicting priorities between disparate technical teams requires instituting structured data product governance. Product managers typically prioritize rapid feature delivery, data scientists require raw unstructured features for model training, and infrastructure engineers focus on cost containment and system stability. To harmonize these goals, I introduce standardized **Data Contracts** and treat data pipelines as official internal software products with defined Service Level Agreements and clear documentation.\n\nI conduct bi-weekly data product alignment forums where cross-functional partners review pipeline performance metrics, discuss upcoming schema enhancements, and prioritize backlog items collaboratively. When priorities clash, I evaluate proposed initiatives against shared corporate business impact, prioritizing efforts that enhance customer trust, prevent regulatory non-compliance, or unlock direct operational revenue. This collaborative, transparent approach builds enduring trust and ensures engineering efforts deliver maximum enterprise value.\n\nAdditionally, I mentor junior engineers and business analysts on SQL optimization and dimensional modeling best practices. By empowering analytical teams to construct performant self-service queries without exhausting warehouse compute resources, we foster an organizational culture of shared accountability, high data literacy, and seamless cross-functional velocity."}, {"type": "question", "num": 15, "category": "GenAI & Modern Enterprise AI Integration", "title": "Future-Proofing Data Platforms: Integrating GenAI, Vector Databases & RAG at Walmart", "question": "Walmart is rapidly infusing AI into customer search and internal operations. Leveraging your work connecting enterprise data to AI/ML workloads at Palantir, how would you design a real-time data pipeline feeding vector embeddings and semantic search indexes for Walmart's product catalog?", "words": 366, "answer": "The modern data engineering frontier requires seamlessly integrating traditional structured analytical stores with unstructured semantic data pipelines powering generative artificial intelligence and Retrieval-Augmented Generation (RAG). At **Palantir**, I engineered feature extraction and anomaly detection workflows that connected curated enterprise data assets directly to advanced AI and ML workloads. This required rethinking standard relational schemas to support vector embeddings, semantic metadata indexing, and low-latency similarity search retrieval.\n\nTo build an enterprise semantic search and recommendation platform for **Walmart's product catalog**, I would architect an asynchronous, event-driven embedding pipeline. As product descriptions, customer reviews, technical specifications, and inventory updates land in our **Delta Lake** or **Snowflake** Lakehouse, Change Data Capture triggers streaming micro-batches in **Apache Spark**. These workers extract product text and image metadata, preprocess the copy by removing noise and normalizing terminology, and pass batches through transformer embedding models like Sentence-Transformers or OpenAI text-embedding-3 hosted on scalable endpoints.\n\nThe resulting high-dimensional vector embeddings are streamed alongside essential structured metadata—such as product category, price, store stock availability, and promotional status—into a high-throughput **Vector Database** like Milvus, Pinecone, or Databricks Vector Search. To guarantee sub-second customer query latency at Walmart scale, I configure the vector store with **Hierarchical Navigable Small World (HNSW)** indexing, enabling rapid approximate nearest neighbor retrieval across millions of catalog items.\n\nCrucially, the semantic vector pipeline must maintain absolute synchronization with physical inventory and pricing reality. If a customer searches for *'organic gluten-free snacks for children'*, the generative retrieval engine must not recommend out-of-stock items or display outdated sale prices. I implement real-time metadata filtering that intersects vector similarity results with our live operational inventory tables in **Snowflake** or Redis before ranking results. By standardizing automated embedding regeneration pipelines and monitoring semantic drift with **MLflow**, Walmart can deliver personalized, hallucination-free generative shopping experiences that drive substantial e-commerce conversion.\n\nFinally, I implement automated evaluation harnesses that continuously benchmark retrieval accuracy, latency percentiles, and index freshness. When inventory updates occur at the local store level, our incremental vector update pipeline refreshes the nearest neighbor index within minutes, ensuring that omnichannel shoppers receive search recommendations that reflect true shelf availability."}, {"type": "coding", "num": 1, "category": "Coding & Algorithms", "title": "Coding Problem 1: Real-Time Event Deduplication & Watermarking in PySpark Structured Streaming", "question": "In Walmart's omnichannel retail ecosystem, thousands of physical store point-of-sale (POS) registers and e-commerce mobile applications emit millions of purchase events per minute ...", "words": 681, "answer": "### Problem Statement\nIn Walmart's omnichannel retail ecosystem, thousands of physical store point-of-sale (POS) registers and e-commerce mobile applications emit millions of purchase events per minute into an Apache Kafka topic. Due to intermittent network disconnects, cellular handoffs, and edge retries, events frequently arrive out-of-order and with duplicated payloads.\n\nDesign an end-to-end PySpark Structured Streaming pipeline that:\n1. Ingests raw JSON transaction events from a Kafka topic.\n2. Implements event-time watermarking to tolerate up to 10 minutes of late-arriving data.\n3. Performs stateful deduplication on a composite key (`transaction_id`, `store_id`) within the watermark window.\n4. Computes rolling 5-minute sales volume and transaction count per store.\n5. Writes the aggregated metrics into a Delta Lake table with checkpointing and exactly-once idempotency.\n\n### Algorithmic Thought Process & Tradeoffs\nWhen designing high-throughput stateful streaming pipelines, managing state store memory while guaranteeing data accuracy is the central engineering challenge. Without watermarking, Spark Structured Streaming would maintain in-memory state for every unique transaction identifier indefinitely, eventually causing JVM heap exhaustion and out-of-memory executor crashes.\n\nMy thought process begins by defining the event-time watermark. A 10-minute watermark instructs Spark to track the maximum event time observed so far and discard any records arriving older than that threshold minus 10 minutes. This allows Spark's state store (backed by RocksDB or HDFS) to prune expired state keys safely.\n\nNext, stateful deduplication is achieved via `dropDuplicatesWithinWatermark()`. Using a composite key (`transaction_id`, `store_id`) ensures that even if an edge device resends a batch of receipts, duplicates within the 10-minute horizon are filtered out before stateful window aggregations occur.\n\nFor aggregations, we apply tumbling or sliding windows using `window(col(\"event_timestamp\"), \"5 minutes\")`. To write out to Delta Lake idempotently, we configure checkpointing on cloud storage (e.g., S3 or ADLS) and use Delta's native ACID log to ensure committed micro-batches are never re-applied during failure recoveries.\n\n### Commented Implementation\n```python\nfrom pyspark.sql import SparkSession\nfrom pyspark.sql.functions import from_json, col, window, sum as _sum, count as _count\nfrom pyspark.sql.types import StructType, StructField, StringType, DoubleType, TimestampType\n\n# Initialize Spark Session configured for Delta Lake and Kafka\nspark = SparkSession.builder \\\n    .appName(\"Walmart_POS_Streaming_Deduplication\") \\\n    .config(\"spark.sql.streaming.stateStore.providerClass\", \n            \"org.apache.spark.sql.execution.streaming.state.RocksDBStateStoreProvider\") \\\n    .config(\"spark.sql.extensions\", \"io.delta.sql.DeltaSparkSessionExtension\") \\\n    .config(\"spark.sql.catalog.spark_catalog\", \"org.apache.spark.sql.delta.catalog.DeltaCatalog\") \\\n    .getOrCreate()\n\n# 1. Define explicit schema for incoming JSON payloads\npos_schema = StructType([\n    StructField(\"transaction_id\", StringType(), False),\n    StructField(\"store_id\", StringType(), False),\n    StructField(\"customer_id\", StringType(), True),\n    StructField(\"product_id\", StringType(), False),\n    StructField(\"amount\", DoubleType(), False),\n    StructField(\"event_timestamp\", TimestampType(), False)\n])\n\n# 2. Ingest raw streaming stream from Kafka broker\nraw_kafka_df = spark.readStream \\\n    .format(\"kafka\") \\\n    .option(\"kafka.bootstrap.servers\", \"kafka-broker:9092\") \\\n    .option(\"subscribe\", \"walmart.pos.transactions\") \\\n    .option(\"startingOffsets\", \"latest\") \\\n    .option(\"failOnDataLoss\", \"false\") \\\n    .load()\n\n# 3. Parse JSON payload and project strongly typed columns\nparsed_transactions = raw_kafka_df \\\n    .select(from_json(col(\"value\").cast(\"string\"), pos_schema).alias(\"data\")) \\\n    .select(\"data.*\")\n\n# 4. Enforce Event-Time Watermarking and Stateful Deduplication\ndeduplicated_stream = parsed_transactions \\\n    .withWatermark(\"event_timestamp\", \"10 minutes\") \\\n    .dropDuplicates([\"transaction_id\", \"store_id\", \"event_timestamp\"])\n\n# 5. Compute rolling 5-minute sales aggregations per physical store\nwindowed_sales_summary = deduplicated_stream \\\n    .groupBy(\n        window(col(\"event_timestamp\"), \"5 minutes\", \"5 minutes\"),\n        col(\"store_id\")\n    ) \\\n    .agg(\n        _sum(\"amount\").alias(\"total_sales_amount\"),\n        _count(\"transaction_id\").alias(\"total_transactions\")\n    ) \\\n    .select(\n        col(\"window.start\").alias(\"window_start\"),\n        col(\"window.end\").alias(\"window_end\"),\n        col(\"store_id\"),\n        col(\"total_sales_amount\"),\n        col(\"total_transactions\")\n    )\n\n# 6. Stream sink to Delta Lake table with checkpointing for exactly-once guarantees\nquery = windowed_sales_summary.writeStream \\\n    .format(\"delta\") \\\n    .outputMode(\"append\") \\\n    .option(\"checkpointLocation\", \"s3://walmart-lakehouse-checkpoints/pos_sales_metrics/\") \\\n    .option(\"path\", \"s3://walmart-lakehouse-gold/pos_sales_summary/\") \\\n    .trigger(processingTime=\"1 minute\") \\\n    .start()\n\nquery.awaitTermination()\n```\n\n### Complexity & Scalability Analysis\n- **Time Complexity:** O(N) per micro-batch where N is the number of records. Window aggregation executes in linear time across partitions.\n- **Space Complexity:** O(U) in the state store, where U is the number of distinct transactions observed within the active 10-minute watermark window. Utilizing RocksDB off-heap storage prevents JVM garbage collection pauses.\n- **Fault Tolerance:** End-to-end exactly-once semantics achieved via Kafka committed offsets and Delta Lake atomic write-ahead logs."}, {"type": "coding", "num": 2, "category": "Coding & Algorithms", "title": "Coding Problem 2: Idempotent Slowly Changing Dimension (SCD Type 2) Upsert in PySpark & Delta Lake", "question": "Walmart's master product catalog contains over 100 million Stock Keeping Units (SKUs). Product pricing, department categorization, and promotional tags update frequently from multi...", "words": 730, "answer": "### Problem Statement\nWalmart's master product catalog contains over 100 million Stock Keeping Units (SKUs). Product pricing, department categorization, and promotional tags update frequently from multiple regional merchandising feeds.\n\nWrite an idempotent PySpark batch transformation that merges incoming product updates into a target Delta Lake dimension table (`dim_product`) using **SCD Type 2** logic:\n1. If a product does not exist, insert it as a new active record (`is_current = True`, `end_date = NULL`).\n2. If an existing product has changed attributes (e.g. price, department), expire the old record (`is_current = False`, `end_date = update_time`) and insert the new version with `is_current = True`.\n3. If the incoming product attributes are identical to the active version, perform no operation (zero redundant writes).\n4. Ensure the entire operation is idempotent and atomic.\n\n### Algorithmic Thought Process & Tradeoffs\nSCD Type 2 tracking is the standard pattern for historical auditability in dimensional warehouses. In distributed systems, executing naive row-by-row updates is prohibitively expensive. We must leverage Delta Lake's native `MERGE INTO` API in PySpark to execute atomic, set-based upserts.\n\nMy thought process decomposes the problem into a two-pass staging strategy:\nFirst, we compare incoming records against the active dimension records in `dim_product` (where `is_current = True`). We compute an MD5 hash of the tracked business attributes (e.g., `price`, `department`, `brand`). If the natural key matches and the hash has changed, the record represents an 'Update'. If the natural key does not exist, it represents an 'Insert'.\n\nSecond, for 'Update' records, we need to perform two distinct actions in the target table: expire the incumbent record and insert the new record. Because a standard SQL `MERGE` statement can only touch each target row once, we perform the classic 'Merge with Staging Union' pattern:\nWe union the incoming updates with a synthetic null key or use Delta Lake's conditional merge to:\n1. Update existing matching active records by setting `is_current = False` and `end_date = current_timestamp`.\n2. Insert all net-new records and newly expired counterparts as active rows.\n\nThis design guarantees that re-running the job for the same execution window yields the exact same state without creating duplicate active versions.\n\n### Commented Implementation\n```python\nfrom pyspark.sql import SparkSession\nfrom pyspark.sql.functions import col, md5, concat_ws, current_timestamp, lit\nfrom delta.tables import DeltaTable\n\nspark = SparkSession.builder \\\n    .appName(\"Walmart_Product_SCD2_Merge\") \\\n    .config(\"spark.sql.extensions\", \"io.delta.sql.DeltaSparkSessionExtension\") \\\n    .config(\"spark.sql.catalog.spark_catalog\", \"org.apache.spark.sql.delta.catalog.DeltaCatalog\") \\\n    .getOrCreate()\n\n# Path to the persistent Delta Lake dimension table\nDIM_PRODUCT_PATH = \"s3://walmart-lakehouse-gold/dimensions/dim_product/\"\n\ndef run_scd2_merge(incoming_updates_df):\n    target_table = DeltaTable.forPath(spark, DIM_PRODUCT_PATH)\n    target_df = target_table.toDF()\n\n    # 1. Compute attribute hash on incoming data for change detection\n    incoming_staged = incoming_updates_df \\\n        .withColumn(\"attr_hash\", md5(concat_ws(\"||\", col(\"price\"), col(\"department\"), col(\"brand\"))))\n\n    # 2. Isolate active records in target dimension\n    active_target = target_df.filter(col(\"is_current\") == True) \\\n        .select(\n            col(\"product_id\").alias(\"t_product_id\"),\n            col(\"attr_hash\").alias(\"t_attr_hash\")\n        )\n\n    # 3. Join incoming with active target to classify actions\n    joined_df = incoming_staged.join(\n        active_target,\n        incoming_staged.product_id == active_target.t_product_id,\n        \"left_outer\"\n    )\n\n    # Identify records requiring expiration (natural key matches, hash differs)\n    records_to_update = joined_df \\\n        .filter((col(\"t_product_id\").isNotNull()) & (col(\"attr_hash\") != col(\"t_attr_hash\"))) \\\n        .select(incoming_staged[\"*\"])\n\n    # Identify brand new records (natural key does not exist)\n    records_to_insert = joined_df \\\n        .filter(col(\"t_product_id\").isNull()) \\\n        .select(incoming_staged[\"*\"])\n\n    # 4. Prepare Staged Merge Dataset\n    # Records to update need two rows: one to expire the old record, one to insert the new record\n    staged_updates_expire = records_to_update \\\n        .withColumn(\"merge_key\", col(\"product_id\")) \\\n        .withColumn(\"action\", lit(\"EXPIRE\"))\n\n    staged_updates_insert = records_to_update \\\n        .withColumn(\"merge_key\", lit(None).cast(\"string\")) \\\n        .withColumn(\"action\", lit(\"INSERT\"))\n\n    staged_new_inserts = records_to_insert \\\n        .withColumn(\"merge_key\", lit(None).cast(\"string\")) \\\n        .withColumn(\"action\", lit(\"INSERT\"))\n\n    # Union all staged records together\n    staged_merge_df = staged_updates_expire \\\n        .unionByName(staged_updates_insert) \\\n        .unionByName(staged_new_inserts)\n\n    # 5. Execute Atomic Delta Lake Merge\n    target_table.alias(\"target\").merge(\n        source=staged_merge_df.alias(\"source\"),\n        condition=\"target.product_id = source.merge_key AND target.is_current = True\"\n    ).whenMatchedUpdate(\n        condition=\"source.action = 'EXPIRE'\",\n        set={\n            \"is_current\": lit(False),\n            \"end_date\": current_timestamp()\n        }\n    ).whenNotMatchedInsert(\n        values={\n            \"product_id\": \"source.product_id\",\n            \"price\": \"source.price\",\n            \"department\": \"source.department\",\n            \"brand\": \"source.brand\",\n            \"attr_hash\": \"source.attr_hash\",\n            \"start_date\": current_timestamp(),\n            \"end_date\": lit(None),\n            \"is_current\": lit(True)\n        }\n    ).execute()\n\n    print(\"SCD Type 2 atomic merge executed successfully.\")\n```\n\n### Complexity & Scalability Analysis\n- **Time Complexity:** O(M log N) where M is incoming updates and N is target table size. Delta Lake utilizes file pruning on `is_current` and data skipping via min/max statistics.\n- **Space Complexity:** O(M) intermediate shuffle storage for staged candidate records.\n- **Idempotency:** Re-executing with the same input produces zero redundant updates because identical attribute hashes are automatically filtered out."}, {"type": "coding", "num": 3, "category": "Coding & Algorithms", "title": "Coding Problem 3: Mitigating Severe Data Skew in PySpark via Two-Phase Key Salting", "question": "During peak retail periods like Black Friday, Walmart's store sales transaction table contains hundreds of millions of records. A tiny fraction of store locations (e.g., Flagship S...", "words": 697, "answer": "### Problem Statement\nDuring peak retail periods like Black Friday, Walmart's store sales transaction table contains hundreds of millions of records. A tiny fraction of store locations (e.g., Flagship Supercenters in Bentonville, Dallas, or Orlando) generate 100x more transaction volume than smaller rural outlets.\n\nWhen joining this massive fact table (`sales_transactions`) with the store dimensional table (`dim_store`) to compute regional revenue, standard Spark Sort-Merge joins fail due to executor out-of-memory errors on the hot store partitions.\n\nImplement a production PySpark salting algorithm that:\n1. Dynamically detects or isolates skewed join keys.\n2. Applies a randomized salt factor to distribute hot partition records uniformly across executors.\n3. Replicates the corresponding dimensional keys so that all join combinations match correctly.\n4. Executes the distributed join without executor data spillage or out-of-memory crashes.\n\n### Algorithmic Thought Process & Tradeoffs\nIn distributed computing, data skew creates the dreaded 'straggler effect' where 99% of tasks finish in seconds, but task 199 stalls for 40 minutes processing 50 GB of data on a single executor. Broadcast joins cannot resolve this if the dimensional table is also large or if memory constraints prohibit broadcasting.\n\nMy thought process implements **Two-Phase Key Salting**:\n1. Fact Table Salting: We take the skewed join key (`store_id`) and append a pseudo-random integer bounded between `0` and `SALT_FACTOR - 1` (e.g., 0 to 19 for a factor of 20). The resulting composite key (`store_id_salted`) disperses what was previously a single giant partition across 20 distinct worker partitions.\n2. Dimension Table Expansion: For the join to succeed, the dimension table must contain matching keys for all 20 possible salt values. We use `explode(array([lit(0), lit(1), ..., lit(SALT_FACTOR - 1)]))` to replicate the dimensional records 20 times, each assigned one salt value.\n3. Distributed Hash Join: We join on `fact.store_id_salted == dim.store_id_salted`. Spark now shuffles the records evenly across all executor slots.\n4. Post-Join Projection: We drop the synthetic salt columns and proceed with downstream aggregations. Memory consumption remains flat, and executor utilization approaches 100% across all cluster nodes.\n\n### Commented Implementation\n```python\nfrom pyspark.sql import SparkSession\nfrom pyspark.sql.functions import col, concat_ws, floor, rand, array, lit, explode\n\nspark = SparkSession.builder \\\n    .appName(\"Walmart_Sales_Key_Salting_Join\") \\\n    .getOrCreate()\n\ndef salted_distributed_join(sales_df, dim_store_df, salt_factor=20):\n    \"\"\"\n    Performs a balanced distributed join between a heavily skewed sales table\n    and a store dimension table using randomized key salting.\n    \n    :param sales_df: Large transactional DataFrame with severe key skew on 'store_id'\n    :param dim_store_df: Store dimensional DataFrame\n    :param salt_factor: Number of sub-partitions to distribute skewed keys across\n    :return: Joined DataFrame free of executor memory bottlenecks\n    \"\"\"\n    \n    # 1. Salt the primary fact table\n    # Append random integer between 0 and (salt_factor - 1)\n    salted_sales_df = sales_df \\\n        .withColumn(\"salt_val\", floor(rand() * salt_factor)) \\\n        .withColumn(\"salted_store_id\", concat_ws(\"_\", col(\"store_id\"), col(\"salt_val\")))\n\n    # 2. Replicate the dimension table to match all possible salt keys\n    # Create an array of integers [0, 1, ..., salt_factor - 1]\n    salt_array = array([lit(i) for i in range(salt_factor)])\n    \n    # Explode array so each store record is replicated 'salt_factor' times\n    replicated_dim_df = dim_store_df \\\n        .withColumn(\"salt_val\", explode(salt_array)) \\\n        .withColumn(\"salted_store_id\", concat_ws(\"_\", col(\"store_id\"), col(\"salt_val\")))\n\n    # 3. Perform the distributed join on the salted composite key\n    # Spark shuffles data uniformly across partitions, avoiding hot executors\n    joined_df = salted_sales_df.join(\n        replicated_dim_df,\n        on=\"salted_store_id\",\n        how=\"inner\"\n    )\n\n    # 4. Clean up synthetic columns and return clean schema\n    final_df = joined_df \\\n        .drop(\"salted_store_id\") \\\n        .drop(salted_sales_df[\"salt_val\"]) \\\n        .drop(replicated_dim_df[\"salt_val\"])\n\n    return final_df\n\n# Demonstration execution\nif __name__ == \"__main__\":\n    # Mocking skewed sales data\n    raw_sales = spark.createDataFrame([\n        (\"TX_STORE_101\", 125.50, \"2026-10-25\"),\n        (\"TX_STORE_101\", 45.00, \"2026-10-25\"),\n        (\"AR_STORE_001\", 89.20, \"2026-10-25\")\n    ], [\"store_id\", \"sale_amount\", \"sale_date\"])\n\n    # Store dimension\n    raw_dim = spark.createDataFrame([\n        (\"TX_STORE_101\", \"Dallas Supercenter\", \"Southwest\"),\n        (\"AR_STORE_001\", \"Bentonville Flagship\", \"Midwest\")\n    ], [\"store_id\", \"store_name\", \"region\"])\n\n    result = salted_distributed_join(raw_sales, raw_dim, salt_factor=10)\n    result.show()\n```\n\n### Complexity & Scalability Analysis\n- **Time Complexity:** O((N + S * M) log P) where N is fact rows, M is dimension rows, S is salt factor, and P is partition count. Eliminates single-thread long-tail bottlenecks.\n- **Space Complexity:** Fact table size remains O(N) with 1 added column. Dimension table memory expands by factor S (O(S * M)), which is easily absorbed by distributed worker memory.\n- **Operational Scalability:** Ideal for petabyte-scale joins where broadcast joins exceed executor RAM thresholds."}, {"type": "coding", "num": 4, "category": "Coding & Algorithms", "title": "Coding Problem 4: Automated Data Quality Contract Firewall using Python & Great Expectations", "question": "Walmart partners with over 100,000 third-party marketplace sellers and suppliers. Upstream suppliers submit daily Advance Shipping Notices (ASNs) via CSV and JSON files landing in ...", "words": 719, "answer": "### Problem Statement\nWalmart partners with over 100,000 third-party marketplace sellers and suppliers. Upstream suppliers submit daily Advance Shipping Notices (ASNs) via CSV and JSON files landing in S3 buckets. Suppliers frequently upload files with missing mandatory columns, invalid negative shipment quantities, corrupted date formats, and duplicate purchase orders.\n\nImplement a modular, production-ready Python data quality firewall using **Great Expectations** and **Pydantic** concepts that:\n1. Validates schema integrity, nullable constraints, and data ranges on landing files.\n2. Checks cross-column consistency (e.g., `shipped_date <= expected_delivery_date`).\n3. Quarantines defective records into an S3 dead-letter bucket while logging validation metrics.\n4. Returns an executive pass/fail summary that blocks downstream Airflow DAG execution on critical failures.\n\n### Algorithmic Thought Process & Tradeoffs\nData contracts must be enforced before untrusted external feeds enter the core Lakehouse. If corrupt data lands in the Bronze or Silver tables, the blast radius expands exponentially, polluting ML feature stores and executive reports.\n\nMy thought process structures a four-tier validation firewall:\n1. Ingestion Interceptor: As the file lands in the raw S3 bucket, a validation wrapper reads the file using Pandas or PySpark and binds it to a Great Expectations Data Context.\n2. Expectation Suite Execution: We define a declarative validation suite enforcing:\n   - File-level checks: Column existence and absence of unexpected schema additions.\n   - Column-level checks: `purchase_order_id` is unique and non-null; `shipped_quantity` is strictly positive (> 0); `carrier_code` matches valid logistics providers.\n   - Multi-column relational checks: `shipped_date` must precede or equal `estimated_arrival_date`.\n3. Triage & Segregation: If the overall validation fails critical assertions, the file is moved to an S3 quarantine path (`s3://walmart-quarantine/vendor_asns/`), a structured JSON incident report is generated for supplier remediation, and the function returns an exit code of 1 to fail the orchestrating Airflow task immediately.\n4. Clean Ingestion: If validation passes, records move to the Bronze ingestion lake.\n\n### Commented Implementation\n```python\nimport os\nimport sys\nimport json\nimport pandas as pd\nimport great_expectations as gx\nfrom datetime import datetime\n\nclass VendorASNQualityFirewall:\n    def __init__(self, data_context_root=\"./gx\"):\n        \"\"\"Initialize Great Expectations ephemeral data context.\"\"\"\n        self.context = gx.get_context(project_root_dir=data_context_root)\n        self.suite_name = \"vendor_asn_quality_contract\"\n\n    def create_or_get_suite(self):\n        \"\"\"Define programmatic data contract assertions.\"\"\"\n        try:\n            suite = self.context.get_expectation_suite(self.suite_name)\n        except Exception:\n            suite = self.context.add_expectation_suite(self.suite_name)\n\n        return suite\n\n    def validate_and_quarantine(self, file_path: str, quarantine_dir: str) -> dict:\n        \"\"\"\n        Validates vendor ASN file against data contracts.\n        Quarantines invalid files and returns detailed execution telemetry.\n        \"\"\"\n        df = pd.read_csv(file_path)\n        validator = self.context.sources.pandas_default.read_dataframe(df)\n\n        # 1. Structural Schema Contract\n        validator.expect_table_columns_to_match_ordered_list([\n            \"po_number\", \"vendor_id\", \"sku_id\", \"quantity\", \"shipped_date\", \"estimated_delivery\"\n        ])\n\n        # 2. Primary Key Completeness & Uniqueness\n        validator.expect_column_values_to_not_be_null(\"po_number\")\n        validator.expect_column_values_to_be_unique(\"po_number\")\n\n        # 3. Numeric Business Rule Constraints\n        validator.expect_column_values_to_be_between(\n            column=\"quantity\", min_value=1, max_value=50000\n        )\n\n        # 4. Temporal Format and Sequence Assertions\n        validator.expect_column_values_to_match_regex(\n            \"shipped_date\", r\"^\\d{4}-\\d{2}-\\d{2}$\"\n        )\n        validator.expect_column_pair_values_a_to_be_greater_than_b(\n            column_A=\"estimated_delivery\",\n            column_B=\"shipped_date\",\n            or_equal=True\n        )\n\n        # Execute Validation\n        validation_result = validator.validate()\n\n        telemetry = {\n            \"file_name\": os.path.basename(file_path),\n            \"timestamp\": datetime.utcnow().isoformat(),\n            \"success\": validation_result.success,\n            \"evaluated_expectations\": len(validation_result.results),\n            \"successful_expectations\": sum(1 for r in validation_result.results if r.success),\n            \"failed_details\": [\n                {\n                    \"expectation\": r.expectation_config.expectation_type,\n                    \"kwargs\": r.expectation_config.kwargs,\n                    \"observed\": r.result.get(\"observed_value\")\n                }\n                for r in validation_result.results if not r.success\n            ]\n        }\n\n        # Handle Quarantine Routing\n        if not validation_result.success:\n            os.makedirs(quarantine_dir, exist_ok=True)\n            quarantine_path = os.path.join(quarantine_dir, os.path.basename(file_path))\n            os.rename(file_path, quarantine_path)\n            telemetry[\"quarantine_path\"] = quarantine_path\n            print(f\"[SECURITY ALERT] Contract breach! File quarantined to: {quarantine_path}\")\n        else:\n            print(f\"[SUCCESS] Contract verified! File approved for Bronze ingestion.\")\n\n        return telemetry\n\n# Example demonstration\nif __name__ == \"__main__\":\n    # Mock invalid vendor file\n    mock_data = {\n        \"po_number\": [\"PO_1001\", \"PO_1001\", \"PO_1003\"],  # Duplicate PO\n        \"vendor_id\": [\"V_50\", \"V_50\", \"V_99\"],\n        \"sku_id\": [\"SKU_A\", \"SKU_B\", \"SKU_C\"],\n        \"quantity\": [100, -5, 50],  # Negative quantity violation\n        \"shipped_date\": [\"2026-10-25\", \"2026-10-25\", \"2026-10-25\"],\n        \"estimated_delivery\": [\"2026-10-28\", \"2026-10-20\", \"2026-10-29\"]  # Reverse date order\n    }\n    sample_csv = \"mock_vendor_asn.csv\"\n    pd.DataFrame(mock_data).to_csv(sample_csv, index=False)\n\n    firewall = VendorASNQualityFirewall()\n    summary = firewall.validate_and_quarantine(sample_csv, quarantine_dir=\"./quarantine\")\n    print(json.dumps(summary, indent=2))\n```\n\n### Complexity & Scalability Analysis\n- **Time Complexity:** O(N * E) where N is row count and E is number of expectations evaluated. Vectorized Pandas evaluations run in sub-second time for files up to 500,000 rows.\n- **Space Complexity:** O(N) memory allocation to evaluate the in-memory dataframe.\n- **Enterprise Benefit:** Zero corrupted supplier rows reach the Lakehouse; downstream pipelines are protected against schema breaks."}, {"type": "coding", "num": 5, "category": "Coding & Algorithms", "title": "Coding Problem 5: Spark SQL / PySpark Window Functions for Sessionization & Fraud Detection", "question": "Walmart's financial protection and loss prevention systems monitor omnichannel returns and refund requests in real time. Fraud syndicates exploit return policies by executing rapid...", "words": 665, "answer": "### Problem Statement\nWalmart's financial protection and loss prevention systems monitor omnichannel returns and refund requests in real time. Fraud syndicates exploit return policies by executing rapid bursts of refund requests across multiple accounts within tight time windows before store associate authorization limits trigger.\n\nGiven a distributed transactional returns dataset (`customer_id`, `store_id`, `return_amount`, `return_timestamp`), write an optimized PySpark pipeline that:\n1. Identifies all instances where a customer initiates 3 or more refund transactions within any rolling 15-minute sliding window.\n2. Calculates the cumulative refund sum within that rolling window.\n3. Flags anomalous velocity bursts where total refunds exceed $500 in that window.\n4. Assigns a persistent fraud risk score without performing expensive multi-pass self-joins.\n\n### Algorithmic Thought Process & Tradeoffs\nDetecting event clustering within rolling time windows is a quintessential stream analytics problem. Naive solutions involve self-joining the table on `t1.customer_id == t2.customer_id AND t2.timestamp BETWEEN t1.timestamp AND t1.timestamp + 15 min`, which incurs an exponential O(N^2) complexity that melts cluster compute on billions of records.\n\nMy thought process uses **PySpark Window Functions with Unix Timestamp Range Frames**:\n1. Epoch Conversion: We cast `return_timestamp` to integer seconds (`unix_timestamp`).\n2. Range-Based Window Specification: We construct a window partitioned by `customer_id`, ordered by `unix_time`, with a frame defined as `rangeBetween(-900, 0)`. The value `-900` represents 900 seconds (15 minutes). This frame dynamically includes all transactions by that customer occurring in the preceding 15 minutes up to the current row.\n3. Vectorized Window Aggregations: Within this single window specification, we compute:\n   - `count(transaction_id)`: number of returns in the rolling 15 minutes.\n   - `sum(return_amount)`: cumulative refund value in that same window.\n   - `lag(return_timestamp, 2)`: checks the timestamp of the 2nd preceding return.\n4. Conditional Fraud Flagging: A transaction is flagged as suspicious if `rolling_return_count >= 3` and `rolling_refund_sum >= 500.0`.\nThis executes in a single distributed shuffle stage, achieving linear O(N log N) runtime.\n\n### Commented Implementation\n```python\nfrom pyspark.sql import SparkSession\nfrom pyspark.sql.functions import (\n    col, unix_timestamp, count, sum as _sum, when, lit\n)\nfrom pyspark.sql.window import Window\n\nspark = SparkSession.builder \\\n    .appName(\"Walmart_Fraud_Velocity_Detection\") \\\n    .getOrCreate()\n\ndef detect_refund_fraud_velocity(returns_df):\n    \"\"\"\n    Detects high-frequency, high-value refund bursts using single-pass\n    range-based temporal window functions in PySpark.\n    \n    :param returns_df: DataFrame with ['return_id', 'customer_id', 'store_id', 'return_amount', 'return_timestamp']\n    :return: Annotated DataFrame with fraud flags and rolling velocity metrics\n    \"\"\"\n\n    # 1. Convert timestamp to epoch seconds for rangeBetween evaluation\n    staged_df = returns_df.withColumn(\n        \"epoch_seconds\", unix_timestamp(col(\"return_timestamp\"))\n    )\n\n    # 2. Define 15-minute (900 seconds) rolling historical window per customer\n    # rangeBetween(-900, 0) evaluates all records from (current_time - 15 mins) to current_time\n    rolling_15min_window = Window \\\n        .partitionBy(\"customer_id\") \\\n        .orderBy(\"epoch_seconds\") \\\n        .rangeBetween(-900, 0)\n\n    # 3. Compute window metrics in a single distributed pass\n    velocity_metrics_df = staged_df \\\n        .withColumn(\"rolling_return_count\", count(\"return_id\").over(rolling_15min_window)) \\\n        .withColumn(\"rolling_refund_total\", _sum(\"return_amount\").over(rolling_15min_window))\n\n    # 4. Evaluate fraud detection heuristics\n    flagged_df = velocity_metrics_df.withColumn(\n        \"is_fraud_burst\",\n        when(\n            (col(\"rolling_return_count\") >= 3) & (col(\"rolling_refund_total\") >= 500.0),\n            lit(True)\n        ).otherwise(lit(False))\n    ).withColumn(\n        \"fraud_risk_level\",\n        when(col(\"rolling_refund_total\") >= 1500.0, lit(\"CRITICAL\"))\n        .when((col(\"rolling_return_count\") >= 3) & (col(\"rolling_refund_total\") >= 500.0), lit(\"HIGH\"))\n        .otherwise(lit(\"LOW\"))\n    )\n\n    # Clean up intermediate epoch column\n    return flagged_df.drop(\"epoch_seconds\")\n\n# Demonstration\nif __name__ == \"__main__\":\n    sample_returns = spark.createDataFrame([\n        (\"RET_1\", \"CUST_999\", \"STORE_10\", 250.00, \"2026-10-25 14:00:00\"),\n        (\"RET_2\", \"CUST_999\", \"STORE_10\", 180.00, \"2026-10-25 14:06:00\"),\n        (\"RET_3\", \"CUST_999\", \"STORE_10\", 220.00, \"2026-10-25 14:11:00\"), # 3rd in 11 mins, sum=$650 -> HIGH FRAUD\n        (\"RET_4\", \"CUST_111\", \"STORE_20\", 35.00,  \"2026-10-25 14:02:00\"),\n        (\"RET_5\", \"CUST_111\", \"STORE_20\", 40.00,  \"2026-10-25 15:30:00\")  # >1 hour gap -> LOW\n    ], [\"return_id\", \"customer_id\", \"store_id\", \"return_amount\", \"return_timestamp\"])\n\n    flagged_output = detect_refund_fraud_velocity(sample_returns)\n    flagged_output.select(\n        \"return_id\", \"customer_id\", \"return_amount\", \"rolling_return_count\", \n        \"rolling_refund_total\", \"fraud_risk_level\"\n    ).show()\n```\n\n### Complexity & Scalability Analysis\n- **Time Complexity:** O(N log N) dominated by the initial partition-level sorting along customer_id and timestamp. Range calculations execute in linear time per partition without cartesian product joins.\n- **Space Complexity:** O(N) memory overhead for window buffers.\n- **Scalability:** Partitions horizontally across Spark cluster executors; effortlessly scales to tens of millions of retail return records daily."}];
+    const categoriesList = ["Resume Deep-Dive & Architecture", "Spark Optimization & Distributed Compute", "Lakehouse Architecture & Delta Lake", "Streaming & Real-Time Processing", "Data Modeling & Data Warehousing", "Data Governance & Quality", "Orchestration & DevOps", "MLOps & AI Integration", "Legacy Migration & High-Throughput Banking", "Attitude & Adaptability", "Thought Process & System Design", "Scenario & Incident Triage", "Security, Governance & Compliance", "Cross-Functional Collaboration & Influence", "GenAI & Modern Enterprise AI Integration", "Coding & Algorithms"];
+
+    let activeCategory = "All";
+    let completedSet = new Set();
+
+    window.addEventListener('DOMContentLoaded', () => {
+      mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+      if (sessionStorage.getItem('priyanka_unlocked') === 'true') {
+        unlockApp();
+      }
+      initApp();
+    });
+
+    function checkPass() {
+      const val = document.getElementById('passInput').value.trim();
+      if (val.toLowerCase() === CORRECT_PASS.toLowerCase()) {
+        sessionStorage.setItem('priyanka_unlocked', 'true');
+        unlockApp();
+      } else {
+        document.getElementById('errMsg').style.display = 'block';
+      }
+    }
+
+    document.getElementById('passInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') checkPass();
+    });
+
+    function unlockApp() {
+      document.getElementById('lockScreen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      window.scrollTo(0, 0);
+    }
+
+    function lockPage() {
+      sessionStorage.removeItem('priyanka_unlocked');
+      document.getElementById('app').style.display = 'none';
+      document.getElementById('lockScreen').style.display = 'flex';
+      document.getElementById('passInput').value = '';
+      document.getElementById('errMsg').style.display = 'none';
+    }
+
+    function initApp() {
+      const pillBox = document.getElementById('categoryPills');
+      pillBox.innerHTML = '';
+      
+      const allBtn = document.createElement('button');
+      allBtn.className = 'pill-btn active';
+      allBtn.textContent = 'All Items (' + itemsData.length + ')';
+      allBtn.onclick = () => setCategory('All', allBtn);
+      pillBox.appendChild(allBtn);
+
+      categoriesList.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = 'pill-btn';
+        const count = itemsData.filter(q => q.category === cat).length;
+        btn.textContent = `${cat} (${count})`;
+        btn.onclick = () => setCategory(cat, btn);
+        pillBox.appendChild(btn);
+      });
+
+      renderQuestions();
+    }
+
+    function setCategory(cat, btnElem) {
+      activeCategory = cat;
+      document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+      btnElem.classList.add('active');
+      applyFilters();
+    }
+
+    function renderQuestions() {
+      const container = document.getElementById('questionList');
+      container.innerHTML = '';
+
+      itemsData.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = 'q-card';
+        card.id = `qcard-${idx}`;
+        card.setAttribute('data-category', item.category);
+
+        const renderedMd = marked.parse(item.answer);
+        const isCoding = item.type === "coding";
+        const badgeClass = isCoding ? "q-num-badge coding-badge" : "q-num-badge";
+        const badgeLabel = isCoding ? `Code ${item.num}` : `Q${item.num.toString().padStart(2, '0')}`;
+
+        card.innerHTML = `
+          <div class="q-header" onclick="toggleCard(${idx})">
+            <div class="q-header-left">
+              <span class="${badgeClass}">${badgeLabel}</span>
+              <div class="q-meta-group">
+                <span class="q-cat-tag">${item.category}</span>
+                <div class="q-title-text">${item.title}</div>
+                <div class="q-prompt-sub">${item.question}</div>
+              </div>
+            </div>
+            <div class="q-header-right">
+              <span class="word-badge">${item.words} words</span>
+              <input type="checkbox" class="q-checkbox" onclick="event.stopPropagation(); toggleComplete(${idx})" title="Mark completed">
+              <span class="chevron">▼</span>
+            </div>
+          </div>
+          <div class="q-body">
+            <div class="answer-content">
+              ${renderedMd}
+            </div>
+            <div class="q-footer-bar">
+              <button class="copy-ans-btn" onclick="copyAnswer(${idx}, this)">📋 Copy Answer / Code</button>
+              <span class="copy-toast" id="toast-${idx}">Copied to clipboard!</span>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+      updateProgress();
+    }
+
+    function toggleCard(idx) {
+      const card = document.getElementById(`qcard-${idx}`);
+      card.classList.toggle('open');
+    }
+
+    function expandAll(open) {
+      document.querySelectorAll('.q-card').forEach(c => {
+        if (open) c.classList.add('open');
+        else c.classList.remove('open');
+      });
+    }
+
+    function toggleComplete(idx) {
+      const card = document.getElementById(`qcard-${idx}`);
+      if (completedSet.has(idx)) {
+        completedSet.delete(idx);
+        card.classList.remove('completed');
+      } else {
+        completedSet.add(idx);
+        card.classList.add('completed');
+      }
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const total = itemsData.length;
+      const count = completedSet.size;
+      const pct = Math.round((count / total) * 100);
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('progressText').textContent = `${count} / ${total} Reviewed (${pct}%)`;
+    }
+
+    function applyFilters() {
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+
+      itemsData.forEach((item, idx) => {
+        const card = document.getElementById(`qcard-${idx}`);
+        const matchesCat = (activeCategory === 'All' || item.category === activeCategory);
+        const textContent = (item.title + ' ' + item.question + ' ' + item.answer).toLowerCase();
+        const matchesQuery = !query || textContent.includes(query);
+
+        if (matchesCat && matchesQuery) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    function copyAnswer(idx, btn) {
+      const item = itemsData[idx];
+      if (!item) return;
+      navigator.clipboard.writeText(item.answer).then(() => {
+        const toast = document.getElementById(`toast-${idx}`);
+        toast.classList.add('show');
+        setTimeout(() => { toast.classList.remove('show'); }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>
