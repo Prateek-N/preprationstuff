@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 
 const SLUG_TO_CANDIDATE = {
+  'venkata-fde-health-prep': 'Venkata Sai Varun Munagavalasa',
   'bibek-yale-reporting-prep': 'Bibek Thapa',
   'aaditi-amex-ba-prep': 'Aaditi Roy',
   'varun-gdit-aiml-prep': 'Varun Sambath Kumar',
@@ -56,6 +57,7 @@ const SLUG_TO_CANDIDATE = {
 }
 
 const PASSWORD_TO_CANDIDATE = {
+  venkata: 'Venkata Sai Varun Munagavalasa',
   bibek: 'Bibek Thapa',
   aaditi: 'Aaditi Roy',
   varun: 'Varun Sambath Kumar',

@@ -1,5 +1,6 @@
 export default {
   index: 'Docs Home',
+  'venkata-fde-health-prep': 'Venkata Sai Varun Munagavalasa Forward Deployed Engineer Prep',
   'bibek-yale-reporting-prep': 'Bibek Thapa Yale University Data Reporting Analyst Prep',
   'aaditi-amex-ba-prep': 'Aaditi Roy AMEX Payment Model Evaluation BA Prep',
   'varun-gdit-aiml-prep': 'Varun Sambath Kumar GDIT AI/ML Engineer Prep',
